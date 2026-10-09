@@ -2,19 +2,24 @@ import { Platform } from 'react-native';
 import { requestWidgetUpdate } from 'react-native-android-widget';
 
 import { useHabitStore } from '@/store/useHabitStore';
-import { renderTodayWidget, WIDGET_NAME } from './TodayWidget';
-import { widgetData } from './widgetTaskHandler';
+import { CARD_WIDGET, LIST_WIDGET, renderCardWidget, renderTodayWidget } from './TodayWidget';
+import { cardHabitFor, widgetData } from './widgetTaskHandler';
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 
-export function refreshWidget() {
+export function refreshWidgets() {
   if (Platform.OS !== 'android') return;
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {
     timer = null;
     requestWidgetUpdate({
-      widgetName: WIDGET_NAME,
+      widgetName: LIST_WIDGET,
       renderWidget: (info) => renderTodayWidget(widgetData(), info.width, info.height),
+      widgetNotFound: () => {},
+    }).catch(() => {});
+    requestWidgetUpdate({
+      widgetName: CARD_WIDGET,
+      renderWidget: async (info) => renderCardWidget(widgetData(), await cardHabitFor(info.widgetId), info.width, info.height),
       widgetNotFound: () => {},
     }).catch(() => {});
   }, 400);
@@ -22,8 +27,8 @@ export function refreshWidget() {
 
 /** Re-render home-screen widgets whenever habits or logs change in the app. */
 export function startWidgetSync() {
-  refreshWidget();
+  refreshWidgets();
   return useHabitStore.subscribe((s, prev) => {
-    if (s.habits !== prev.habits || s.logs !== prev.logs || s.profile !== prev.profile || s.today !== prev.today) refreshWidget();
+    if (s.habits !== prev.habits || s.logs !== prev.logs || s.profile !== prev.profile || s.today !== prev.today) refreshWidgets();
   });
 }

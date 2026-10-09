@@ -5,6 +5,7 @@ import { OnboardingScreen } from '@/screens/OnboardingScreen';
 import { HabitEditorScreen } from '@/screens/HabitEditorScreen';
 import { HabitDetailScreen } from '@/screens/HabitDetailScreen';
 import { ManageHabitsScreen } from '@/screens/ManageHabitsScreen';
+import { QuickCompleteScreen } from '@/screens/QuickCompleteScreen';
 import { useHabitStore } from '@/store/useHabitStore';
 import type { RootStackParamList } from './types';
 
@@ -23,6 +24,11 @@ export function RootNavigator() {
           <Stack.Screen name="HabitEditor" component={HabitEditorScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="HabitDetail" component={HabitDetailScreen} />
           <Stack.Screen name="ManageHabits" component={ManageHabitsScreen} />
+          <Stack.Screen
+            name="QuickComplete"
+            component={QuickCompleteScreen}
+            options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }}
+          />
         </>
       )}
     </Stack.Navigator>

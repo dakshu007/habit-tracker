@@ -82,15 +82,29 @@
         {
           "widgets": [
             {
+              "name": "HabitCard",
+              "label": "Habit card",
+              "description": "Your habit card \u2014 slide to complete from the home screen",
+              "minWidth": "250dp",
+              "minHeight": "250dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 3,
+              "maxResizeWidth": "500dp",
+              "maxResizeHeight": "600dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-card-preview.png"
+            },
+            {
               "name": "TodayHabits",
               "label": "Today's habits",
-              "description": "Check off habits right from your home screen",
+              "description": "All of today's habits at a glance",
               "minWidth": "250dp",
               "minHeight": "180dp",
               "targetCellWidth": 4,
               "targetCellHeight": 2,
               "maxResizeWidth": "500dp",
-              "maxResizeHeight": "500dp",
+              "maxResizeHeight": "600dp",
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000,
               "previewImage": "./assets/widget-preview.png"

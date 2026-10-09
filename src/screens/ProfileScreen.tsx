@@ -1,64 +1,40 @@
-import { useMemo, useState } from 'react';
-import { Alert, ToastAndroid, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Alert, Image, ToastAndroid, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useNavigation } from '@react-navigation/native';
 
 import { Screen, Card, SectionTitle, Toggle, Row } from '@/components/ui/Screen';
 import { Txt } from '@/components/ui/Txt';
-import { Button, PressableScale } from '@/components/ui/Glass';
-import { Field } from '@/components/ui/Field';
+import { PressableScale } from '@/components/ui/Glass';
 import { overlay } from '@/components/ui/Overlay';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { ArchiveIcon, ChevronRight, DownloadIcon, EditIcon, MotionIcon, PlusIcon, RefreshIcon, ShareIcon, VibrateIcon, CalendarSmallIcon, SwipeIcon, WidgetIcon } from '@/components/ui/icons';
+import { ArchiveIcon, ChevronRight, DownloadIcon, MotionIcon, PlusIcon, RefreshIcon, ShareIcon, VibrateIcon, CalendarSmallIcon, WidgetIcon } from '@/components/ui/icons';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useTheme, type ThemeMode } from '@/theme/ThemeContext';
-import { levelFor, levelTitle, xpFor } from '@/logic/habits';
 import { exportBackup, pickBackup } from '@/services/backup';
+import { AchievementsGrid, IdentityCard } from '@/components/profile/ProfileParts';
 import { SwipeToggle } from '@/components/ui/SwipeToggle';
 import { MotionPicker } from '@/components/ui/MotionPicker';
 import { requestPinWidget } from 'react-native-android-widget';
-import { WIDGET_NAME } from '@/widget/TodayWidget';
+import { CARD_WIDGET, LIST_WIDGET } from '@/widget/TodayWidget';
+import { getProfileStyle } from '@/data/profileStyles';
 import { haptic } from '@/utils/haptics';
 import type { RootNav } from '@/navigation/types';
 
 const toast = (msg: string) => ToastAndroid.show(msg, ToastAndroid.SHORT);
 
-function NameDialog() {
-  const name = useHabitStore((s) => s.profile.name);
-  const setProfile = useHabitStore((s) => s.setProfile);
-  const [text, setText] = useState(name);
-  const save = () => {
-    setProfile({ name: text.trim() });
-    overlay.close();
-  };
-  return (
-    <View style={{ padding: 22, gap: 18 }}>
-      <Txt variant="h2">What should we call you?</Txt>
-      <Field autoFocus value={text} onChangeText={setText} placeholder="Your name" maxLength={24} onSubmitEditing={save} returnKeyType="done" />
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button label="Cancel" variant="glass" onPress={overlay.close} style={{ flex: 1 }} />
-        <Button label="Save" onPress={save} style={{ flex: 1 }} />
-      </View>
-    </View>
-  );
-}
 
 export function ProfileScreen() {
   const { theme, mode, setMode } = useTheme();
   const navigation = useNavigation<RootNav>();
   const habits = useHabitStore((s) => s.habits);
-  const logs = useHabitStore((s) => s.logs);
   const profile = useHabitStore((s) => s.profile);
   const settings = useHabitStore((s) => s.settings);
   const updateSettings = useHabitStore((s) => s.updateSettings);
   const importSnapshot = useHabitStore((s) => s.importSnapshot);
   const resetAll = useHabitStore((s) => s.resetAll);
 
-  const lvl = useMemo(() => levelFor(xpFor(habits, logs)), [habits, logs]);
   const activeCount = habits.filter((h) => !h.archived).length;
   const archivedCount = habits.length - activeCount;
-  const initial = (profile.name || 'You').trim().charAt(0).toUpperCase();
 
   const doImport = async () => {
     try {
@@ -82,15 +58,7 @@ export function ProfileScreen() {
     }
   };
 
-  const addWidget = async () => {
-    const ok = await requestPinWidget({ widgetName: WIDGET_NAME }).catch(() => false);
-    if (!ok) {
-      Alert.alert(
-        'Add the widget',
-        'Long-press an empty spot on your home screen → Widgets → Habit Tracker, then drag “Today’s habits” onto your screen.',
-      );
-    }
-  };
+  const addWidget = () => overlay.open(<WidgetPicker />);
 
   const doReset = () =>
     Alert.alert('Erase everything?', 'All habits, history and settings will be deleted from this phone. This can’t be undone.', [
@@ -106,40 +74,12 @@ export function ProfileScreen() {
     ]);
 
   return (
-    <Screen title="Profile" accent="#34C7A0">
-      {/* Identity */}
-      <Card style={{ padding: 0, overflow: 'hidden' }}>
-        <LinearGradient colors={['#5ED3B3', '#4C8DF6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          <View
-            style={{
-              width: 68,
-              height: 68,
-              borderRadius: 34,
-              backgroundColor: 'rgba(255,255,255,0.25)',
-              borderWidth: 1.5,
-              borderColor: 'rgba(255,255,255,0.7)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Txt variant="title" color="white">
-              {initial}
-            </Txt>
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Txt variant="title" color="white" numberOfLines={1}>
-              {profile.name || 'Add your name'}
-            </Txt>
-            <Txt variant="small" color="rgba(255,255,255,0.88)">
-              Level {lvl.level} · {levelTitle(lvl.level)} · {activeCount} habits
-            </Txt>
-          </View>
-          <PressableScale accessibilityLabel="Edit name" onPress={() => overlay.open(<NameDialog />, 'dialog')}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
-              <EditIcon size={18} color="#FFFFFF" />
-            </View>
-          </PressableScale>
-        </LinearGradient>
+    <Screen title="Profile" accent={getProfileStyle(profile.cardStyle).colors[1]}>
+      <IdentityCard />
+
+      <SectionTitle>Achievements</SectionTitle>
+      <Card>
+        <AchievementsGrid />
       </Card>
 
       <SectionTitle>Appearance</SectionTitle>
@@ -178,13 +118,6 @@ export function ProfileScreen() {
           title="Motion effects"
           subtitle="Cards tilt with your phone"
           right={<Toggle value={settings.motion} onChange={(v) => updateSettings({ motion: v })} />}
-        />
-        <Row
-          icon={<SwipeIcon size={19} color="#34C7A0" />}
-          iconBg="#34C7A0"
-          title="Swipe between tabs"
-          subtitle="Swipe left or right on any screen"
-          right={<Toggle value={settings.swipeTabs} onChange={(v) => updateSettings({ swipeTabs: v })} />}
         />
         <Row
           last
@@ -261,5 +194,38 @@ export function ProfileScreen() {
         </Txt>
       </View>
     </Screen>
+  );
+}
+
+/** Choose which home-screen widget to pin. */
+function WidgetPicker() {
+  const { theme } = useTheme();
+  const pin = async (widgetName: string) => {
+    overlay.close();
+    const ok = await requestPinWidget({ widgetName }).catch(() => false);
+    if (!ok) {
+      Alert.alert('Add the widget', 'Long-press an empty spot on your home screen → Widgets → Habit Tracker, then drag it onto your screen.');
+    }
+  };
+  const option = (name: string, title: string, desc: string, preview: number) => (
+    <PressableScale key={name} onPress={() => pin(name)} scaleTo={0.98}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 22, backgroundColor: theme.inputBg }}>
+        <Image source={preview} resizeMode="contain" style={{ width: 96, height: 96 }} />
+        <View style={{ flex: 1, gap: 3 }}>
+          <Txt variant="h3">{title}</Txt>
+          <Txt variant="small" color="secondary">
+            {desc}
+          </Txt>
+        </View>
+        <ChevronRight size={18} color={theme.textTertiary} />
+      </View>
+    </PressableScale>
+  );
+  return (
+    <View style={{ padding: 20, gap: 12 }}>
+      <Txt variant="h2">Add a widget</Txt>
+      {option(CARD_WIDGET, 'Habit card', 'Your habit card with the slider. Use ‹ › to switch habits.', require('../../assets/widget-card-preview.png'))}
+      {option(LIST_WIDGET, 'Today’s habits', 'Every habit for today, with +1 and slide-to-complete.', require('../../assets/widget-preview.png'))}
+    </View>
   );
 }

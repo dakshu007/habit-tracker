@@ -19,8 +19,7 @@ export interface Settings {
   motion: boolean;
   /** App-wide animation style (see theme/motion). */
   motionPreset: MotionPreset;
-  /** Swipe left/right on a screen to change tabs. */
-  swipeTabs: boolean;
+
   weekStart: 0 | 1;
   /** Evening nudge if day habits are still open. */
   nudge: { enabled: boolean; hour: number; minute: number };
@@ -29,6 +28,14 @@ export interface Settings {
 export interface Profile {
   name: string;
   onboarded: boolean;
+  /** file:// URI of the profile photo copied into app storage. */
+  photoUri?: string;
+  /** Profile card gradient (see data/profileStyles). */
+  cardStyle?: string;
+  /** Personal motto shown on the profile. */
+  motto?: string;
+  /** ISO date the user finished onboarding. */
+  joinedAt?: string;
 }
 
 /** Shape written to disk and to backup files. */
@@ -87,7 +94,6 @@ const defaultSettings: Settings = {
   haptics: true,
   motion: true,
   motionPreset: 'smooth',
-  swipeTabs: true,
   weekStart: 1,
   nudge: { enabled: true, hour: 20, minute: 30 },
 };
@@ -103,6 +109,10 @@ export const useHabitStore = create<HabitState>()(
       /** Write a value and fire the "perfect day" celebration if this completed the set. */
       const write = (id: string, day: string, value: number) => {
         const before = get();
+        // Completion is final: once a habit hits its goal for a day it can't drop back below it.
+        const habit = before.habits.find((h) => h.id === id);
+        const current = before.logs[day]?.[id]?.value ?? 0;
+        if (habit && current >= habit.goalValue && value < habit.goalValue) return;
         const allDoneBefore = allDayHabitsDone(before.habits, before.logs, day);
         set((s) => ({
           logs: {
@@ -199,7 +209,7 @@ export const useHabitStore = create<HabitState>()(
         setProfile: (patch) => set((s) => ({ profile: { ...s.profile, ...patch } })),
         finishOnboarding: (name, habits) =>
           set({
-            profile: { name: name.trim(), onboarded: true },
+            profile: { ...get().profile, name: name.trim(), onboarded: true, joinedAt: new Date().toISOString() },
             habits,
             activeHabitId: habits[0]?.id ?? null,
           }),

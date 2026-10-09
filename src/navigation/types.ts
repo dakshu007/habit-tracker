@@ -6,6 +6,7 @@ export type RootStackParamList = {
   HabitEditor: { id?: string; templateKey?: string } | undefined;
   HabitDetail: { id: string };
   ManageHabits: undefined;
+  QuickComplete: { id: string };
 };
 
 export type RootNav = NativeStackNavigationProp<RootStackParamList>;

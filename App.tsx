@@ -15,16 +15,29 @@ import {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
-import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer, type LinkingOptions, type Theme as NavTheme } from '@react-navigation/native';
 
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 import { RootNavigator } from '@/navigation/RootNavigator';
+import type { RootStackParamList } from '@/navigation/types';
 import { useHabitStore } from '@/store/useHabitStore';
 import { setupNotifications, startNotificationSync } from '@/services/notifications';
 import { startWidgetSync } from '@/widget/sync';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 SplashScreen.setOptions({ duration: 350, fade: true });
+
+/** Deep links: the home-screen widget opens habittracker://complete/<habitId>. */
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['habittracker://'],
+  config: {
+    initialRouteName: 'Main',
+    screens: {
+      Main: '',
+      QuickComplete: 'complete/:id',
+    },
+  },
+};
 
 /** Wait for the persisted store so we never flash onboarding at returning users. */
 function useHydrated() {
@@ -66,7 +79,7 @@ function Root() {
   };
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer theme={navTheme} linking={linking}>
       {/* "Off" animation style: Reanimated jumps every animation to its end state. */}
       <ReducedMotionConfig mode={motionOff ? ReduceMotion.Always : ReduceMotion.System} />
       <RootNavigator />

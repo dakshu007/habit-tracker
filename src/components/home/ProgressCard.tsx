@@ -5,7 +5,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Txt } from '@/components/ui/Txt';
 import { PressableScale } from '@/components/ui/Glass';
 import { overlay } from '@/components/ui/Overlay';
-import { ClockIcon, EditIcon, MinusIcon, PlusIcon, StopIcon, CloseIcon } from '@/components/ui/icons';
+import { ClockIcon, EditIcon, LockIcon, MinusIcon, PlusIcon, StopIcon, CloseIcon } from '@/components/ui/icons';
 import { GradientProgressBar } from './GradientProgressBar';
 import { ValueDialog } from './ValueDialog';
 import { useTheme } from '@/theme/ThemeContext';
@@ -164,8 +164,32 @@ export function ProgressCard({ habit }: { habit: Habit }) {
         </Animated.View>
       )}
 
+      {/* Done = final: no more edits for this day */}
+      {done && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            padding: 14,
+            borderRadius: 22,
+            backgroundColor: hexToRgba(palette.success, isDark ? 0.18 : 0.1),
+          }}
+        >
+          <LockIcon size={18} color={palette.success} strokeWidth={2.2} />
+          <View style={{ flex: 1 }}>
+            <Txt variant="label" color="success">
+              Locked in for {day === today ? 'today' : 'this day'}
+            </Txt>
+            <Txt variant="small" color="secondary">
+              Completed habits can’t be undone — that’s what makes them count.
+            </Txt>
+          </View>
+        </View>
+      )}
+
       {/* Logging controls */}
-      {!future && (
+      {!future && !done && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <PressableScale
             accessibilityLabel={`Remove ${qty(habit.step, habit.unit)}`}

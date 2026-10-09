@@ -8,7 +8,8 @@ import { HabitArt } from '@/components/art/HabitArt';
 import { GoalBadge } from './GoalBadge';
 import { StatusChip, type ChipTone } from './StatusChip';
 import { SlideToComplete } from './SlideToComplete';
-import { radius, spacing } from '@/theme/tokens';
+import { palette, radius, spacing } from '@/theme/tokens';
+import { LockIcon } from '@/components/ui/icons';
 import { useTheme } from '@/theme/ThemeContext';
 import { useHabitStore } from '@/store/useHabitStore';
 import { getTheme } from '@/data/themes';
@@ -25,11 +26,14 @@ interface TaskCardProps {
   /** Weighted device tilt (active card only) → parallax / glare. */
   tiltX?: SharedValue<number>;
   tiltY?: SharedValue<number>;
+  /** Pin the card to a specific day (defaults to the Home screen's selected day). */
+  day?: string;
 }
 
-export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day: dayProp }: TaskCardProps) {
   const { theme } = useTheme();
-  const day = useHabitStore((s) => s.selectedDay);
+  const selectedDay = useHabitStore((s) => s.selectedDay);
+  const day = dayProp ?? selectedDay;
   const today = useHabitStore((s) => s.today);
   const weekStart = useHabitStore((s) => s.settings.weekStart);
   const value = useHabitStore((s) => valueOn(s.logs, day, habit.id));
@@ -103,7 +107,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY }: T
               backgroundColor: theme.cardElevated,
               borderRadius: radius.innerCard,
               padding: spacing.cardPad,
-              gap: 20,
+              gap: 16,
             },
             fgParallax,
           ]}
@@ -127,6 +131,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY }: T
             doneLabel={habit.doneLabel}
             onComplete={() => complete(habit.id, day)}
           />
+          <FinalNote done={done} future={future} />
         </Animated.View>
 
         <Animated.View
@@ -145,3 +150,16 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY }: T
     </View>
   );
 });
+
+/** The "no take-backs" nudge under the slider, so people pause before sliding. */
+function FinalNote({ done, future }: { done: boolean; future: boolean }) {
+  if (future) return null;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: -6 }}>
+      <LockIcon size={12} color={done ? palette.success : palette.inkMuted} strokeWidth={2.2} />
+      <Txt variant="small" color={done ? 'success' : 'secondary'} style={{ fontSize: 11.5 }} numberOfLines={1}>
+        {done ? 'Locked in for today — no take-backs' : 'No take-backs — slide only when it’s truly done'}
+      </Txt>
+    </View>
+  );
+}

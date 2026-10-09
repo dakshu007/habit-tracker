@@ -215,7 +215,6 @@ function DaySheet({ day }: { day: string }) {
   const logs = useHabitStore((s) => s.logs);
   const today = useHabitStore((s) => s.today);
   const complete = useHabitStore((s) => s.complete);
-  const setValue = useHabitStore((s) => s.setValue);
   const setSelectedDay = useHabitStore((s) => s.setSelectedDay);
 
   const list = [...dueOn(habits, day), ...weeklyHabits(habits)];
@@ -257,13 +256,12 @@ function DaySheet({ day }: { day: string }) {
               </View>
               <PressableScale
                 disabled={future}
-                accessibilityLabel={done ? `Undo ${h.title}` : `Complete ${h.title}`}
+                silent={done}
+                accessibilityLabel={done ? `${h.title} completed` : `Complete ${h.title}`}
                 onPress={() => {
-                  if (done) setValue(h.id, day, 0);
-                  else {
-                    complete(h.id, day);
-                    haptic.success();
-                  }
+                  if (done) return; // completions are final
+                  complete(h.id, day);
+                  haptic.success();
                 }}
               >
                 <View

@@ -66,3 +66,7 @@ export const BellSmallIcon = line('M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15zM10 19.
 export const UndoIcon = line('M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11');
 export const SwipeIcon = line('M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4');
 export const WidgetIcon = line('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z');
+export const LockIcon = line('M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13v9.5h-13zM12 15v2');
+export const CameraIcon = line('M4 8.5h3l1.5-2.5h7L17 8.5h3V19H4zM12 16.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6z');
+export const PaletteIcon = line('M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1-.8-1.4-.8-2.3 0-.9.8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3zM7.5 12.5h.01M9.5 8h.01M14.5 8h.01');
+export const QuoteIcon = line('M5 17c2.5 0 4-1.8 4-4.5V8H5v4.5h3M15 17c2.5 0 4-1.8 4-4.5V8h-4v4.5h3');

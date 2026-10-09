@@ -9,7 +9,7 @@ import { Button, GlassButton, PressableScale } from '@/components/ui/Glass';
 import { Card, SectionTitle, Toggle } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { CheckIcon, CloseIcon, MinusIcon, PlusIcon, TrashIcon, ArchiveIcon } from '@/components/ui/icons';
-import { HabitArt } from '@/components/art/HabitArt';
+import { HabitArt, artAspect } from '@/components/art/HabitArt';
 import { GoalBadge } from '@/components/home/GoalBadge';
 import { useHabitStore, useHabit } from '@/store/useHabitStore';
 import { useTheme } from '@/theme/ThemeContext';
@@ -104,7 +104,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
     ]);
 
   const previewW = width - spacing.screenX * 2;
-  const tile = 64;
+  const tile = 84;
   const ordered = useMemo(() => weekdayOrder(weekStart) as Weekday[], [weekStart]);
 
   return (
@@ -132,28 +132,15 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: spacing.screenX, paddingBottom: insets.bottom + 40, gap: 16 }}
       >
-        {/* Live preview */}
+        {/* Live preview — the whole illustration, details underneath */}
         <Animated.View
           entering={enter(0)}
-          style={{ width: previewW, height: 250, borderRadius: 32, overflow: 'hidden', backgroundColor: colors.cardTint, boxShadow: '0px 14px 30px rgba(0,0,0,0.12)' }}
+          style={{ width: previewW, borderRadius: 32, overflow: 'hidden', backgroundColor: theme.cardElevated, boxShadow: '0px 14px 30px rgba(0,0,0,0.12)' }}
         >
-          <Animated.View key={`${h.artId}${h.themeId}`} entering={FadeIn.duration(300)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-            <HabitArt artId={h.artId} colors={colors} />
+          <Animated.View key={h.artId} entering={FadeIn.duration(300)} style={{ width: previewW, height: Math.min(previewW, previewW / artAspect(h.artId)) }}>
+            <HabitArt artId={h.artId} mode="full" />
           </Animated.View>
-          <View
-            style={{
-              position: 'absolute',
-              left: 8,
-              right: 8,
-              bottom: 8,
-              padding: 14,
-              borderRadius: 24,
-              backgroundColor: theme.cardElevated,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
+          <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1, gap: 4 }}>
               <Txt variant="cardTitle" numberOfLines={1}>
                 {h.title.trim() || 'Your habit'}
@@ -225,8 +212,8 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
               <PressableScale key={a.id} onPress={() => (haptic.tick(), patch({ artId: a.id }))} silent accessibilityLabel={a.name}>
                 <View style={{ alignItems: 'center', gap: 6 }}>
                   <View style={{ padding: 3, borderRadius: 22, borderWidth: 2.5, borderColor: on ? colors.accent : 'transparent' }}>
-                    <View style={{ width: tile, height: tile, borderRadius: 17, overflow: 'hidden' }}>
-                      <HabitArt artId={a.id} colors={colors} compact />
+                    <View style={{ width: tile, height: tile, borderRadius: 20, overflow: 'hidden' }}>
+                      <HabitArt artId={a.id} mode="full" />
                     </View>
                   </View>
                   <Txt variant="small" color={on ? 'primary' : 'secondary'}>

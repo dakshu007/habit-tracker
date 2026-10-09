@@ -49,6 +49,8 @@ export const RunMap = memo(function RunMap({ points, gaps, mode, here, follow = 
   return (
     <Map
       style={{ flex: 1 }}
+      // A SurfaceView doesn't move with a ScrollView; the summary map sits in one.
+      androidView={mode === 'summary' ? 'texture' : 'surface'}
       mapStyle={isDark ? STYLE_DARK : STYLE_LIGHT}
       logo={false}
       compass={false}

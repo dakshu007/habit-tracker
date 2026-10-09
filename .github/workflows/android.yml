@@ -46,7 +46,14 @@ jobs:
         working-directory: android
         run: |
           echo "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" >> gradle.properties
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Upload Gradle reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-reports
+          path: android/build/reports/
 
       - name: Collect APK
         run: cp android/app/build/outputs/apk/release/app-release.apk "HabitTracker-build-${BUILD_NUMBER}.apk"

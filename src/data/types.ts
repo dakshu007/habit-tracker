@@ -46,6 +46,11 @@ export interface Habit {
   sync?: HealthSource;
   /** "Quit a bad habit" mode: the daily slide confirms a clean day. */
   quit?: QuitInfo;
+  /**
+   * Sleep from phone use: inside this bedtime window (minutes after midnight),
+   * time with the screen off counts as sleep. Needs usage access (services/phoneSleep).
+   */
+  phoneSleep?: { bed: number; wake: number };
   /** Set when the habit was started from a challenge. */
   challenge?: { id: string; startDay: string; days: number; closed?: boolean; passed?: boolean };
 }

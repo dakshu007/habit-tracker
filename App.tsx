@@ -26,6 +26,7 @@ import { setupNotifications, startNotificationSync, startNotificationTaps } from
 import { startWidgetSync } from '@/widget/sync';
 import { startHealthSync } from '@/services/health';
 import { useLiveRun } from '@/store/useRunStore';
+import { startPhoneSleepSync } from '@/services/phoneSleep';
 import { setLang, useLang } from '@/i18n';
 
 /**
@@ -51,6 +52,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       Review: 'review',
       QuickLog: 'quick-log',
       Run: 'run',
+      VoiceLog: 'voice',
+      Challenges: 'join/:code',
     },
   },
 };
@@ -126,6 +129,7 @@ function App() {
     const stopWidget = startWidgetSync();
     const stopTaps = startNotificationTaps();
     const stopHealth = startHealthSync();
+    const stopSleep = startPhoneSleepSync();
     useHabitStore.getState().applyFreezes();
     useLiveRun.getState().load(); // a run left recording shows on Home
     return () => {
@@ -133,6 +137,7 @@ function App() {
       stopWidget();
       stopTaps();
       stopHealth();
+      stopSleep();
     };
   }, [hydrated]);
 

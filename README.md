@@ -8,6 +8,11 @@ An illustrated, gesture-driven habit tracker for Android, built with Expo (SDK 5
 - **Quit mode:** days clean, money saved, slips
 - **Health Connect auto-tracking:** steps, distance, running, walking, cycling, swimming, yoga, dance, workouts, floors, sleep
 - **GPS runs:** live map (free OpenFreeMap tiles), distance, pace, km splits, pace-coloured route; records with the screen off (foreground service, no background-location permission); logs to your running habit; stored on device and included in backups
+- **Sleep from phone use:** bedtime window + screen on/off history (Usage access) → hours slept, no watch needed
+- **Voice logging:** "2 glasses of water", "ran 5 km", "done meditating" (English + Hindi) via the phone's speech recognizer; app-icon shortcuts (Voice log / Quick log / Start a run)
+- **Monthly report:** designed one-page PDF or CSV of every entry, made on device
+- **Friends:** invite link, challenge codes to do a challenge together, share progress
+- **Past days are view-only:** only today can be logged
 - **Streaks:** streak freezes (earned every 7 days, applied automatically) and rest days
 - **Challenges:** 7/21/30 days, milestones, trophies
 - **Routines:** play habits one card at a time
@@ -19,6 +24,9 @@ An illustrated, gesture-driven habit tracker for Android, built with Expo (SDK 5
 - **Widgets:** habit card and today list (slide deep-links to the real slider); Quick Settings tile
 - **Customisation:** 7 animation styles, light/dark, haptics, English + हिन्दी
 - **Your data:** backup export/restore, Android Auto Backup, privacy policy in-app
+
+## Native code
+`modules/device-signals` is a local Expo module (Kotlin): screen on/off events via `UsageStatsManager` for sleep, and `RecognizerIntent` for voice. It's auto-linked from `./modules`.
 
 ## Develop
 ```bash

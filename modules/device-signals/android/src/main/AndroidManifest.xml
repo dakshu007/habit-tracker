@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <!-- Screen on/off history for sleep detection. Granted by the user in Settings → Usage access. -->
+  <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+  <queries>
+    <!-- The phone's speech recognizer, for voice logging (it records audio, not this app). -->
+    <intent>
+      <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+    </intent>
+  </queries>
+</manifest>

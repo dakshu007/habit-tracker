@@ -133,7 +133,8 @@
           "androidForegroundServiceIcon": "./assets/notification-icon.png"
         }
       ],
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      "./plugins/with-app-shortcuts"
     ]
   }
 }

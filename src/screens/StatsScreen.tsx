@@ -33,12 +33,14 @@ import { MOODS } from '@/components/mood/Mood';
 import { hexToRgba } from '@/theme/color';
 import { t } from '@/i18n';
 import type { RootNav } from '@/navigation/types';
+import { getProfileStyle } from '@/data/profileStyles';
 
 export function StatsScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<RootNav>();
   const habits = useHabitStore((s) => s.habits);
   const logs = useHabitStore((s) => s.logs);
+  const cardStyle = getProfileStyle(useHabitStore((s) => s.profile.cardStyle));
   const today = useHabitStore((s) => s.today);
   const weekStart = useHabitStore((s) => s.settings.weekStart);
   const [range, setRange] = useState<'week' | 'month'>('week');
@@ -97,10 +99,10 @@ export function StatsScreen() {
   );
 
   return (
-    <Screen title={t('Stats')} subtitle={t('Your consistency, at a glance.')} accent="#B280FF">
+    <Screen title={t('Stats')} subtitle={t('Your consistency, at a glance.')} accent={cardStyle.colors[0]}>
       {/* Level hero */}
       <Card style={{ padding: 0, overflow: 'hidden' }}>
-        <LinearGradient colors={['#8E6CFF', '#5E9BFF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 16 }}>
+        <LinearGradient colors={cardStyle.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={{ width: 58, height: 58, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)', alignItems: 'center', justifyContent: 'center' }}>
               <Txt variant="title" color="white">

@@ -1,4 +1,4 @@
-/** Gradient presets for the profile card. */
+/** Gradient presets for the profile card (the Stats level card follows the same choice). */
 export interface ProfileStyle {
   id: string;
   name: string;
@@ -8,6 +8,8 @@ export interface ProfileStyle {
 }
 
 export const profileStyles: ProfileStyle[] = [
+  // Default: the app's own sky blue (Home wash #6FB7ED → Sky accent #056EBE).
+  { id: 'sky', name: 'Sky', colors: ['#7EC2F0', '#3F95DA', '#056EBE'] },
   { id: 'aurora', name: 'Aurora', colors: ['#6CC3F7', '#5E8BF5', '#9A72F4'] },
   { id: 'sunset', name: 'Sunset', colors: ['#FFC48A', '#F59A7B', '#E0638C'] },
   { id: 'lagoon', name: 'Lagoon', colors: ['#7FE0D6', '#3BB5E8', '#3D7BE0'] },

@@ -1,17 +1,20 @@
-import { useMemo } from 'react';
-import { View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ToastAndroid, View } from 'react-native';
 
 import { Screen, Card, SectionTitle } from '@/components/ui/Screen';
 import { Txt } from '@/components/ui/Txt';
 import { Button, GlassButton, PressableScale } from '@/components/ui/Glass';
 import { ChevronLeft } from '@/components/ui/icons';
-import { Flag, Target, Trophy } from '@/components/ui/lucide';
+import { Flag, Share2, Target, Trophy, Users } from '@/components/ui/lucide';
 import { HabitArt } from '@/components/art/HabitArt';
 import { ProgressRing } from '@/components/charts/ProgressRing';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useTheme } from '@/theme/ThemeContext';
 import { hexToRgba } from '@/theme/color';
-import { challengeProgress, challenges, habitForChallenge, PASS_RATE } from '@/data/challenges';
+import { challengeProgress, challenges, habitForChallenge, parseChallengeCode, PASS_RATE, type Challenge } from '@/data/challenges';
+import { shareChallengeCode, shareChallengeProgress } from '@/services/invite';
+import { Field } from '@/components/ui/Field';
+import { shiftKey } from '@/utils/date';
 import { templates } from '@/data/templates';
 import { getTheme } from '@/data/themes';
 import { MONTH_LABELS } from '@/utils/date';
@@ -21,7 +24,7 @@ import type { RootScreenProps } from '@/navigation/types';
 
 const MILESTONES = [0.25, 0.5, 0.75, 1];
 
-export function ChallengesScreen({ navigation }: RootScreenProps<'Challenges'>) {
+export function ChallengesScreen({ navigation, route }: RootScreenProps<'Challenges'>) {
   const { theme } = useTheme();
   const habits = useHabitStore((s) => s.habits);
   const logs = useHabitStore((s) => s.logs);
@@ -35,12 +38,35 @@ export function ChallengesScreen({ navigation }: RootScreenProps<'Challenges'>) 
   );
   const activeIds = new Set(active.map((a) => a.h.challenge!.id));
 
-  const join = (id: string) => {
+  const join = (id: string, friend = false) => {
     const c = challenges.find((x) => x.id === id)!;
     haptic.success();
     addHabit(habitForChallenge(c, today));
+    if (friend) shareChallengeCode(c, today).catch(() => {});
     navigation.goBack();
   };
+
+  // Friend codes ("RUN21-261012"): same challenge, same start day where possible.
+  const [code, setCode] = useState(route.params?.code ?? '');
+  const toast = (msg: string) => ToastAndroid.show(msg, ToastAndroid.SHORT);
+  const joinCode = (input: string) => {
+    const parsed = parseChallengeCode(input);
+    if (!parsed) return toast(t('That code doesn’t look right — check it with your friend.'));
+    const { challenge: c, startDay } = parsed;
+    if (activeIds.has(c.id)) return toast(t('You’re already in this challenge.'));
+    if (shiftKey(startDay, c.days - 1) < today) return toast(t('That challenge has already ended.'));
+    haptic.success();
+    // Join on the friend's start day, or today if they started earlier (past days are locked).
+    addHabit(habitForChallenge(c, startDay > today ? startDay : today));
+    toast(t('Joined “{challenge}” with your friend!', { challenge: t(c.title) }));
+    navigation.goBack();
+  };
+  useEffect(() => {
+    if (route.params?.code) joinCode(route.params.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const challengeOf = (id: string): Challenge | undefined => challenges.find((x) => x.id === id);
 
   return (
     <Screen
@@ -54,6 +80,27 @@ export function ChallengesScreen({ navigation }: RootScreenProps<'Challenges'>) 
         </GlassButton>
       }
     >
+      <Card style={{ gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Users size={20} color="#F5A623" strokeWidth={2} />
+          <Txt variant="h3" style={{ flex: 1 }}>
+            {t('Have a code from a friend?')}
+          </Txt>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Field value={code} onChangeText={setCode} placeholder="RUN21-261012" autoCapitalize="characters" autoCorrect={false} onSubmitEditing={() => joinCode(code)} />
+          </View>
+          <PressableScale disabled={!code.trim()} onPress={() => joinCode(code)}>
+            <View style={{ height: 48, paddingHorizontal: 18, borderRadius: 24, justifyContent: 'center', backgroundColor: '#F5A623' }}>
+              <Txt variant="label" color="white">
+                {t('Join')}
+              </Txt>
+            </View>
+          </PressableScale>
+        </View>
+      </Card>
+
       {active.length > 0 && (
         <>
           <SectionTitle>{t('In progress')}</SectionTitle>
@@ -104,6 +151,22 @@ export function ChallengesScreen({ navigation }: RootScreenProps<'Challenges'>) 
                     );
                   })}
                 </View>
+                {challengeOf(h.challenge!.id) && (
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <SmallButton
+                      Icon={Users}
+                      label={t('Invite a friend')}
+                      color={c.accent}
+                      onPress={() => shareChallengeCode(challengeOf(h.challenge!.id)!, h.challenge!.startDay).catch(() => {})}
+                    />
+                    <SmallButton
+                      Icon={Share2}
+                      label={t('Share progress')}
+                      color={c.accent}
+                      onPress={() => shareChallengeProgress(challengeOf(h.challenge!.id)!, h.challenge!.startDay, p.day, p.doneDays).catch(() => {})}
+                    />
+                  </View>
+                )}
               </Card>
             );
           })}
@@ -131,13 +194,25 @@ export function ChallengesScreen({ navigation }: RootScreenProps<'Challenges'>) 
                 <Txt variant="small" color="secondary" numberOfLines={3}>
                   {t(c.blurb)}
                 </Txt>
-                <PressableScale disabled={running} onPress={() => join(c.id)} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
-                  <View style={{ paddingHorizontal: 16, height: 36, borderRadius: 18, justifyContent: 'center', backgroundColor: th.accent }}>
-                    <Txt variant="label" color="white">
-                      {running ? t('In progress') : t('Join challenge')}
-                    </Txt>
-                  </View>
-                </PressableScale>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                  <PressableScale disabled={running} onPress={() => join(c.id)}>
+                    <View style={{ paddingHorizontal: 16, height: 36, borderRadius: 18, justifyContent: 'center', backgroundColor: th.accent }}>
+                      <Txt variant="label" color="white">
+                        {running ? t('In progress') : t('Join challenge')}
+                      </Txt>
+                    </View>
+                  </PressableScale>
+                  {!running && (
+                    <PressableScale onPress={() => join(c.id, true)} accessibilityLabel={t('Join with a friend')}>
+                      <View style={{ paddingHorizontal: 12, height: 36, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: hexToRgba(th.accent, 0.14) }}>
+                        <Users size={15} color={th.accent} strokeWidth={2.2} />
+                        <Txt variant="label" color={th.accent}>
+                          {t('With a friend')}
+                        </Txt>
+                      </View>
+                    </PressableScale>
+                  )}
+                </View>
               </View>
             </View>
           </Card>
@@ -170,5 +245,18 @@ export function ChallengesScreen({ navigation }: RootScreenProps<'Challenges'>) 
 
       <Button label={t('Done')} variant="glass" onPress={() => navigation.goBack()} />
     </Screen>
+  );
+}
+
+function SmallButton({ Icon, label, color, onPress }: { Icon: typeof Users; label: string; color: string; onPress: () => void }) {
+  return (
+    <PressableScale onPress={onPress} style={{ flex: 1 }}>
+      <View style={{ height: 40, borderRadius: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: hexToRgba(color, 0.14) }}>
+        <Icon size={16} color={color} strokeWidth={2.2} />
+        <Txt variant="label" color={color}>
+          {label}
+        </Txt>
+      </View>
+    </PressableScale>
   );
 }

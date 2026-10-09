@@ -53,6 +53,8 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
   const height = Math.round(width * CARD_ASPECT);
   const done = value >= habit.goalValue;
   const future = day > today;
+  /** Past days can be viewed but never logged. */
+  const past = day < today;
 
   const quit = habit.quit;
   const clean = quit ? daysClean(habit, day > today ? today : day) : 0;
@@ -66,6 +68,9 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
   } else if (rest && !done) {
     tone = 'upcoming';
     chip = t('Rest day');
+  } else if (past && !done) {
+    tone = 'idle';
+    chip = t('Not done');
   } else if (quit) {
     chip = done ? t('Clean today') : t('{n} days clean', { n: clean });
   } else if (habit.schedule.kind === 'weekly') {
@@ -148,8 +153,8 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
 
           <SlideToComplete
             done={done}
-            disabled={future || (rest && !done)}
-            idleLabel={future ? t('Opens on the day') : rest ? t('Rest day — enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
+            disabled={future || past || (rest && !done)}
+            idleLabel={future ? t('Opens on the day') : past ? t('Past days are locked') : rest ? t('Rest day — enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
             doneLabel={quit ? t('Clean day logged. Proud of you.') : habit.doneLabel}
             onComplete={() => {
               complete(habit.id, day);
@@ -157,7 +162,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
               onCompleted?.();
             }}
           />
-          {quit && !future ? (
+          {quit && !future && !past ? (
             <Pressable
               accessibilityRole="button"
               onPress={() =>
@@ -173,7 +178,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
               </Txt>
             </Pressable>
           ) : (
-            <FinalNote done={done} future={future || (rest && !done)} />
+            <FinalNote done={done} future={future || past || (rest && !done)} />
           )}
         </Animated.View>
 

@@ -11,7 +11,7 @@ interface HabitArtProps {
   /**
    * - card:  fit to width, anchored to the top; the card fills below with the art's edge color
    * - thumb: centered square crop for small tiles (legacy `compact`)
-   * - full:  the whole illustration, letterboxed in its edge color
+   * - full:  fills the frame edge to edge (size the frame to artAspect() to show all of it)
    */
   mode?: 'card' | 'thumb' | 'full';
   compact?: boolean;
@@ -33,7 +33,7 @@ export const HabitArt = memo(function HabitArt({ artId, mode, compact }: HabitAr
   if (m === 'full') {
     return (
       <View style={{ flex: 1, backgroundColor: art.bg, overflow: 'hidden' }}>
-        <Image source={art.source} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
+        <Image source={art.source} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
       </View>
     );
   }

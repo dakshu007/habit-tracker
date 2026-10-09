@@ -6,6 +6,7 @@ import { Txt } from '@/components/ui/Txt';
 import { PressableScale } from '@/components/ui/Glass';
 import { CheckIcon, PlusIcon } from '@/components/ui/icons';
 import { HabitArt } from '@/components/art/HabitArt';
+import { Mic } from '@/components/ui/lucide';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useTheme } from '@/theme/ThemeContext';
 import { useMotion } from '@/theme/motion';
@@ -48,6 +49,14 @@ export function QuickLogScreen({ navigation }: RootScreenProps<'QuickLog'>) {
           <Txt variant="h2" style={{ flex: 1 }}>
             {t('Quick log')}
           </Txt>
+          <PressableScale accessibilityLabel={t('Voice log')} onPress={() => navigation.replace('VoiceLog')} style={{ marginRight: 16 }}>
+            <View style={{ height: 36, paddingHorizontal: 12, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: hexToRgba('#4C8DF6', 0.14) }}>
+              <Mic size={16} color="#4C8DF6" strokeWidth={2.2} />
+              <Txt variant="label" color="#4C8DF6">
+                {t('Speak')}
+              </Txt>
+            </View>
+          </PressableScale>
           <Pressable onPress={close} hitSlop={10}>
             <Txt variant="label" color="secondary">
               {t('Done')}

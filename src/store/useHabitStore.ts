@@ -372,7 +372,13 @@ export const useHabitStore = create<HabitState>()(
     },
     {
       name: 'habits-v2',
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => {
+        const p = (persisted ?? {}) as Partial<Snapshot>;
+        // v2: the default profile card became Sky; the old default (Aurora) moves over with it.
+        if (version < 2 && p.profile?.cardStyle === 'aurora') p.profile = { ...p.profile, cardStyle: undefined };
+        return p as HabitState;
+      },
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         habits: s.habits,

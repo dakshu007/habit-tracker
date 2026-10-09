@@ -69,3 +69,41 @@ export function challengeProgress(h: Habit, logs: Logs, today: string): Challeng
     frac: Math.max(0, Math.min(1, elapsed / days)),
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Friend codes                                                        */
+/* ------------------------------------------------------------------ */
+
+/** Short, speakable names used in friend codes ("RUN21-261012"). Never change them. */
+const CODE_NAMES: Record<string, string> = {
+  'hydrate-7': 'WATER7',
+  'detox-7': 'DETOX7',
+  'read-21': 'READ21',
+  'calm-21': 'CALM21',
+  'run-21': 'RUN21',
+  'walk-30': 'WALK30',
+  'journal-30': 'JOURNAL30',
+  'fit-30': 'FIT30',
+};
+
+/**
+ * A code a friend can type to join the same challenge, starting the same day
+ * (works offline — no account needed). Format: NAME-YYMMDD.
+ */
+export function challengeCode(id: string, startDay: string): string {
+  const name = CODE_NAMES[id] ?? id.toUpperCase();
+  const [y, m, d] = startDay.split('-');
+  return `${name}-${y.slice(2)}${m}${d}`;
+}
+
+/** Reads a friend code (case and spacing don't matter). Null if it isn't one. */
+export function parseChallengeCode(input: string): { challenge: Challenge; startDay: string } | null {
+  const m = input.trim().toUpperCase().replace(/\s+/g, '').match(/^([A-Z]+\d+)-?(\d{2})(\d{2})(\d{2})$/);
+  if (!m) return null;
+  const id = Object.keys(CODE_NAMES).find((k) => CODE_NAMES[k] === m[1]);
+  const challenge = id ? getChallenge(id) : undefined;
+  const month = Number(m[3]);
+  const day = Number(m[4]);
+  if (!challenge || month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return { challenge, startDay: `20${m[2]}-${m[3]}-${m[4]}` };
+}

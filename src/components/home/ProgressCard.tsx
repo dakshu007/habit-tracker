@@ -48,6 +48,7 @@ function BuildProgressCard({ habit }: { habit: Habit }) {
   const remaining = Math.max(0, habit.goalValue - value);
   const done = value >= habit.goalValue;
   const future = day > today;
+  const past = day < today;
   const timed = TIMED_UNITS.includes(habit.unit.toLowerCase());
   const runnable = canLogRun(habit);
 
@@ -138,8 +139,20 @@ function BuildProgressCard({ habit }: { habit: Habit }) {
         </View>
       )}
 
+      {past && !done && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 22, backgroundColor: theme.inputBg }}>
+          <LockIcon size={18} color={theme.textSecondary} strokeWidth={2.2} />
+          <View style={{ flex: 1 }}>
+            <Txt variant="label">{t('This day is closed')}</Txt>
+            <Txt variant="small" color="secondary">
+              {t('You can look back at past days, but only today can be logged.')}
+            </Txt>
+          </View>
+        </View>
+      )}
+
       {/* Logging controls */}
-      {!future && !done && (
+      {!future && !past && !done && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <PressableScale
             accessibilityLabel={t('Remove {amount}', { amount: qty(habit.step, habit.unit) })}

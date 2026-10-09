@@ -8,7 +8,7 @@ export type RootStackParamList = {
   ManageHabits: undefined;
   QuickComplete: { id: string };
   Focus: { habitId: string };
-  Challenges: undefined;
+  Challenges: { code?: string } | undefined;
   Routines: undefined;
   RoutineEdit: { id?: string } | undefined;
   RoutinePlay: { id: string };
@@ -18,6 +18,7 @@ export type RootStackParamList = {
   Privacy: undefined;
   Run: { habitId?: string } | undefined;
   Runs: undefined;
+  VoiceLog: undefined;
   RunDetail: { id: string; fresh?: boolean };
 };
 

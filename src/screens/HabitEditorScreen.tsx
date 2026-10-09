@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -23,12 +23,13 @@ import { DAY_LETTERS, formatTime, weekdayOrder } from '@/utils/date';
 import { fmtNumber } from '@/utils/format';
 import { pickTime } from '@/utils/pickTime';
 import { haptic } from '@/utils/haptics';
-import type { Habit, Schedule, Weekday } from '@/data/types';
+import type { Habit, HealthSource, Schedule, Weekday } from '@/data/types';
 import type { RootScreenProps } from '@/navigation/types';
 import { useEnter } from '@/theme/motion';
 import { t } from '@/i18n';
 import { AutoTrack } from '@/components/editor/AutoTrack';
-import { healthStatus } from '@/services/health';
+import { PhoneSleep } from '@/components/editor/PhoneSleep';
+import { connectHealth, healthStatus } from '@/services/health';
 import { isUnlocked, useUnlockedAchievements } from '@/logic/unlocks';
 import { showLocked } from '@/components/profile/ProfileParts';
 
@@ -110,6 +111,40 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
       },
     ]);
 
+  /** Templates like Walk or Running fill themselves from Health Connect — switch that on, asking once if needed. */
+  const offerAutoTrack = async (src: HealthSource) => {
+    const st = await healthStatus();
+    if (st === 'ready') return setH((cur) => ({ ...cur, sync: src }));
+    if (st !== 'needs-permission') return;
+    Alert.alert(t('Track this automatically?'), t('Health Connect can fill this habit from your phone’s step counter, watch or fitness apps — no typing needed.'), [
+      { text: t('Not now'), style: 'cancel' },
+      {
+        text: t('Turn on'),
+        onPress: async () => {
+          if (await connectHealth()) setH((cur) => ({ ...cur, sync: src }));
+        },
+      },
+    ]);
+  };
+
+  // A template picked before opening (e.g. from onboarding or a challenge) gets the same offer.
+  useEffect(() => {
+    const tpl = isNew ? templates.find((x) => x.key === route.params?.templateKey) : undefined;
+    if (tpl?.sync) offerAutoTrack(tpl.sync);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Defer the heavy lower sections until the open transition finishes.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const unsub = navigation.addListener('transitionEnd', () => setReady(true));
+    const id = setTimeout(() => setReady(true), 450);
+    return () => {
+      unsub();
+      clearTimeout(id);
+    };
+  }, [navigation]);
+
   const previewW = width - spacing.screenX * 2;
   const tile = 84;
   const ordered = useMemo(() => weekdayOrder(weekStart) as Weekday[], [weekStart]);
@@ -144,7 +179,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           entering={enter(0)}
           style={{ width: previewW, borderRadius: 32, overflow: 'hidden', backgroundColor: theme.cardElevated, boxShadow: '0px 14px 30px rgba(0,0,0,0.12)' }}
         >
-          <Animated.View key={h.artId} entering={FadeIn.duration(300)} style={{ width: previewW, height: Math.min(previewW, previewW / artAspect(h.artId)) }}>
+          <Animated.View key={h.artId} entering={FadeIn.duration(300)} style={{ width: previewW, height: Math.round(previewW / artAspect(h.artId)) }}>
             <HabitArt artId={h.artId} mode="full" />
           </Animated.View>
           <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -178,10 +213,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
                       setCustomUnit(!UNIT_SUGGESTIONS.includes(tpl.unit));
                       if (tpl.schedule.kind === 'days') setDays(tpl.schedule.days);
                       if (tpl.schedule.kind === 'weekly') setPerWeek(tpl.schedule.timesPerWeek);
-                      if (tpl.sync) {
-                        const src = tpl.sync;
-                        healthStatus().then((st) => st === 'ready' && setH((cur) => ({ ...cur, sync: src })));
-                      }
+                      if (tpl.sync) offerAutoTrack(tpl.sync);
                     }}
                   >
                     <View
@@ -245,6 +277,9 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           <Field label={t('Why it matters')} value={h.subtitle} onChangeText={(subtitle) => patch({ subtitle })} placeholder={t('e.g. Clears my head')} maxLength={44} />
         </Card>
 
+        {/* Everything below the fold mounts once the screen has slid in, so opening feels instant. */}
+        {ready ? (
+          <>
         <SectionTitle>{t('Artwork')}</SectionTitle>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.screenX }} contentContainerStyle={{ gap: 10, paddingHorizontal: spacing.screenX }}>
           {artList.map((a) => {
@@ -254,7 +289,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
                 <View style={{ alignItems: 'center', gap: 6 }}>
                   <View style={{ padding: 3, borderRadius: 22, borderWidth: 2.5, borderColor: on ? colors.accent : 'transparent' }}>
                     <View style={{ width: tile, height: tile, borderRadius: 20, overflow: 'hidden' }}>
-                      <HabitArt artId={a.id} mode="full" />
+                      <HabitArt artId={a.id} mode="thumb" />
                     </View>
                   </View>
                   <Txt variant="small" color={on ? 'primary' : 'secondary'}>
@@ -416,6 +451,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
             setH((cur) => ({ ...cur, sync, unit: unit ?? cur.unit }));
             if (unit) setCustomUnit(!UNIT_SUGGESTIONS.includes(unit));
           }} />
+          <PhoneSleep h={h} onChange={(phoneSleep) => setH((cur) => ({ ...cur, phoneSleep, sync: phoneSleep ? undefined : cur.sync }))} />
           </>
         )}
 
@@ -461,6 +497,10 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
             />
             <Button variant="ghost" color={theme.danger} label={t('Delete habit')} icon={<TrashIcon size={18} color={theme.danger} />} onPress={remove} />
           </View>
+        )}
+          </>
+        ) : (
+          <View style={{ height: 600 }} />
         )}
       </ScrollView>
     </KeyboardAvoidingView>

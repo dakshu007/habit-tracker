@@ -15,6 +15,7 @@ import { ShareScreen } from '@/screens/ShareScreen';
 import { PrivacyScreen } from '@/screens/PrivacyScreen';
 import { QuickLogScreen } from '@/screens/QuickLogScreen';
 import { RunScreen } from '@/screens/RunScreen';
+import { VoiceLogScreen } from '@/screens/VoiceLogScreen';
 import { RunDetailScreen, RunsScreen } from '@/screens/RunsScreen';
 import { useHabitStore } from '@/store/useHabitStore';
 import type { RootStackParamList } from './types';
@@ -48,6 +49,11 @@ export function RootNavigator() {
           <Stack.Screen
             name="QuickLog"
             component={QuickLogScreen}
+            options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }}
+          />
+          <Stack.Screen
+            name="VoiceLog"
+            component={VoiceLogScreen}
             options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }}
           />
           <Stack.Screen

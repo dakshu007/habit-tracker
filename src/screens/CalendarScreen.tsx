@@ -260,7 +260,7 @@ function DaySheet({ day }: { day: string }) {
                 </Txt>
               </View>
               <PressableScale
-                disabled={future}
+                disabled={day !== today}
                 silent={done}
                 accessibilityLabel={done ? t('{habit} done', { habit: h.title }) : t('Complete {habit}', { habit: h.title })}
                 onPress={() => {
@@ -289,6 +289,7 @@ function DaySheet({ day }: { day: string }) {
           );
         })}
       </ScrollView>
+      {day >= today && (
       <PressableScale onPress={() => toggleRestDay(day)}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: rest ? hexToRgba('#9B6BF2', 0.16) : theme.inputBg }}>
           <Bed size={18} color="#9B6BF2" strokeWidth={2} />
@@ -297,6 +298,7 @@ function DaySheet({ day }: { day: string }) {
           </Txt>
         </View>
       </PressableScale>
+      )}
       <Button
         label={t('Open this day on Home')}
         onPress={() => {

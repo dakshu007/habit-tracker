@@ -30,6 +30,7 @@ export { default as Lightbulb } from 'lucide-react-native/icons/lightbulb';
 export { default as Lock } from 'lucide-react-native/icons/lock';
 export { default as Medal } from 'lucide-react-native/icons/medal';
 export { default as MessageCircle } from 'lucide-react-native/icons/message-circle';
+export { default as Mic } from 'lucide-react-native/icons/mic';
 export { default as MoonStar } from 'lucide-react-native/icons/moon-star';
 export { default as MountainSnow } from 'lucide-react-native/icons/mountain-snow';
 export { default as Navigation } from 'lucide-react-native/icons/navigation';

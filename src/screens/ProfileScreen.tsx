@@ -17,7 +17,9 @@ import { MotionPicker } from '@/components/ui/MotionPicker';
 import { requestPinWidget } from 'react-native-android-widget';
 import { CARD_WIDGET, LIST_WIDGET } from '@/widget/TodayWidget';
 import { getProfileStyle } from '@/data/profileStyles';
-import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck } from '@/components/ui/lucide';
+import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Users } from '@/components/ui/lucide';
+import { ReportSheet } from '@/components/profile/ReportSheet';
+import { inviteFriends } from '@/services/invite';
 import { useRunStore } from '@/store/useRunStore';
 import { fmtKm } from '@/logic/run';
 import { BuddySheet } from '@/components/profile/BuddySheet';
@@ -220,6 +222,14 @@ export function ProfileScreen() {
       <SectionTitle>{t('Friends')}</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
         <Row
+          icon={<Users size={19} color="#F5A623" strokeWidth={2} />}
+          iconBg="#F5A623"
+          title={t('Invite friends')}
+          subtitle={t('Send the app, or a challenge code to do together')}
+          onPress={() => inviteFriends().catch(() => {})}
+          right={<ChevronRight size={18} color={theme.textTertiary} />}
+        />
+        <Row
           last
           icon={<HeartHandshake size={19} color="#25A55F" strokeWidth={2} />}
           iconBg="#25A55F"
@@ -238,6 +248,14 @@ export function ProfileScreen() {
           title={t('Export backup')}
           subtitle={t('Save a file to Drive, email or chat')}
           onPress={() => exportBackup().catch(() => toast(t('Export failed')))}
+          right={<ChevronRight size={18} color={theme.textTertiary} />}
+        />
+        <Row
+          icon={<FileText size={19} color="#056EBE" strokeWidth={2} />}
+          iconBg="#056EBE"
+          title={t('Monthly report')}
+          subtitle={t('PDF summary or CSV spreadsheet')}
+          onPress={() => overlay.open(<ReportSheet />)}
           right={<ChevronRight size={18} color={theme.textTertiary} />}
         />
         <Row

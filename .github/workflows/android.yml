@@ -42,21 +42,34 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
 
-      - name: Diagnose Expo autolinking
-        working-directory: android
+      - name: Log failing node calls made by Gradle
         run: |
-          node --version
-          node --no-warnings --eval "require('expo/bin/autolinking')" expo-modules-autolinking mirror-kotlin-inline-modules \
-            --kotlin-files-mirror-directory "$GITHUB_WORKSPACE/node_modules/expo/android/src/main/java/inline/modules/" \
-            --inline-modules-list-directory "$GITHUB_WORKSPACE/node_modules/expo/android/build/inline/modules/" \
-            --watched-directories-serialized "[]"
-          echo "autolinking mirror exit: $?"
+          REAL_NODE="$(command -v node)"
+          mkdir -p "$HOME/node-wrap"
+          cat > "$HOME/node-wrap/node" <<WRAP
+          #!/usr/bin/env bash
+          ERR=\$(mktemp)
+          "$REAL_NODE" "\$@" 2>"\$ERR"
+          CODE=\$?
+          cat "\$ERR" >&2
+          if [ \$CODE -ne 0 ]; then
+            { echo "=== node exit \$CODE in \$PWD"; printf '  arg: %s\\n' "\$@"; cat "\$ERR"; } >> "$HOME/node-failures.log"
+          fi
+          rm -f "\$ERR"
+          exit \$CODE
+          WRAP
+          chmod +x "$HOME/node-wrap/node"
+          echo "$HOME/node-wrap" >> "$GITHUB_PATH"
 
       - name: Build release APK
         working-directory: android
         run: |
           echo "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" >> gradle.properties
           ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Show failing node calls
+        if: failure()
+        run: cat "$HOME/node-failures.log" || echo "no node failures logged"
 
       - name: Upload Gradle reports on failure
         if: failure()

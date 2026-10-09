@@ -11,7 +11,7 @@ import { CloseIcon } from '@/components/ui/icons';
 import { Navigation, Pause, Play, Square } from '@/components/ui/lucide';
 import { RUN_BLUE, RunMap } from '@/components/run/RunMap';
 import { useHabitStore } from '@/store/useHabitStore';
-import { useRunStore } from '@/store/useRunStore';
+import { useLiveRun, useRunStore } from '@/store/useRunStore';
 import { canLogRun, currentPace, defaultRunHabit, fmtDuration, fmtKm, fmtPace, movingTime, paceSecPerKm, runAmountFor } from '@/logic/run';
 import { ensureGps, hasGpsPermission, isRecording, openAppSettings, startRunUpdates, stopRunUpdates, type GpsAccess } from '@/services/runTracker';
 import { ensurePermission as ensureNotificationPermission } from '@/services/notifications';
@@ -52,7 +52,7 @@ function logRun(run: Run) {
 export function RunScreen({ navigation, route }: RootScreenProps<'Run'>) {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useTheme();
-  const live = useRunStore((s) => s.live);
+  const live = useLiveRun((s) => s.live);
   const habits = useHabitStore((s) => s.habits);
   const candidates = useMemo(() => habits.filter(canLogRun), [habits]);
 
@@ -81,16 +81,17 @@ export function RunScreen({ navigation, route }: RootScreenProps<'Run'>) {
   };
 
   useEffect(() => {
-    hasGpsPermission().then((ok) => {
-      if (!ok) return;
+    (async () => {
+      await useLiveRun.getState().load();
+      const saved = useLiveRun.getState().live;
+      if (saved?.habitId) setHabitId(saved.habitId);
+      if (!(await hasGpsPermission())) return;
       startWatch();
       // Recording should be on but isn't (phone restarted, app updated…): pick it back up.
-      if (useRunStore.getState().live?.status === 'running') {
-        isRecording().then((on) => {
-          if (!on) startRunUpdates().catch(() => {});
-        });
+      if (saved?.status === 'running') {
+        if (!(await isRecording())) startRunUpdates().catch(() => {});
       }
-    });
+    })();
     return () => {
       watch.current?.remove();
       watch.current = null;
@@ -118,14 +119,14 @@ export function RunScreen({ navigation, route }: RootScreenProps<'Run'>) {
     startWatch();
     // The "run in progress" notification needs this on Android 13+ (tracking works either way).
     await ensureNotificationPermission().catch(() => false);
-    useRunStore.getState().start(habitId);
+    useLiveRun.getState().start(habitId);
     try {
       await startRunUpdates();
       haptic.medium();
       setFollow(true);
       setNow(Date.now());
     } catch {
-      useRunStore.getState().discard();
+      useLiveRun.getState().clear();
       setProblem('failed');
     }
     setBusy(false);
@@ -133,12 +134,12 @@ export function RunScreen({ navigation, route }: RootScreenProps<'Run'>) {
 
   const pause = () => {
     haptic.light();
-    useRunStore.getState().pause();
+    useLiveRun.getState().pause();
   };
 
   const resume = () => {
     haptic.medium();
-    useRunStore.getState().resume();
+    useLiveRun.getState().resume();
     setNow(Date.now());
   };
 
@@ -166,7 +167,7 @@ export function RunScreen({ navigation, route }: RootScreenProps<'Run'>) {
         style: 'destructive',
         onPress: async () => {
           await stopRunUpdates();
-          useRunStore.getState().discard();
+          useLiveRun.getState().clear();
           navigation.goBack();
         },
       },

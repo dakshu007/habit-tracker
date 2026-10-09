@@ -2,7 +2,7 @@ import { Linking } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 
-import { ensureRunsHydrated, useRunStore } from '@/store/useRunStore';
+import { useLiveRun } from '@/store/useRunStore';
 import { t } from '@/i18n/core';
 
 export const RUN_TASK = 'habit-run-gps';
@@ -14,8 +14,8 @@ export const RUN_TASK = 'habit-run-gps';
  */
 TaskManager.defineTask<{ locations: Location.LocationObject[] }>(RUN_TASK, async ({ data, error }) => {
   if (error || !data?.locations?.length) return;
-  await ensureRunsHydrated();
-  useRunStore.getState().addFixes(
+  await useLiveRun.getState().load();
+  useLiveRun.getState().addFixes(
     data.locations.map((l) => ({ lng: l.coords.longitude, lat: l.coords.latitude, time: l.timestamp, accuracy: l.coords.accuracy })),
   );
 });

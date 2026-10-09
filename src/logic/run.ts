@@ -264,7 +264,7 @@ export function bounds(points: RunPoint[]): [number, number, number, number] | n
 }
 
 /** An SVG path of the route scaled into a w×h box (for list thumbnails). */
-export function sketchPath(points: RunPoint[], gaps: number[], w: number, h: number, inset = 6): string {
+export function sketchPath(points: RunPoint[], gaps: number[], w: number, h: number, inset = 6, maxPoints = 300): string {
   const b = bounds(points);
   if (!b) return '';
   const [west, south, east, north] = b;
@@ -275,7 +275,7 @@ export function sketchPath(points: RunPoint[], gaps: number[], w: number, h: num
   const scale = Math.min((w - inset * 2) / spanX, (h - inset * 2) / spanY);
   const ox = (w - spanX * scale) / 2;
   const oy = (h - spanY * scale) / 2;
-  const step = Math.max(1, Math.floor(points.length / 300));
+  const step = Math.max(1, Math.ceil(points.length / maxPoints));
   return stretches(points, gaps)
     .map((s) =>
       s

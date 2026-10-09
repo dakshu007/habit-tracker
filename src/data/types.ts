@@ -144,3 +144,6 @@ export interface Run {
   /** Cumulative moving time (ms) when each whole kilometre was reached. */
   splits: number[];
 }
+
+/** A run in the list: no route (that's in its own file), plus a small SVG path of it (64×64). */
+export type RunSummary = Omit<Run, 'points' | 'gaps'> & { sketch: string };

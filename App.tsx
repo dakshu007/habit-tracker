@@ -25,6 +25,7 @@ import { useHabitStore } from '@/store/useHabitStore';
 import { setupNotifications, startNotificationSync, startNotificationTaps } from '@/services/notifications';
 import { startWidgetSync } from '@/widget/sync';
 import { startHealthSync } from '@/services/health';
+import { useLiveRun } from '@/store/useRunStore';
 import { setLang, useLang } from '@/i18n';
 
 /**
@@ -126,6 +127,7 @@ function App() {
     const stopTaps = startNotificationTaps();
     const stopHealth = startHealthSync();
     useHabitStore.getState().applyFreezes();
+    useLiveRun.getState().load(); // a run left recording shows on Home
     return () => {
       stopNotifications();
       stopWidget();

@@ -9,7 +9,8 @@ import { ChevronLeft, ChevronRight, TrashIcon } from '@/components/ui/icons';
 import { Footprints, PartyPopper, Play, Route, Timer, Trophy, Zap, type LucideIcon } from '@/components/ui/lucide';
 import { RUN_BLUE, RunMap } from '@/components/run/RunMap';
 import { RouteSketch } from '@/components/run/RouteSketch';
-import { useRunStore } from '@/store/useRunStore';
+import { useLiveRun, useRunStore } from '@/store/useRunStore';
+import { loadRoute, type RouteData } from '@/services/runFiles';
 import { useHabitStore } from '@/store/useHabitStore';
 import { fmtDuration, fmtKm, fmtPace, movingTime, paceSecPerKm, splitDurations } from '@/logic/run';
 import { useTheme } from '@/theme/ThemeContext';
@@ -17,10 +18,10 @@ import { hexToRgba } from '@/theme/color';
 import { dayKey, formatTime, relativeDayLabel, startOfWeek } from '@/utils/date';
 import { qty } from '@/utils/format';
 import { t } from '@/i18n';
-import type { Run } from '@/data/types';
+import type { RunSummary } from '@/data/types';
 import type { RootScreenProps } from '@/navigation/types';
 
-function runTitle(run: Run): string {
+function runTitle(run: RunSummary): string {
   const h = new Date(run.startedAt).getHours();
   if (h >= 5 && h < 12) return t('Morning run');
   if (h >= 12 && h < 17) return t('Afternoon run');
@@ -28,7 +29,7 @@ function runTitle(run: Run): string {
   return t('Night run');
 }
 
-function runWhen(run: Run): string {
+function runWhen(run: RunSummary): string {
   const d = new Date(run.startedAt);
   return `${relativeDayLabel(dayKey(d))} · ${formatTime(d.getHours(), d.getMinutes())}`;
 }
@@ -40,7 +41,7 @@ function runWhen(run: Run): string {
 export function RunsScreen({ navigation }: RootScreenProps<'Runs'>) {
   const { theme } = useTheme();
   const runs = useRunStore((s) => s.runs);
-  const live = useRunStore((s) => s.live);
+  const live = useLiveRun((s) => s.live);
   const weekStart = useHabitStore((s) => s.settings.weekStart);
 
   const totals = useMemo(() => {
@@ -98,7 +99,7 @@ export function RunsScreen({ navigation }: RootScreenProps<'Runs'>) {
                   }}
                 >
                   <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: hexToRgba(RUN_BLUE, 0.08) }}>
-                    <RouteSketch points={r.points} gaps={r.gaps} />
+                    <RouteSketch path={r.sketch} />
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Txt variant="h3">{runTitle(r)}</Txt>
@@ -159,6 +160,14 @@ export function RunDetailScreen({ navigation, route }: RootScreenProps<'RunDetai
   const run = useRunStore((s) => s.runs.find((r) => r.id === route.params.id));
   const habit = useHabitStore((s) => (run?.habitId ? s.habits.find((h) => h.id === run.habitId) : undefined));
   const splits = useMemo(() => (run ? splitDurations(run) : []), [run]);
+  const [routeData, setRouteData] = useState<RouteData | null>(null);
+  useEffect(() => {
+    let alive = true;
+    loadRoute(route.params.id).then((r) => alive && setRouteData(r));
+    return () => {
+      alive = false;
+    };
+  }, [route.params.id]);
 
   if (!run) return null;
 
@@ -186,7 +195,11 @@ export function RunDetailScreen({ navigation, route }: RootScreenProps<'RunDetai
     <View style={{ flex: 1, backgroundColor: theme.screenBase }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
         <View style={{ height: mapH }}>
-          <RunMap points={run.points} gaps={run.gaps} mode="summary" padding={{ top: insets.top + 60, bottom: 50 }} />
+          {routeData && routeData.points.length > 0 ? (
+            <RunMap points={routeData.points} gaps={routeData.gaps} mode="summary" padding={{ top: insets.top + 60, bottom: 50 }} />
+          ) : (
+            <View style={{ flex: 1, backgroundColor: hexToRgba(RUN_BLUE, 0.08) }} />
+          )}
         </View>
 
         <View style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: theme.screenBase, paddingHorizontal: 20, paddingTop: 24, gap: 18 }}>
@@ -297,7 +310,7 @@ function Tile({ Icon, label, value, unit }: { Icon: LucideIcon; label: string; v
 
 /** Live-run banner for the home screen: tap to get back to the run. */
 export function LiveRunPill({ onPress }: { onPress: () => void }) {
-  const live = useRunStore((s) => s.live);
+  const live = useLiveRun((s) => s.live);
   const [, tick] = useState(0);
   useEffect(() => {
     if (live?.status !== 'running') return;

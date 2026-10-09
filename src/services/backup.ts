@@ -3,6 +3,7 @@ import * as Sharing from 'expo-sharing';
 
 import { useHabitStore, type Snapshot } from '@/store/useHabitStore';
 import { useRunStore } from '@/store/useRunStore';
+import { loadRoute } from '@/services/runFiles';
 import type { Run } from '@/data/types';
 import { dayKey } from '@/utils/date';
 
@@ -21,7 +22,9 @@ interface BackupFile extends Backup {
 /** Write a JSON backup to cache and open the Android share sheet. */
 export async function exportBackup(): Promise<void> {
   const { habits, logs, settings, profile } = useHabitStore.getState();
-  const runs = useRunStore.getState().runs;
+  const runs: Run[] = await Promise.all(
+    useRunStore.getState().runs.map(async ({ sketch: _sketch, ...r }) => ({ ...r, ...((await loadRoute(r.id)) ?? { points: [], gaps: [] }) })),
+  );
   const payload: BackupFile = { format: FORMAT, version: VERSION, exportedAt: new Date().toISOString(), habits, logs, settings, profile, runs };
   const file = new File(Paths.cache, `habits-backup-${dayKey()}.json`);
   file.create({ overwrite: true });

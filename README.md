@@ -3,14 +3,21 @@
 An illustrated, gesture-driven habit tracker for Android, built with Expo (SDK 57) and React Native. It's offline-first: all data stays on the phone.
 
 ## Features
-- **Card stack home:** swipeable illustrated habit cards with tilt parallax, slide-to-complete, and a background that changes colour live as you swipe
-- **Date wheel:** scroll to any day to log or review it; dots show how complete each day was
-- **Flexible habits:** any goal and unit, daily / specific weekdays / N times a week, quick-log step, exact value entry, focus timer for timed habits
-- **Stats:** level & XP, streaks, 7/30-day completion charts, best-weekday insight, per-habit rates
-- **Calendar:** monthly heatmap (all habits or one), day sheet with quick check-off
-- **Reminders:** per-habit reminders + a smart evening nudge that only fires when habits are still open
-- **Profile:** light/dark/system theme, haptics, motion, week start, backup export/restore, erase data
-- **Android glass UI:** real-time blur via `expo-blur` BlurTargetView + layered gloss/rim, native Android haptics
+- **Card stack home:** 22 hand-drawn illustrations, tilt parallax, slide-to-complete (with no take-backs), a background that changes colour as you swipe, and a date wheel
+- **Flexible habits:** any goal and unit, daily / chosen weekdays / N times a week, quick-log step, exact value entry
+- **Quit mode:** days clean, money saved, slips
+- **Health Connect auto-tracking:** steps, distance, running, walking, cycling, swimming, yoga, dance, workouts, floors, sleep
+- **Streaks:** streak freezes (earned every 7 days, applied automatically) and rest days
+- **Challenges:** 7/21/30 days, milestones, trophies
+- **Routines:** play habits one card at a time
+- **Focus mode:** countdown, generated ambient sounds, end chime, ongoing notification
+- **Mood check-ins** after completing a habit, with insights in Stats
+- **Stats, calendar heatmap, weekly review story,** levels, 12 achievements with unlockable themes
+- **Share cards** (streak / today / week) and an offline accountability buddy via WhatsApp
+- **Reminders:** per-habit, a smart evening nudge, and the Sunday review
+- **Widgets:** habit card and today list (slide deep-links to the real slider); Quick Settings tile
+- **Customisation:** 7 animation styles, light/dark, haptics, English + हिन्दी
+- **Your data:** backup export/restore, Android Auto Backup, privacy policy in-app
 
 ## Develop
 ```bash
@@ -20,3 +27,16 @@ npx expo run:android   # needs Android Studio / SDK
 
 ## Builds
 Every push runs `.github/workflows/android.yml`, which builds a release APK and publishes it as a GitHub pre-release (`build-N`).
+
+### Optional GitHub secrets
+| Secret | Effect |
+|---|---|
+| `SENTRY_DSN` | Turns on crash reporting (no personal data). |
+| `ANDROID_KEYSTORE_BASE64` + `ANDROID_KEYSTORE_PASSWORD` + `ANDROID_KEY_ALIAS` + `ANDROID_KEY_PASSWORD` | Signs with your Play upload key and also builds an `.aab` for Google Play. |
+
+Without them, builds are signed with the shared debug key, which is fine for testing.
+
+## Before publishing
+- Choose the brand name (the package id `app.mykavo.habittracker` is permanent once live)
+- Set `SUPPORT_EMAIL` in `src/data/privacy.ts` and host `PRIVACY.md` at a public URL
+- Fill in Play Console using `docs/play-store/listing.md` and `docs/play-store/data-safety.md` (includes the Health Connect declaration)

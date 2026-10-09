@@ -3,6 +3,8 @@ import type { HabitColors } from './types';
 export interface ColorTheme extends HabitColors {
   id: string;
   name: string;
+  /** Achievement id that unlocks this theme (premium reward). */
+  unlock?: string;
 }
 
 /**
@@ -23,6 +25,11 @@ export const colorThemes: ColorTheme[] = [
   { id: 'rose', name: 'Rose', accent: '#E0457B', bgTop: '#F59AB8', cardTint: '#FDEAF1' },
   { id: 'forest', name: 'Forest', accent: '#3E8E41', bgTop: '#94C98F', cardTint: '#EAF5E7' },
   { id: 'indigo', name: 'Indigo', accent: '#4F5BD5', bgTop: '#9AA3F0', cardTint: '#EEF0FF' },
+  // Rewards — earned through achievements.
+  { id: 'ember', name: 'Ember', accent: '#E8590C', bgTop: '#FF9F68', cardTint: '#FFE8DA', unlock: 'streak7' },
+  { id: 'gold', name: 'Gold', accent: '#B8860B', bgTop: '#F2D27A', cardTint: '#FFF6DC', unlock: 'level5' },
+  { id: 'holo', name: 'Holo', accent: '#8E6CFF', bgTop: '#9FE3F5', cardTint: '#F3E9FF', unlock: 'perfect7' },
+  { id: 'midnight', name: 'Midnight', accent: '#5865F2', bgTop: '#7C83D9', cardTint: '#E6E8FF', unlock: 'night' },
 ];
 
 const byId = Object.fromEntries(colorThemes.map((t) => [t.id, t]));

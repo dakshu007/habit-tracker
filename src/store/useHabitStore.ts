@@ -3,9 +3,10 @@ import { useMemo } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import type { ActiveTimer, Habit, Logs } from '@/data/types';
+import type { ActiveTimer, ChallengeTrophy, Habit, Logs, Routine } from '@/data/types';
 import { dayKey } from '@/utils/date';
-import { dueOn, weeklyHabits } from '@/logic/habits';
+import { dueOn, isDoneOn, isScheduledOn, REST_KEY, streakFor, weeklyHabits } from '@/logic/habits';
+import { shiftKey } from '@/utils/date';
 import type { MotionPreset } from '@/theme/motion';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -23,6 +24,29 @@ export interface Settings {
   weekStart: 0 | 1;
   /** Evening nudge if day habits are still open. */
   nudge: { enabled: boolean; hour: number; minute: number };
+  /** Ask "how do you feel?" after a slide. */
+  moodPrompt: boolean;
+  /** Sunday-evening weekly review notification. */
+  weeklyReview: boolean;
+  /** UI language. */
+  language: 'system' | 'en' | 'hi';
+  /** Currency symbol for "quit" savings. */
+  currency: string;
+}
+
+/** Everything that isn't habits/logs/settings/profile but should persist and back up. */
+export interface Extras {
+  /** Streak freezes in the bank (max 3). */
+  freezes: number;
+  /** habitId → highest 7-day streak milestone already rewarded. */
+  freezeMilestones: Record<string, number>;
+  routines: Routine[];
+  trophies: ChallengeTrophy[];
+  buddy?: { name: string; phone?: string };
+  /** In-app rating prompt bookkeeping. */
+  rating: { askedAt?: string };
+  /** Week (start day key) of the last weekly review the user opened. */
+  lastReviewWeek?: string;
 }
 
 export interface Profile {
@@ -44,9 +68,11 @@ export interface Snapshot {
   logs: Logs;
   settings: Settings;
   profile: Profile;
+  extras?: Extras;
 }
 
 interface HabitState extends Snapshot {
+  extras: Extras;
   // UI (not persisted)
   today: string;
   selectedDay: string;
@@ -74,6 +100,20 @@ interface HabitState extends Snapshot {
   stopTimer: () => void;
   cancelTimer: () => void;
 
+  // Mood, freezes, rest days, quit
+  setMood: (id: string, day: string, mood: 1 | 2 | 3 | 4, note?: string) => void;
+  applyFreezes: () => void;
+  toggleRestDay: (day: string) => void;
+  slip: (id: string, day: string) => void;
+
+  // Routines, challenges, buddy, rating, review
+  saveRoutine: (r: Routine) => void;
+  deleteRoutine: (id: string) => void;
+  addTrophy: (t: ChallengeTrophy) => void;
+  setBuddy: (b: Extras['buddy']) => void;
+  markRatingAsked: () => void;
+  markReviewSeen: (weekKey: string) => void;
+
   // UI
   setActive: (id: string) => void;
   setFilter: (f: TaskFilter) => void;
@@ -96,7 +136,15 @@ const defaultSettings: Settings = {
   motionPreset: 'smooth',
   weekStart: 1,
   nudge: { enabled: true, hour: 20, minute: 30 },
+  moodPrompt: true,
+  weeklyReview: true,
+  language: 'system',
+  currency: '₹',
 };
+
+const defaultExtras: Extras = { freezes: 0, freezeMilestones: {}, routines: [], trophies: [], rating: {} };
+
+const MAX_FREEZES = 3;
 
 const defaultProfile: Profile = { name: '', onboarded: false };
 
@@ -117,13 +165,31 @@ export const useHabitStore = create<HabitState>()(
         set((s) => ({
           logs: {
             ...s.logs,
-            [day]: { ...s.logs[day], [id]: { value: clean(value), at: new Date().toISOString() } },
+            [day]: { ...s.logs[day], [id]: { ...s.logs[day]?.[id], value: clean(value), at: new Date().toISOString(), frozen: undefined } },
           },
         }));
         const after = get();
         if (!allDoneBefore && allDayHabitsDone(after.habits, after.logs, day)) {
           set({ celebrateAt: Date.now() });
         }
+        if (habit) awardFreeze(habit);
+      };
+
+      /** Every new 7-day streak milestone on a habit earns one freeze (bank holds 3). */
+      const awardFreeze = (habit: Habit) => {
+        const s = get();
+        if (habit.schedule.kind === 'weekly') return;
+        const streak = streakFor(habit, s.logs, s.today, s.settings.weekStart).current;
+        const milestone = Math.floor(streak / 7) * 7;
+        const prev = s.extras.freezeMilestones[habit.id] ?? 0;
+        if (milestone < 7 || milestone <= prev) return;
+        set({
+          extras: {
+            ...s.extras,
+            freezes: Math.min(MAX_FREEZES, s.extras.freezes + 1),
+            freezeMilestones: { ...s.extras.freezeMilestones, [habit.id]: milestone },
+          },
+        });
       };
 
       return {
@@ -131,6 +197,7 @@ export const useHabitStore = create<HabitState>()(
         logs: {},
         settings: defaultSettings,
         profile: defaultProfile,
+        extras: defaultExtras,
 
         today: dayKey(),
         selectedDay: dayKey(),
@@ -193,6 +260,72 @@ export const useHabitStore = create<HabitState>()(
         },
         cancelTimer: () => set({ timer: null }),
 
+        setMood: (id, day, mood, note) =>
+          set((s) => {
+            const e = s.logs[day]?.[id];
+            if (!e) return s;
+            return { logs: { ...s.logs, [day]: { ...s.logs[day], [id]: { ...e, mood, note: note?.trim() || undefined } } } };
+          }),
+
+        /**
+         * Spend banked freezes on yesterday's misses so streaks survive one bad
+         * day. Runs on launch and at midnight rollover.
+         */
+        applyFreezes: () => {
+          const s = get();
+          const y = shiftKey(s.today, -1);
+          if (s.logs[y]?.[REST_KEY]) return;
+          let freezes = s.extras.freezes;
+          if (freezes <= 0) return;
+          const day = { ...s.logs[y] };
+          let used = false;
+          for (const h of s.habits) {
+            if (freezes <= 0) break;
+            if (h.archived || h.schedule.kind === 'weekly' || h.quit || !isScheduledOn(h, y)) continue;
+            if (isDoneOn(h, s.logs, y) || day[h.id]?.frozen) continue;
+            // Only worth a freeze if there's a streak to protect.
+            if (streakFor(h, s.logs, shiftKey(y, -1), s.settings.weekStart).current < 1) continue;
+            day[h.id] = { ...day[h.id], value: day[h.id]?.value ?? 0, at: new Date().toISOString(), frozen: true };
+            freezes--;
+            used = true;
+          }
+          if (used) set({ logs: { ...s.logs, [y]: day }, extras: { ...s.extras, freezes } });
+        },
+
+        toggleRestDay: (day) =>
+          set((s) => {
+            const cur = { ...s.logs[day] };
+            if (cur[REST_KEY]) delete cur[REST_KEY];
+            else cur[REST_KEY] = { value: 1, at: new Date().toISOString() };
+            const logs = { ...s.logs };
+            if (Object.keys(cur).length) logs[day] = cur;
+            else delete logs[day];
+            return { logs };
+          }),
+
+        /** Quit mode: record a slip (the one action allowed to undo a clean day). */
+        slip: (id, day) =>
+          set((s) => ({
+            habits: s.habits.map((h) =>
+              h.id === id && h.quit ? { ...h, quit: { ...h.quit, slips: [...h.quit.slips.filter((d) => d !== day), day] } } : h,
+            ),
+            logs: { ...s.logs, [day]: { ...s.logs[day], [id]: { value: 0, at: new Date().toISOString() } } },
+          })),
+
+        saveRoutine: (r) =>
+          set((s) => ({
+            extras: {
+              ...s.extras,
+              routines: s.extras.routines.some((x) => x.id === r.id) ? s.extras.routines.map((x) => (x.id === r.id ? r : x)) : [...s.extras.routines, r],
+            },
+          })),
+        deleteRoutine: (id) => set((s) => ({ extras: { ...s.extras, routines: s.extras.routines.filter((r) => r.id !== id) } })),
+        addTrophy: (t) =>
+          set((s) => (s.extras.trophies.some((x) => x.id === t.id && x.completedAt.slice(0, 10) === t.completedAt.slice(0, 10)) ? s : { extras: { ...s.extras, trophies: [...s.extras.trophies, t] } })),
+        setBuddy: (buddy) => set((s) => ({ extras: { ...s.extras, buddy } })),
+        markRatingAsked: () => set((s) => ({ extras: { ...s.extras, rating: { askedAt: new Date().toISOString() } } })),
+        markReviewSeen: (lastReviewWeek) => set((s) => ({ extras: { ...s.extras, lastReviewWeek } })),
+
         setActive: (id) => set({ activeHabitId: id }),
         setFilter: (filter) => set({ filter }),
         setView: (view) => set({ view }),
@@ -203,6 +336,7 @@ export const useHabitStore = create<HabitState>()(
           if (s.today === now) return;
           // If the user was looking at "today", follow the calendar into the new day.
           set({ today: now, selectedDay: s.selectedDay === s.today ? now : s.selectedDay });
+          get().applyFreezes();
         },
 
         updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
@@ -219,6 +353,7 @@ export const useHabitStore = create<HabitState>()(
             logs: snap.logs,
             settings: { ...defaultSettings, ...snap.settings },
             profile: { ...defaultProfile, ...snap.profile, onboarded: true },
+            extras: { ...defaultExtras, ...snap.extras },
             activeHabitId: snap.habits[0]?.id ?? null,
             timer: null,
           }),
@@ -228,6 +363,7 @@ export const useHabitStore = create<HabitState>()(
             logs: {},
             settings: defaultSettings,
             profile: defaultProfile,
+            extras: defaultExtras,
             activeHabitId: null,
             timer: null,
             selectedDay: dayKey(),
@@ -243,6 +379,7 @@ export const useHabitStore = create<HabitState>()(
         logs: s.logs,
         settings: s.settings,
         profile: s.profile,
+        extras: s.extras,
         activeHabitId: s.activeHabitId,
         filter: s.filter,
         view: s.view,
@@ -255,6 +392,7 @@ export const useHabitStore = create<HabitState>()(
           ...p,
           settings: { ...defaultSettings, ...p.settings },
           profile: { ...defaultProfile, ...p.profile },
+          extras: { ...defaultExtras, ...p.extras },
         };
       },
     },

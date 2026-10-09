@@ -8,6 +8,8 @@ import { fonts } from '@/theme/tokens';
 import { hexToRgba } from '@/theme/color';
 import { relativeDayLabel } from '@/utils/date';
 import { fmtNumber, qty } from '@/utils/format';
+import { t } from '@/i18n/core';
+
 
 /** Widget names — must match app.json → react-native-android-widget → widgets[].name. */
 export const LIST_WIDGET = 'TodayHabits';
@@ -103,7 +105,7 @@ function SlidePill({ h, done, height, p }: { h: Habit; done: boolean; height: nu
         }}
       >
         <FlexWidget style={{ flex: 1 }}>
-          <TextWidget text={`${h.doneLabel} 🔒`} maxLines={1} truncate="END" style={{ fontSize: 14, fontFamily: fonts.semibold, color: '#1E9E47' }} />
+          <TextWidget text={h.doneLabel} maxLines={1} truncate="END" style={{ fontSize: 14, fontFamily: fonts.semibold, color: '#1E9E47' }} />
         </FlexWidget>
         <SvgWidget svg={knobSvg(knob, true, p)} style={{ width: knob, height: knob }} />
       </FlexWidget>
@@ -113,7 +115,7 @@ function SlidePill({ h, done, height, p }: { h: Habit; done: boolean; height: nu
     <FlexWidget
       clickAction="OPEN_URI"
       clickActionData={{ uri: completeUri(h.id) }}
-      accessibilityLabel={`Slide to complete ${h.title}`}
+      accessibilityLabel={t('Slide to complete {habit}', { habit: h.title })}
       style={{
         width: 'match_parent',
         height,
@@ -128,7 +130,7 @@ function SlidePill({ h, done, height, p }: { h: Habit; done: boolean; height: nu
     >
       <SvgWidget svg={knobSvg(knob, false, p)} style={{ width: knob, height: knob }} />
       <FlexWidget style={{ flex: 1 }}>
-        <TextWidget text="Slide when you’re done" maxLines={1} style={{ fontSize: 14.5, fontFamily: fonts.semibold, color: p.title }} />
+        <TextWidget text={t('Slide when you’re done')} maxLines={1} style={{ fontSize: 14.5, fontFamily: fonts.semibold, color: p.title }} />
       </FlexWidget>
       <SvgWidget svg={chevrons(p.sub as string)} style={{ width: 18, height: 18 }} />
     </FlexWidget>
@@ -150,8 +152,8 @@ function CardBody({ data, habitId, width, height, p }: { data: TodayWidgetData; 
         clickAction="OPEN_APP"
         style={{ width: 'match_parent', height: 'match_parent', borderRadius: 28, backgroundColor: p.bg, padding: 20, justifyContent: 'center', alignItems: 'center' }}
       >
-        <TextWidget text="Nothing due today" style={{ fontSize: 17, fontFamily: fonts.bold, color: p.title }} />
-        <TextWidget text="Tap to add a habit" style={{ fontSize: 13, fontFamily: fonts.medium, color: p.sub, marginTop: 4 }} />
+        <TextWidget text={t('Nothing due today')} style={{ fontSize: 17, fontFamily: fonts.bold, color: p.title }} />
+        <TextWidget text={t('Tap to add a habit')} style={{ fontSize: 13, fontFamily: fonts.medium, color: p.sub, marginTop: 4 }} />
       </FlexWidget>
     );
   }
@@ -175,7 +177,7 @@ function CardBody({ data, habitId, width, height, p }: { data: TodayWidgetData; 
         <ImageWidget image={art.source as number} imageWidth={innerW} imageHeight={imgH} radius={20} resizeMode="cover" />
         <FlexWidget style={{ width: innerW, height: imgH, padding: 10, flexDirection: 'row', justifyContent: 'flex-end' }}>
           <TextWidget
-            text={`${doneCount}/${due.length} today`}
+            text={t('{done}/{total} today', { done: doneCount, total: due.length })}
             style={{ fontSize: 11.5, fontFamily: fonts.bold, color: '#1C1B22', backgroundColor: 'rgba(255, 255, 255, 0.92)', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}
           />
         </FlexWidget>
@@ -195,7 +197,7 @@ function CardBody({ data, habitId, width, height, p }: { data: TodayWidgetData; 
             <FlexWidget
               clickAction="PREV"
               clickActionData={{ id: h.id }}
-              accessibilityLabel="Previous habit"
+              accessibilityLabel={t('Previous habit')}
               style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: p.chip, justifyContent: 'center', alignItems: 'center' }}
             >
               <SvgWidget svg={arrow('left', p.title as string)} style={{ width: 18, height: 18 }} />
@@ -203,7 +205,7 @@ function CardBody({ data, habitId, width, height, p }: { data: TodayWidgetData; 
             <FlexWidget
               clickAction="NEXT"
               clickActionData={{ id: h.id }}
-              accessibilityLabel="Next habit"
+              accessibilityLabel={t('Next habit')}
               style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: p.chip, justifyContent: 'center', alignItems: 'center' }}
             >
               <SvgWidget svg={arrow('right', p.title as string)} style={{ width: 18, height: 18 }} />
@@ -257,7 +259,7 @@ function Row({ h, value, p }: { h: Habit; value: number; p: Palette }) {
           <FlexWidget
             clickAction="OPEN_URI"
             clickActionData={{ uri: completeUri(h.id) }}
-            accessibilityLabel={`Slide to complete ${h.title}`}
+            accessibilityLabel={t('Slide to complete {habit}', { habit: h.title })}
             style={{ width: 68, height: 36, borderRadius: 18, backgroundColor: p.chip, flexDirection: 'row', alignItems: 'center', paddingLeft: 4, paddingRight: 8 }}
           >
             <SvgWidget svg={knobSvg(28, false, p)} style={{ width: 28, height: 28 }} />
@@ -286,7 +288,7 @@ function ListBody({ data, width, height, p }: { data: TodayWidgetData; width: nu
         <FlexWidget style={{ flex: 1, flexDirection: 'column' }}>
           <TextWidget text={relativeDayLabel(data.day)} style={{ fontSize: 19, fontFamily: fonts.extrabold, color: p.title }} />
           <TextWidget
-            text={due.length === 0 ? 'Nothing scheduled' : left === 0 ? 'Perfect day — all done ✨' : `${left} ${left === 1 ? 'habit' : 'habits'} to go${data.name ? `, ${data.name}` : ''}`}
+            text={due.length === 0 ? t('Nothing scheduled') : left === 0 ? t('Perfect day — all done') : `${left === 1 ? t('1 habit to go') : t('{n} habits to go', { n: left })}${data.name ? `, ${data.name}` : ''}`}
             maxLines={1}
             truncate="END"
             style={{ fontSize: 12.5, fontFamily: fonts.medium, color: p.sub }}
@@ -300,7 +302,7 @@ function ListBody({ data, width, height, p }: { data: TodayWidgetData; width: nu
       </FlexWidget>
 
       {due.length === 0 ? (
-        <TextWidget text="Tap to plan your day" clickAction="OPEN_APP" style={{ fontSize: 14, fontFamily: fonts.semibold, color: p.title }} />
+        <TextWidget text={t('Tap to plan your day')} clickAction="OPEN_APP" style={{ fontSize: 14, fontFamily: fonts.semibold, color: p.title }} />
       ) : (
         <ListWidget style={{ width: 'match_parent', height: listH }}>
           {due.map((h, i) => (

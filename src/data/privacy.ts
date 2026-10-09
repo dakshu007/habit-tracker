@@ -1,0 +1,47 @@
+/**
+ * Privacy policy text, shown in-app (Profile → Privacy policy) and mirrored in
+ * PRIVACY.md for the Play Store listing. Keep the two in sync.
+ */
+export const PRIVACY_UPDATED = '9 October 2026';
+
+/** TODO before publishing: set the public support address shown in the policy. */
+export const SUPPORT_EMAIL = 'support@example.com';
+
+export const PRIVACY_SECTIONS: { title: string; body: string }[] = [
+  {
+    title: 'The short version',
+    body: 'Habit Tracker works offline. Your habits, history, notes, moods and profile photo are stored only on your phone. We don’t have servers that receive your data, we don’t sell data, and there are no ads or third-party trackers.',
+  },
+  {
+    title: 'What the app stores on your device',
+    body: 'Habits you create, daily progress, streaks, moods and notes you choose to add, your name, motto and optional profile photo, and app settings. You can export it at any time (Profile → Export backup) and erase it (Profile → Erase all data).',
+  },
+  {
+    title: 'Health Connect',
+    body: 'If you turn on auto-tracking for a habit, the app reads steps, distance, exercise sessions, floors climbed and sleep from Health Connect — only the types you allow, only to fill in your habit progress on this device. Health data is never sent anywhere, never used for advertising, and never shared. You can revoke access at any time in Health Connect settings.',
+  },
+  {
+    title: 'Notifications',
+    body: 'Reminders, the evening nudge, focus timers and the weekly review are scheduled locally on your phone. No push server is involved.',
+  },
+  {
+    title: 'Backups',
+    body: 'Android may back up the app’s data to your own Google account (Android Auto Backup), so it can be restored on a new phone. This is handled by Google under your account settings. Manual backup files you export stay wherever you save them.',
+  },
+  {
+    title: 'Crash reports',
+    body: 'If crash reporting is enabled in a release, technical crash details (device model, Android version, error stack) are sent to Sentry to help fix bugs. They don’t include your habits, notes or health data.',
+  },
+  {
+    title: 'Sharing',
+    body: 'Share cards and buddy messages are only sent when you tap Share, through the app you pick.',
+  },
+  {
+    title: 'Children',
+    body: 'The app isn’t directed at children under 13.',
+  },
+  {
+    title: 'Contact',
+    body: 'Questions about privacy? Email {email}.',
+  },
+];

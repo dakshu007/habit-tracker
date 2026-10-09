@@ -1,3 +1,4 @@
+import { t } from '@/i18n/core';
 /** Local date helpers (no external deps). All keys are local-time YYYY-MM-DD. */
 
 export const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -98,20 +99,20 @@ export function formatLastUpdated(iso: string, now: Date = new Date()): string {
   const time = formatTime(d.getHours(), d.getMinutes());
   const k = dayKey(d);
   const today = dayKey(now);
-  if (k === today) return `Today at ${time}`;
-  if (k === shiftKey(today, -1)) return `Yesterday at ${time}`;
-  if (k > shiftKey(today, -7)) return `${DAY_LABELS[d.getDay()]} at ${time}`;
-  return `${d.getDate()} ${MONTH_LABELS[d.getMonth()].slice(0, 3)} at ${time}`;
+  if (k === today) return t('Today at {time}', { time });
+  if (k === shiftKey(today, -1)) return t('Yesterday at {time}', { time });
+  if (k > shiftKey(today, -7)) return t('{day} at {time}', { day: t(DAY_LABELS[d.getDay()]), time });
+  return t('{date} at {time}', { date: `${d.getDate()} ${t(MONTH_LABELS[d.getMonth()].slice(0, 3))}`, time });
 }
 
 /** "Today", "Yesterday", "Tomorrow" or "Wed, 12 Mar". */
 export function relativeDayLabel(key: string, now: Date = new Date()): string {
   const today = dayKey(now);
-  if (key === today) return 'Today';
-  if (key === shiftKey(today, -1)) return 'Yesterday';
-  if (key === shiftKey(today, 1)) return 'Tomorrow';
+  if (key === today) return t('Today');
+  if (key === shiftKey(today, -1)) return t('Yesterday');
+  if (key === shiftKey(today, 1)) return t('Tomorrow');
   const d = fromKey(key);
-  return `${DAY_LABELS[d.getDay()]}, ${d.getDate()} ${MONTH_LABELS[d.getMonth()].slice(0, 3)}`;
+  return `${t(DAY_LABELS[d.getDay()])}, ${d.getDate()} ${t(MONTH_LABELS[d.getMonth()].slice(0, 3))}`;
 }
 
 export function greeting(now: Date = new Date()): string {

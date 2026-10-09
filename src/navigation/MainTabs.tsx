@@ -15,6 +15,8 @@ import { RemindersScreen } from '@/screens/RemindersScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { useTheme } from '@/theme/ThemeContext';
 import { useMotion } from '@/theme/motion';
+import { useChallengeWatcher } from '@/components/challenge/ChallengeWatcher';
+import { useRatingPrompt } from '@/services/rating';
 import type { TabName } from './types';
 
 const TABS: TabName[] = ['Home', 'Stats', 'Calendar', 'Reminders', 'Profile'];
@@ -58,6 +60,8 @@ export function MainTabs() {
   const target = useRef<View>(null);
   const [active, setActive] = useState<TabName>('Home');
   const [mounted, setMounted] = useState<Set<TabName>>(() => new Set(['Home']));
+  useChallengeWatcher();
+  useRatingPrompt();
   const activeIndex = TABS.indexOf(active);
 
   const go = (t: TabName) => {

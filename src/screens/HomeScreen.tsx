@@ -18,6 +18,10 @@ import { useTabFocused } from '@/navigation/MainTabs';
 import { bestCurrentStreak, dueOn, isDoneOn } from '@/logic/habits';
 import { getTheme } from '@/data/themes';
 import { spacing } from '@/theme/tokens';
+import { overlay } from '@/components/ui/Overlay';
+import { Play, Snowflake } from '@/components/ui/lucide';
+import { StreakInfo } from '@/components/home/StreakInfo';
+import { t } from '@/i18n';
 import { useEnter } from '@/theme/motion';
 import { greeting, relativeDayLabel } from '@/utils/date';
 import type { RootNav } from '@/navigation/types';
@@ -49,12 +53,14 @@ function useCountUp(target: number, duration = 600) {
 function CaptionLine({ done, remaining, day }: { done: number; remaining: number; day: string }) {
   const doneShown = useCountUp(done);
   const label = relativeDayLabel(day);
-  const when = label === 'Today' ? 'today' : label === 'Yesterday' ? 'yesterday' : `on ${label}`;
+  const when = label === t('Today') ? t('today') : label === t('Yesterday') ? t('yesterday') : t('on {day}', { day: label });
   return (
     <Txt variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
       {remaining === 0 && done > 0
-        ? `All ${done} done ${when} — beautiful work`
-        : `${doneShown} done ${when}, ${remaining} ${remaining === 1 ? 'habit' : 'habits'} to go`}
+        ? t('All {n} done {when} — beautiful work', { n: done, when })
+        : remaining === 1
+          ? t('{done} done {when}, 1 habit to go', { done: doneShown, when })
+          : t('{done} done {when}, {n} habits to go', { done: doneShown, when, n: remaining })}
     </Txt>
   );
 }
@@ -75,6 +81,7 @@ export function HomeScreen() {
   const name = useHabitStore((s) => s.profile.name);
   const weekStart = useHabitStore((s) => s.settings.weekStart);
   const setSelectedDay = useHabitStore((s) => s.setSelectedDay);
+  const freezes = useHabitStore((s) => s.extras.freezes);
 
   const due = useMemo(() => dueOn(habits, day), [habits, day]);
   const done = due.filter((h) => isDoneOn(h, logs, day)).length;
@@ -102,24 +109,41 @@ export function HomeScreen() {
           >
             <View style={{ flex: 1 }}>
               <Txt variant="small" color="rgba(255,255,255,0.85)">
-                {greeting()}
+                {t(greeting())}
                 {name ? ',' : ''}
               </Txt>
               <Txt variant="title" color="white" numberOfLines={1}>
-                {name || 'Ready to grow?'}
+                {name || t('Ready to grow?')}
               </Txt>
             </View>
-            {streak && streak.streak.current > 0 && (
-              <GlassSurface radius={22} fill="rgba(255,255,255,0.25)">
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: 44, paddingHorizontal: 14 }}>
-                  <FlameIcon size={20} />
-                  <Txt variant="statSmall" color="white">
-                    {streak.streak.current}
-                  </Txt>
-                </View>
-              </GlassSurface>
+            {((streak && streak.streak.current > 0) || freezes > 0) && (
+              <PressableScale silent onPress={() => overlay.open(<StreakInfo />)} accessibilityLabel={t('Streak and freezes')}>
+                <GlassSurface radius={22} fill="rgba(255,255,255,0.25)">
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: 44, paddingHorizontal: 14 }}>
+                    {streak && streak.streak.current > 0 && (
+                      <>
+                        <FlameIcon size={20} />
+                        <Txt variant="statSmall" color="white">
+                          {streak.streak.current}
+                        </Txt>
+                      </>
+                    )}
+                    {freezes > 0 && (
+                      <>
+                        <Snowflake size={17} color="#FFFFFF" strokeWidth={2.2} style={{ marginLeft: 4 }} />
+                        <Txt variant="statSmall" color="white">
+                          {freezes}
+                        </Txt>
+                      </>
+                    )}
+                  </View>
+                </GlassSurface>
+              </PressableScale>
             )}
-            <GlassButton accessibilityLabel="New habit" fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('HabitEditor')}>
+            <GlassButton accessibilityLabel={t('Routines')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('Routines')}>
+              <Play size={19} color="#FFFFFF" fill="#FFFFFF" />
+            </GlassButton>
+            <GlassButton accessibilityLabel={t('New habit')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('HabitEditor')}>
               <PlusIcon color="#FFFFFF" size={22} strokeWidth={2.4} />
             </GlassButton>
           </Animated.View>
@@ -132,7 +156,7 @@ export function HomeScreen() {
             <SegmentedPill />
             {day !== today && (
               <Animated.View entering={FadeIn} exiting={FadeOut} style={{ alignSelf: 'center' }}>
-                <PressableScale onPress={() => setSelectedDay(today)} accessibilityLabel="Back to today">
+                <PressableScale onPress={() => setSelectedDay(today)} accessibilityLabel={t('Back to today')}>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -146,7 +170,7 @@ export function HomeScreen() {
                   >
                     <UndoIcon size={14} color="#1C1B22" strokeWidth={2.4} />
                     <Txt variant="label" color="#1C1B22">
-                      Back to today
+                      {t('Back to today')}
                     </Txt>
                   </View>
                 </PressableScale>
@@ -198,16 +222,16 @@ function EmptyStack({ weekly, hasHabits, onCreate }: { weekly: boolean; hasHabit
           <Glyph name={weekly ? 'sun' : 'leaf'} size={46} color="#4394D3" strokeWidth={1.5} />
         </View>
         <Txt variant="h2" style={{ textAlign: 'center' }}>
-          {weekly ? 'No weekly goals yet' : hasHabits ? 'A free day' : 'Start your first habit'}
+          {weekly ? t('No weekly goals yet') : hasHabits ? t('A free day') : t('Start your first habit')}
         </Txt>
         <Txt variant="bodyRegular" color="secondary" style={{ textAlign: 'center' }}>
           {weekly
-            ? 'Weekly goals let you do something a few times a week — on any days you like.'
+            ? t('Weekly goals let you do something a few times a week — on any days you like.')
             : hasHabits
-              ? 'Nothing is scheduled for this day. Enjoy it, or add something new.'
-              : 'Pick something small. Consistency beats intensity.'}
+              ? t('Nothing is scheduled for this day. Enjoy it, or add something new.')
+              : t('Pick something small. Consistency beats intensity.')}
         </Txt>
-        <Button label={weekly ? 'Add a weekly goal' : 'Create a habit'} onPress={onCreate} style={{ alignSelf: 'stretch', marginTop: 6 }} />
+        <Button label={weekly ? t('Add a weekly goal') : t('Create a habit')} onPress={onCreate} style={{ alignSelf: 'stretch', marginTop: 6 }} />
       </View>
     </GlassSurface>
   );

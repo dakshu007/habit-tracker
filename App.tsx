@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as Sentry from '@sentry/react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -21,8 +22,19 @@ import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import type { RootStackParamList } from '@/navigation/types';
 import { useHabitStore } from '@/store/useHabitStore';
-import { setupNotifications, startNotificationSync } from '@/services/notifications';
+import { setupNotifications, startNotificationSync, startNotificationTaps } from '@/services/notifications';
 import { startWidgetSync } from '@/widget/sync';
+import { startHealthSync } from '@/services/health';
+import { setLang, useLang } from '@/i18n';
+
+/**
+ * Crash reporting: active only when a Sentry DSN is provided at build time
+ * (GitHub secret SENTRY_DSN → EXPO_PUBLIC_SENTRY_DSN). No PII is sent.
+ */
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
+if (SENTRY_DSN) {
+  Sentry.init({ dsn: SENTRY_DSN, sendDefaultPii: false, tracesSampleRate: 0.1, enabled: !__DEV__ });
+}
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 SplashScreen.setOptions({ duration: 350, fade: true });
@@ -35,6 +47,8 @@ const linking: LinkingOptions<RootStackParamList> = {
     screens: {
       Main: '',
       QuickComplete: 'complete/:id',
+      Review: 'review',
+      QuickLog: 'quick-log',
     },
   },
 };
@@ -66,6 +80,8 @@ function useDayRollover() {
 function Root() {
   const { theme, isDark } = useTheme();
   const motionOff = useHabitStore((s) => s.settings.motionPreset === 'off');
+  const lang = useLang();
+  setLang(lang); // before children render, so every t() sees it
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(theme.screenBase).catch(() => {});
@@ -79,7 +95,7 @@ function Root() {
   };
 
   return (
-    <NavigationContainer theme={navTheme} linking={linking}>
+    <NavigationContainer key={lang} theme={navTheme} linking={linking}>
       {/* "Off" animation style: Reanimated jumps every animation to its end state. */}
       <ReducedMotionConfig mode={motionOff ? ReduceMotion.Always : ReduceMotion.System} />
       <RootNavigator />
@@ -88,7 +104,7 @@ function Root() {
   );
 }
 
-export default function App() {
+function App() {
   const hydrated = useHydrated();
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
@@ -106,9 +122,14 @@ export default function App() {
     setupNotifications().catch(() => {});
     const stopNotifications = startNotificationSync();
     const stopWidget = startWidgetSync();
+    const stopTaps = startNotificationTaps();
+    const stopHealth = startHealthSync();
+    useHabitStore.getState().applyFreezes();
     return () => {
       stopNotifications();
       stopWidget();
+      stopTaps();
+      stopHealth();
     };
   }, [hydrated]);
 
@@ -128,3 +149,5 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+export default SENTRY_DSN ? Sentry.wrap(App) : App;

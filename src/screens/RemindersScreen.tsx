@@ -15,17 +15,18 @@ import { DAY_LABELS, formatTime } from '@/utils/date';
 import { pickTime } from '@/utils/pickTime';
 import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
+import { t } from '@/i18n';
 
 function scheduleText(h: Habit) {
-  if (h.schedule.kind === 'daily') return 'Every day';
-  if (h.schedule.kind === 'weekly') return `${h.schedule.timesPerWeek}× a week`;
-  return h.schedule.days.map((d) => DAY_LABELS[d]).join(' · ');
+  if (h.schedule.kind === 'daily') return t('Every day');
+  if (h.schedule.kind === 'weekly') return t('{n}× a week', { n: h.schedule.timesPerWeek });
+  return h.schedule.days.map((d) => t(DAY_LABELS[d])).join(' · ');
 }
 
 function TimeChip({ hour, minute, onPress, disabled }: { hour: number; minute: number; onPress: () => void; disabled?: boolean }) {
   const { theme } = useTheme();
   return (
-    <PressableScale onPress={onPress} disabled={disabled} accessibilityLabel="Change time">
+    <PressableScale onPress={onPress} disabled={disabled} accessibilityLabel={t('Change time')}>
       <View style={{ paddingHorizontal: 12, height: 34, borderRadius: 17, backgroundColor: theme.inputBg, justifyContent: 'center' }}>
         <Txt variant="label">{formatTime(hour, minute)}</Txt>
       </View>
@@ -74,25 +75,25 @@ export function RemindersScreen() {
     if (!granted && !(await enable())) return;
     haptic.success();
     await Notifications.scheduleNotificationAsync({
-      content: { title: 'Reminders are working ✨', body: 'This is how your habit nudges will look.' },
+      content: { title: t('Reminders are working'), body: t('This is how your habit nudges will look.') },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, channelId: 'reminders' },
     });
   };
 
   return (
-    <Screen title="Reminders" subtitle={`${activeCount} habit reminder${activeCount === 1 ? '' : 's'} active`} accent="#FF986D">
+    <Screen title={t('Reminders')} subtitle={activeCount === 1 ? t('1 habit reminder active') : t('{n} habit reminders active', { n: activeCount })} accent="#FF986D">
       {granted === false && (
         <Card style={{ gap: 12, borderColor: '#FF986D' }}>
           <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
             <BellSmallIcon size={24} color="#FF7A2F" />
             <View style={{ flex: 1 }}>
-              <Txt variant="h3">Notifications are off</Txt>
+              <Txt variant="h3">{t('Notifications are off')}</Txt>
               <Txt variant="small" color="secondary">
-                Turn them on so reminders can reach you.
+                {t('Turn them on so reminders can reach you.')}
               </Txt>
             </View>
           </View>
-          <Button label="Enable notifications" color="#FF7A2F" onPress={enable} />
+          <Button label={t('Enable notifications')} color="#FF7A2F" onPress={enable} />
         </Card>
       )}
 
@@ -100,8 +101,8 @@ export function RemindersScreen() {
         <Row
           icon={<MoonIcon size={20} color="#7D8BFF" />}
           iconBg="#7D8BFF"
-          title="Evening nudge"
-          subtitle="Only if habits are still open that day"
+          title={t('Evening nudge')}
+          subtitle={t('Only if habits are still open that day')}
           right={
             <Toggle
               value={nudge.enabled}
@@ -114,7 +115,7 @@ export function RemindersScreen() {
         />
         <Row
           last
-          title="Nudge time"
+          title={t('Nudge time')}
           right={
             <TimeChip
               hour={nudge.hour}
@@ -129,11 +130,11 @@ export function RemindersScreen() {
         />
       </Card>
 
-      <SectionTitle>Habit reminders</SectionTitle>
+      <SectionTitle>{t('Habit reminders')}</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
         {live.length === 0 && (
           <Txt variant="bodyRegular" color="secondary" style={{ paddingVertical: 16, textAlign: 'center' }}>
-            Your habits will show up here.
+            {t('Your habits will show up here.')}
           </Txt>
         )}
         {live.map((h, i) => (
@@ -165,7 +166,7 @@ export function RemindersScreen() {
         ))}
       </Card>
 
-      <Button label="Send a test notification" variant="glass" icon={<SparkleIcon size={18} color={theme.textPrimary} />} onPress={test} />
+      <Button label={t('Send a test notification')} variant="glass" icon={<SparkleIcon size={18} color={theme.textPrimary} />} onPress={test} />
     </Screen>
   );
 }

@@ -3,6 +3,8 @@ export interface ProfileStyle {
   id: string;
   name: string;
   colors: [string, string, string];
+  /** Achievement id that unlocks this style (premium reward). */
+  unlock?: string;
 }
 
 export const profileStyles: ProfileStyle[] = [
@@ -14,6 +16,9 @@ export const profileStyles: ProfileStyle[] = [
   { id: 'peach', name: 'Peach', colors: ['#FFE1C2', '#FFB8A0', '#F59AB8'] },
   { id: 'midnight', name: 'Midnight', colors: ['#4B4F7A', '#2B2D4A', '#1C1B22'] },
   { id: 'graphite', name: 'Graphite', colors: ['#8A8F98', '#5A5E66', '#34363C'] },
+  { id: 'gold', name: 'Gold', colors: ['#FFE9A8', '#E8B84A', '#B8860B'], unlock: 'level5' },
+  { id: 'holo', name: 'Holo', colors: ['#9FE3F5', '#C7A6FF', '#FF9AD5'], unlock: 'perfect7' },
+  { id: 'ember', name: 'Ember', colors: ['#FFC48A', '#FF7A2F', '#C2410C'], unlock: 'streak30' },
 ];
 
 export function getProfileStyle(id?: string): ProfileStyle {

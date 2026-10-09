@@ -1,3 +1,5 @@
+import { t } from '@/i18n/core';
+
 /** Format a value to at most one decimal, dropping a trailing ".0"; thousands get separators. */
 export function fmtNumber(n: number): string {
   const rounded = Math.round(n * 10) / 10;
@@ -20,8 +22,8 @@ const SINGULAR: Record<string, string> = {
 
 /** Unit matched to the amount: "1 hour", "2 hours", "1 glass". */
 export function unitFor(value: number, unit: string): string {
-  if (Math.abs(value) !== 1) return unit;
-  return SINGULAR[unit.toLowerCase()] ?? unit;
+  const u = Math.abs(value) !== 1 ? unit : (SINGULAR[unit.toLowerCase()] ?? unit);
+  return t(u); // known units are translated; custom units fall back unchanged
 }
 
 /** "1 hour", "4.5 km", "8,000 steps". */

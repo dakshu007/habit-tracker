@@ -5,6 +5,7 @@ import { radius, spacing } from '@/theme/tokens';
 import { hexToRgba } from '@/theme/color';
 import { qty } from '@/utils/format';
 import type { HabitColors } from '@/data/types';
+import { t } from '@/i18n';
 
 /**
  * "Goal" badge on the right of the card title row. Background is the habit's
@@ -25,7 +26,7 @@ export function GoalBadge({ colors, goal, unit }: { colors: HabitColors; goal: n
       }}
     >
       <Txt variant="goalLabel" color="rgba(255,255,255,0.85)">
-        Goal
+        {t('Goal')}
       </Txt>
       <Txt variant="goalValue" color="white" numberOfLines={1}>
         {qty(goal, unit)}

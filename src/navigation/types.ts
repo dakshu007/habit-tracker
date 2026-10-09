@@ -7,6 +7,15 @@ export type RootStackParamList = {
   HabitDetail: { id: string };
   ManageHabits: undefined;
   QuickComplete: { id: string };
+  Focus: { habitId: string };
+  Challenges: undefined;
+  Routines: undefined;
+  RoutineEdit: { id?: string } | undefined;
+  RoutinePlay: { id: string };
+  Review: { week?: string } | undefined;
+  Share: { habitId?: string; kind?: 'streak' | 'today' | 'week' } | undefined;
+  QuickLog: undefined;
+  Privacy: undefined;
 };
 
 export type RootNav = NativeStackNavigationProp<RootStackParamList>;

@@ -8,6 +8,7 @@ import { create } from 'zustand';
 import { useTheme } from '@/theme/ThemeContext';
 import { useBlurTarget } from './Glass';
 import { useMotion } from '@/theme/motion';
+import { t } from '@/i18n';
 
 type Variant = 'sheet' | 'dialog';
 
@@ -62,7 +63,7 @@ export function OverlayHost() {
         {target ? (
           <BlurView blurTarget={target} blurMethod="dimezisBlurViewSdk31Plus" intensity={28} tint={isDark ? 'dark' : 'light'} style={abs} />
         ) : null}
-        <Pressable accessibilityLabel="Close" onPress={close} style={[abs, { backgroundColor: theme.overlay }]} />
+        <Pressable accessibilityLabel={t('Close')} onPress={close} style={[abs, { backgroundColor: theme.overlay }]} />
       </Animated.View>
 
       {variant === 'sheet' ? (

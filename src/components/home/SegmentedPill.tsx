@@ -8,6 +8,7 @@ import { useHabitStore } from '@/store/useHabitStore';
 import { dueOn, isDoneOn, weekSessions, weeklyHabits, weeklyTarget } from '@/logic/habits';
 import { haptic } from '@/utils/haptics';
 import { useMotion } from '@/theme/motion';
+import { t } from '@/i18n';
 
 
 interface Seg {
@@ -106,7 +107,7 @@ export function SegmentedPill() {
         }}
       >
         <Txt variant="pillToggle" color="white">
-          Today&rsquo;s tasks
+          {t('Today’s tasks')}
         </Txt>
         <View
           style={{
@@ -138,7 +139,7 @@ export function SegmentedPill() {
         }}
       >
         <Txt variant="pillToggle" color="white" style={{ opacity: filter === 'weekly' ? 1 : 0.9 }}>
-          Weekly tasks
+          {t('Weekly tasks')}
         </Txt>
         {weeklyRemaining > 0 && (
           <View

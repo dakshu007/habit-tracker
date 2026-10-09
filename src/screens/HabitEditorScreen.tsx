@@ -8,7 +8,7 @@ import { Field } from '@/components/ui/Field';
 import { Button, GlassButton, PressableScale } from '@/components/ui/Glass';
 import { Card, SectionTitle, Toggle } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { CheckIcon, CloseIcon, MinusIcon, PlusIcon, TrashIcon, ArchiveIcon } from '@/components/ui/icons';
+import { CheckIcon, CloseIcon, LockIcon, MinusIcon, PlusIcon, TrashIcon, ArchiveIcon } from '@/components/ui/icons';
 import { HabitArt, artAspect } from '@/components/art/HabitArt';
 import { GoalBadge } from '@/components/home/GoalBadge';
 import { useHabitStore, useHabit } from '@/store/useHabitStore';
@@ -26,6 +26,11 @@ import { haptic } from '@/utils/haptics';
 import type { Habit, Schedule, Weekday } from '@/data/types';
 import type { RootScreenProps } from '@/navigation/types';
 import { useEnter } from '@/theme/motion';
+import { t } from '@/i18n';
+import { AutoTrack } from '@/components/editor/AutoTrack';
+import { healthStatus } from '@/services/health';
+import { isUnlocked, useUnlockedAchievements } from '@/logic/unlocks';
+import { showLocked } from '@/components/profile/ProfileParts';
 
 type ScheduleKind = Schedule['kind'];
 
@@ -41,6 +46,8 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
   const weekStart = useHabitStore((s) => s.settings.weekStart);
 
   const enter = useEnter();
+  const currency = useHabitStore((s) => s.settings.currency);
+  const unlocked = useUnlockedAchievements();
   const isNew = !existing;
   const [h, setH] = useState<Habit>(() => {
     if (existing) return existing;
@@ -90,10 +97,10 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
   };
 
   const remove = () =>
-    Alert.alert(`Delete “${h.title}”?`, 'Its whole history will be removed too. Archive it instead to keep your stats.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('Delete “{habit}”?', { habit: h.title }), t('Its whole history will be removed too. Archive it instead to keep your stats.'), [
+      { text: t('Cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('Delete'),
         style: 'destructive',
         onPress: () => {
           haptic.warning();
@@ -111,17 +118,17 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: theme.screenBase }}>
       {/* Top bar */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: spacing.screenX, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <GlassButton accessibilityLabel="Close" onPress={() => navigation.goBack()} fill={theme.inputBg}>
+        <GlassButton accessibilityLabel={t('Close')} onPress={() => navigation.goBack()} fill={theme.inputBg}>
           <CloseIcon size={20} color={theme.textPrimary} />
         </GlassButton>
         <Txt variant="h2" style={{ flex: 1, textAlign: 'center' }}>
-          {isNew ? 'New habit' : 'Edit habit'}
+          {isNew ? t('New habit') : t('Edit habit')}
         </Txt>
-        <PressableScale onPress={save} disabled={!valid} accessibilityLabel="Save habit">
+        <PressableScale onPress={save} disabled={!valid} accessibilityLabel={t('Save habit')}>
           <View style={{ height: 44, paddingHorizontal: 18, borderRadius: 22, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <CheckIcon size={16} color="#FFFFFF" strokeWidth={3} />
             <Txt variant="button" color="white">
-              Save
+              {t('Save')}
             </Txt>
           </View>
         </PressableScale>
@@ -143,10 +150,10 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1, gap: 4 }}>
               <Txt variant="cardTitle" numberOfLines={1}>
-                {h.title.trim() || 'Your habit'}
+                {h.title.trim() || t('Your habit')}
               </Txt>
               <Txt variant="cardSubtitle" color="secondary" numberOfLines={1}>
-                {h.subtitle.trim() || 'Why it matters to you'}
+                {h.subtitle.trim() || t('Why it matters to you')}
               </Txt>
             </View>
             <GoalBadge colors={colors} goal={goal > 0 ? goal : 0} unit={h.unit || '—'} />
@@ -156,21 +163,25 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
         {/* Templates */}
         {isNew && (
           <>
-            <SectionTitle>Start from a template</SectionTitle>
+            <SectionTitle>{t('Start from a template')}</SectionTitle>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.screenX }} contentContainerStyle={{ gap: 8, paddingHorizontal: spacing.screenX }}>
-              {templates.map((t) => {
-                const c = getTheme(t.themeId);
+              {templates.map((tpl) => {
+                const c = getTheme(tpl.themeId);
                 return (
                   <PressableScale
-                    key={t.key}
+                    key={tpl.key}
                     onPress={() => {
                       haptic.tick();
-                      const next = { ...habitFromTemplate(t), id: h.id, reminder: h.reminder };
+                      const next = { ...habitFromTemplate(tpl), id: h.id, reminder: h.reminder };
                       setH(next);
-                      setGoalText(fmtNumber(t.goalValue).replace(/,/g, ''));
-                      setCustomUnit(!UNIT_SUGGESTIONS.includes(t.unit));
-                      if (t.schedule.kind === 'days') setDays(t.schedule.days);
-                      if (t.schedule.kind === 'weekly') setPerWeek(t.schedule.timesPerWeek);
+                      setGoalText(fmtNumber(tpl.goalValue).replace(/,/g, ''));
+                      setCustomUnit(!UNIT_SUGGESTIONS.includes(tpl.unit));
+                      if (tpl.schedule.kind === 'days') setDays(tpl.schedule.days);
+                      if (tpl.schedule.kind === 'weekly') setPerWeek(tpl.schedule.timesPerWeek);
+                      if (tpl.sync) {
+                        const src = tpl.sync;
+                        healthStatus().then((st) => st === 'ready' && setH((cur) => ({ ...cur, sync: src })));
+                      }
                     }}
                   >
                     <View
@@ -186,10 +197,10 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
                       }}
                     >
                       <View style={{ width: 32, height: 32, borderRadius: 16, overflow: 'hidden' }}>
-                        <HabitArt artId={t.artId} colors={c} compact />
+                        <HabitArt artId={tpl.artId} colors={c} compact />
                       </View>
                       <Txt variant="label" color={isDark ? 'primary' : c.accent}>
-                        {t.title}
+                        {t(tpl.title)}
                       </Txt>
                     </View>
                   </PressableScale>
@@ -199,12 +210,42 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           </>
         )}
 
+        <SectionTitle>{t('Habit type')}</SectionTitle>
+        <SegmentedControl<'build' | 'quit'>
+          options={[
+            { key: 'build', label: t('Build a habit') },
+            { key: 'quit', label: t('Quit a habit') },
+          ]}
+          value={h.quit ? 'quit' : 'build'}
+          onChange={(k) => {
+            haptic.tick();
+            if (k === 'quit' && !h.quit) {
+              setGoalText('1');
+              setCustomUnit(true);
+              setH((cur) => ({
+                ...cur,
+                quit: { costPerDay: 0, currency, slips: [] },
+                unit: 'day',
+                goalValue: 1,
+                step: 1,
+                sync: undefined,
+                schedule: { kind: 'daily' },
+                doneLabel: t('Clean day logged. Proud of you.'),
+              }));
+            } else if (k === 'build' && h.quit) {
+              setGoalText('1');
+              setCustomUnit(false);
+              setH((cur) => ({ ...cur, quit: undefined, unit: 'times', goalValue: 1, step: 1, doneLabel: t('Done! Nicely done.') }));
+            }
+          }}
+        />
+
         <Card style={{ gap: 14 }}>
-          <Field label="Name" value={h.title} onChangeText={(title) => patch({ title })} placeholder="e.g. Morning run" maxLength={28} />
-          <Field label="Why it matters" value={h.subtitle} onChangeText={(subtitle) => patch({ subtitle })} placeholder="e.g. Clears my head" maxLength={44} />
+          <Field label={t('Name')} value={h.title} onChangeText={(title) => patch({ title })} placeholder={t('e.g. Morning run')} maxLength={28} />
+          <Field label={t('Why it matters')} value={h.subtitle} onChangeText={(subtitle) => patch({ subtitle })} placeholder={t('e.g. Clears my head')} maxLength={44} />
         </Card>
 
-        <SectionTitle>Artwork</SectionTitle>
+        <SectionTitle>{t('Artwork')}</SectionTitle>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.screenX }} contentContainerStyle={{ gap: 10, paddingHorizontal: spacing.screenX }}>
           {artList.map((a) => {
             const on = a.id === h.artId;
@@ -217,7 +258,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
                     </View>
                   </View>
                   <Txt variant="small" color={on ? 'primary' : 'secondary'}>
-                    {a.name}
+                    {t(a.name)}
                   </Txt>
                 </View>
               </PressableScale>
@@ -225,36 +266,72 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           })}
         </ScrollView>
 
-        <SectionTitle>Color</SectionTitle>
+        <SectionTitle>{t('Color')}</SectionTitle>
         <Card style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' }}>
           {colorThemes.map((c) => {
             const on = c.id === h.themeId;
+            const locked = !isUnlocked(c.unlock, unlocked);
             return (
-              <PressableScale key={c.id} onPress={() => (haptic.tick(), patch({ themeId: c.id }))} silent accessibilityLabel={c.name}>
+              <PressableScale
+                key={c.id}
+                onPress={() => {
+                  if (locked) return showLocked(c.name, unlocked.get(c.unlock!));
+                  haptic.tick();
+                  patch({ themeId: c.id });
+                }}
+                silent
+                accessibilityLabel={locked ? t('{name} (locked)', { name: c.name }) : c.name}
+              >
                 <View style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 2.5, borderColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                  <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center', opacity: locked ? 0.35 : 1 }}>
                     {on && <CheckIcon size={16} color="#FFFFFF" strokeWidth={3} />}
                   </View>
+                  {locked && (
+                    <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
+                      <LockIcon size={15} color={theme.textPrimary} strokeWidth={2.4} />
+                    </View>
+                  )}
                 </View>
               </PressableScale>
             );
           })}
         </Card>
 
-        <SectionTitle>Daily goal</SectionTitle>
+        {h.quit ? (
+          <>
+            <SectionTitle>{t('Money saved per clean day')}</SectionTitle>
+            <Card style={{ gap: 10 }}>
+              <Field
+                large
+                keyboardType="decimal-pad"
+                value={h.quit.costPerDay ? String(h.quit.costPerDay) : ''}
+                onChangeText={(v) => {
+                  const n = Number(v.replace(',', '.'));
+                  setH((cur) => (cur.quit ? { ...cur, quit: { ...cur.quit, costPerDay: Number.isFinite(n) ? n : 0 } } : cur));
+                }}
+                placeholder={`${currency}0`}
+              />
+              <Txt variant="small" color="secondary">
+                {t('What the habit costs you each day (cigarettes, snacks…). Leave empty to track days only.')}
+              </Txt>
+            </Card>
+          </>
+        ) : (
+          <>
+        <SectionTitle>{t('Daily goal')}</SectionTitle>
         <Card style={{ gap: 14 }}>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
             <View style={{ flex: 1 }}>
-              <Field label="Amount" large keyboardType="decimal-pad" value={goalText} onChangeText={setGoalText} placeholder="1" />
+              <Field label={t('Amount')} large keyboardType="decimal-pad" value={goalText} onChangeText={setGoalText} placeholder="1" />
             </View>
             <View style={{ flex: 1 }}>
               <Field
-                label="Unit"
+                label={t('Unit')}
                 large
                 value={h.unit}
                 editable={customUnit}
                 onChangeText={(unit) => patch({ unit })}
-                placeholder="unit"
+                placeholder={t('unit')}
                 maxLength={12}
                 style={{ opacity: customUnit ? 1 : 0.8 }}
               />
@@ -264,7 +341,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
             {UNIT_SUGGESTIONS.map((u) => (
               <MiniChip
                 key={u}
-                label={u}
+                label={t(u)}
                 active={!customUnit && h.unit === u}
                 color={colors.accent}
                 onPress={() => {
@@ -273,13 +350,13 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
                 }}
               />
             ))}
-            <MiniChip label="custom…" active={customUnit} color={colors.accent} onPress={() => setCustomUnit(true)} />
+            <MiniChip label={t('custom…')} active={customUnit} color={colors.accent} onPress={() => setCustomUnit(true)} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
-              <Txt variant="h3">Each + tap adds</Txt>
+              <Txt variant="h3">{t('Each + tap adds')}</Txt>
               <Txt variant="small" color="secondary">
-                Quick-log step on the Home screen
+                {t('Quick-log step on the Home screen')}
               </Txt>
             </View>
             <Stepper
@@ -290,13 +367,13 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           </View>
         </Card>
 
-        <SectionTitle>Schedule</SectionTitle>
+        <SectionTitle>{t('Schedule')}</SectionTitle>
         <Card style={{ gap: 16 }}>
           <SegmentedControl<ScheduleKind>
             options={[
-              { key: 'daily', label: 'Every day' },
-              { key: 'days', label: 'Some days' },
-              { key: 'weekly', label: 'Weekly' },
+              { key: 'daily', label: t('Every day') },
+              { key: 'days', label: t('Some days') },
+              { key: 'weekly', label: t('Weekly') },
             ]}
             value={h.schedule.kind}
             onChange={setKind}
@@ -320,9 +397,9 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           {h.schedule.kind === 'weekly' && (
             <Animated.View entering={FadeIn} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flex: 1 }}>
-                <Txt variant="h3">Times per week</Txt>
+                <Txt variant="h3">{t('Times per week')}</Txt>
                 <Txt variant="small" color="secondary">
-                  Any days you like — shows under “Weekly tasks”
+                  {t('Any days you like — shows under “Weekly tasks”')}
                 </Txt>
               </View>
               <Stepper value={`${perWeek}×`} onMinus={() => bumpPerWeek(-1)} onPlus={() => bumpPerWeek(1)} />
@@ -330,17 +407,24 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           )}
           {h.schedule.kind === 'daily' && (
             <Txt variant="small" color="secondary">
-              Shows every day under “Today’s tasks”.
+              {t('Shows every day under “Today’s tasks”.')}
             </Txt>
           )}
         </Card>
 
-        <SectionTitle>Reminder</SectionTitle>
+          <AutoTrack h={h} onChange={(sync, unit) => {
+            setH((cur) => ({ ...cur, sync, unit: unit ?? cur.unit }));
+            if (unit) setCustomUnit(!UNIT_SUGGESTIONS.includes(unit));
+          }} />
+          </>
+        )}
+
+        <SectionTitle>{t('Reminder')}</SectionTitle>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Txt variant="h3">Remind me</Txt>
+            <Txt variant="h3">{t('Remind me')}</Txt>
             <Txt variant="small" color="secondary">
-              {h.reminder.enabled ? `At ${formatTime(h.reminder.hour, h.reminder.minute)} on scheduled days` : 'Off'}
+              {h.reminder.enabled ? t('At {time} on scheduled days', { time: formatTime(h.reminder.hour, h.reminder.minute) }) : t('Off')}
             </Txt>
           </View>
           {h.reminder.enabled && (
@@ -358,16 +442,16 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           <Toggle value={h.reminder.enabled} color={colors.accent} onChange={(enabled) => patch({ reminder: { ...h.reminder, enabled } })} />
         </Card>
 
-        <SectionTitle>Celebration message</SectionTitle>
+        <SectionTitle>{t('Celebration message')}</SectionTitle>
         <Card>
-          <Field value={h.doneLabel} onChangeText={(doneLabel) => patch({ doneLabel })} placeholder="Done! Nicely done." maxLength={32} />
+          <Field value={h.doneLabel} onChangeText={(doneLabel) => patch({ doneLabel })} placeholder={t('Done! Nicely done.')} maxLength={32} />
         </Card>
 
         {!isNew && (
           <View style={{ gap: 10, marginTop: 8 }}>
             <Button
               variant="glass"
-              label={h.archived ? 'Unarchive habit' : 'Archive habit'}
+              label={h.archived ? t('Unarchive habit') : t('Archive habit')}
               icon={<ArchiveIcon size={18} color={theme.textPrimary} />}
               onPress={() => {
                 setArchived(h.id, !h.archived);
@@ -375,7 +459,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
                 navigation.goBack();
               }}
             />
-            <Button variant="ghost" color={theme.danger} label="Delete habit" icon={<TrashIcon size={18} color={theme.danger} />} onPress={remove} />
+            <Button variant="ghost" color={theme.danger} label={t('Delete habit')} icon={<TrashIcon size={18} color={theme.danger} />} onPress={remove} />
           </View>
         )}
       </ScrollView>
@@ -409,13 +493,13 @@ function Stepper({ value, onMinus, onPlus }: { value: string; onMinus: () => voi
   const btn = { width: 36, height: 36, borderRadius: 18, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: theme.cardElevated };
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 4, borderRadius: 24, backgroundColor: theme.inputBg }}>
-      <PressableScale onPress={() => (haptic.tick(), onMinus())} silent accessibilityLabel="Decrease" style={btn}>
+      <PressableScale onPress={() => (haptic.tick(), onMinus())} silent accessibilityLabel={t('Decrease')} style={btn}>
         <MinusIcon size={16} color={theme.textPrimary} strokeWidth={2.4} />
       </PressableScale>
       <Txt variant="statSmall" style={{ minWidth: 40, textAlign: 'center' }}>
         {value}
       </Txt>
-      <PressableScale onPress={() => (haptic.tick(), onPlus())} silent accessibilityLabel="Increase" style={btn}>
+      <PressableScale onPress={() => (haptic.tick(), onPlus())} silent accessibilityLabel={t('Increase')} style={btn}>
         <PlusIcon size={16} color={theme.textPrimary} strokeWidth={2.4} />
       </PressableScale>
     </View>

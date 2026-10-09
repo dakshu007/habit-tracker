@@ -41,6 +41,37 @@ export interface Habit {
 
   createdAt: string;
   archived: boolean;
+
+  /** Auto-fill progress from Health Connect (see services/health). */
+  sync?: HealthSource;
+  /** "Quit a bad habit" mode: the daily slide confirms a clean day. */
+  quit?: QuitInfo;
+  /** Set when the habit was started from a challenge. */
+  challenge?: { id: string; startDay: string; days: number; closed?: boolean; passed?: boolean };
+}
+
+export type HealthSource =
+  | 'steps'
+  | 'distance'
+  | 'run-km'
+  | 'run-min'
+  | 'walk-km'
+  | 'walk-min'
+  | 'bike-km'
+  | 'bike-min'
+  | 'swim-min'
+  | 'yoga-min'
+  | 'dance-min'
+  | 'workout-min'
+  | 'floors'
+  | 'sleep-h';
+
+export interface QuitInfo {
+  /** Money (or time) saved per clean day, in the user's currency. */
+  costPerDay: number;
+  currency: string;
+  /** Day keys where the user reported a slip; the clean counter restarts after the latest. */
+  slips: string[];
 }
 
 /** Progress for one habit on one day. */
@@ -48,6 +79,28 @@ export interface LogEntry {
   value: number;
   /** ISO timestamp of the last update. */
   at: string;
+  /** 1 (low) … 4 (great), from the post-completion check-in. */
+  mood?: 1 | 2 | 3 | 4;
+  note?: string;
+  /** A streak freeze covered this missed day. */
+  frozen?: boolean;
+  /** Value came from Health Connect. */
+  synced?: boolean;
+}
+
+/** A sequence of habits played back one card after another. */
+export interface Routine {
+  id: string;
+  name: string;
+  habitIds: string[];
+}
+
+/** A finished challenge, kept as a trophy. */
+export interface ChallengeTrophy {
+  id: string;
+  title: string;
+  days: number;
+  completedAt: string;
 }
 
 /** dayKey (YYYY-MM-DD) → habitId → entry. */

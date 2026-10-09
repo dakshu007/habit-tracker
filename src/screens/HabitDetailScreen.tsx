@@ -18,6 +18,10 @@ import { getTheme } from '@/data/themes';
 import { DAY_LABELS, DAY_LETTERS, addDays, dayKey, formatTime, fromKey, relativeDayLabel, startOfWeek, weekdayOrder } from '@/utils/date';
 import { fmtNumber, pct, qty, unitFor } from '@/utils/format';
 import type { RootScreenProps } from '@/navigation/types';
+import { MoodDot } from '@/components/mood/Mood';
+import { Share2, Timer, Trophy } from '@/components/ui/lucide';
+import { challengeProgress } from '@/data/challenges';
+import { t } from '@/i18n';
 
 const WEEKS = 16;
 
@@ -37,12 +41,12 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
   const data = useMemo(() => {
     if (!habit) return null;
     let total = 0;
-    const history: { key: string; value: number }[] = [];
+    const history: { key: string; value: number; mood?: number; note?: string }[] = [];
     for (const [k, day] of Object.entries(logs)) {
       const e = day[habit.id];
       if (!e || e.value <= 0) continue;
       total += e.value;
-      history.push({ key: k, value: e.value });
+      history.push({ key: k, value: e.value, mood: e.mood, note: e.note });
     }
     history.sort((a, b) => (a.key < b.key ? 1 : -1));
     return {
@@ -54,6 +58,7 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
   }, [habit, logs, today, weekStart]);
 
   if (!habit || !data) return null;
+  const challenge = challengeProgress(habit, logs, today);
   const c = getTheme(habit.themeId);
 
   // Heatmap: WEEKS columns × 7 rows, ending with the current week.
@@ -63,10 +68,10 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
 
   const scheduleText =
     habit.schedule.kind === 'daily'
-      ? 'Every day'
+      ? t('Every day')
       : habit.schedule.kind === 'weekly'
-        ? `${habit.schedule.timesPerWeek}× a week`
-        : habit.schedule.days.map((d) => DAY_LABELS[d]).join(', ');
+        ? t('{n}× a week', { n: habit.schedule.timesPerWeek })
+        : habit.schedule.days.map((d) => t(DAY_LABELS[d])).join(', ');
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.screenBase }}>
@@ -94,19 +99,35 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
             ) : null}
             {habit.reminder.enabled && (
               <Txt variant="small" color="secondary">
-                Reminder at {formatTime(habit.reminder.hour, habit.reminder.minute)}
+                {t('Reminder at {time}', { time: formatTime(habit.reminder.hour, habit.reminder.minute) })}
               </Txt>
             )}
           </View>
 
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Stat icon={<FlameIcon size={20} />} value={`${data.streak.current}`} label={`${data.streak.unit} streak`} />
-            <Stat icon={<TrophyIcon size={20} color="#F5A623" />} value={`${data.streak.best}`} label="Best streak" />
+            <Stat icon={<FlameIcon size={20} />} value={`${data.streak.current}`} label={data.streak.unit === 'week' ? t('Week streak') : t('Day streak')} />
+            <Stat icon={<TrophyIcon size={20} color="#F5A623" />} value={`${data.streak.best}`} label={t('Best streak')} />
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Stat icon={<CheckIcon size={20} color="#34C759" strokeWidth={2.8} />} value={pct(data.rate)} label="Last 30 days" />
-            <Stat icon={<SparkleIcon size={20} color={c.accent} />} value={fmtNumber(data.total)} label={`${unitFor(data.total, habit.unit)} all time`} />
+            <Stat icon={<CheckIcon size={20} color="#34C759" strokeWidth={2.8} />} value={pct(data.rate)} label={t('Last 30 days')} />
+            <Stat icon={<SparkleIcon size={20} color={c.accent} />} value={fmtNumber(data.total)} label={t('{unit} all time', { unit: unitFor(data.total, habit.unit) })} />
           </View>
+
+          {challenge && (
+            <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <Trophy size={26} color="#F5A623" strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Txt variant="h3">{t('Challenge: day {day} of {total}', { day: challenge.day, total: habit.challenge!.days })}</Txt>
+                <Txt variant="small" color="secondary">
+                  {habit.challenge!.closed
+                    ? habit.challenge!.passed
+                      ? t('Completed — trophy earned')
+                      : t('Finished')
+                    : t('{done} days done so far', { done: challenge.doneDays })}
+                </Txt>
+              </View>
+            </Card>
+          )}
 
           <SectionTitle>{`Last ${WEEKS} weeks`}</SectionTitle>
           <Card style={{ flexDirection: 'row', gap: 6 }}>
@@ -143,11 +164,11 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
             </View>
           </Card>
 
-          <SectionTitle>Recent activity</SectionTitle>
+          <SectionTitle>{t('Recent activity')}</SectionTitle>
           <Card style={{ paddingVertical: 6 }}>
             {data.history.length === 0 ? (
               <Txt variant="bodyRegular" color="secondary" style={{ paddingVertical: 14, textAlign: 'center' }}>
-                Nothing logged yet — your first check-in will show here.
+                {t('Nothing logged yet — your first check-in will show here.')}
               </Txt>
             ) : (
               data.history.map((e, i) => {
@@ -165,9 +186,15 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
                     }}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: done ? c.accent : hexToRgba(c.accent, 0.35) }} />
-                    <Txt variant="h3" style={{ flex: 1 }}>
-                      {relativeDayLabel(e.key)}
-                    </Txt>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Txt variant="h3">{relativeDayLabel(e.key)}</Txt>
+                      {e.note ? (
+                        <Txt variant="small" color="secondary" numberOfLines={2}>
+                          “{e.note}”
+                        </Txt>
+                      ) : null}
+                    </View>
+                    <MoodDot value={e.mood} />
                     <Txt variant="label" color={done ? 'primary' : 'secondary'}>
                       {fmtNumber(e.value)} / {qty(habit.goalValue, habit.unit)}
                     </Txt>
@@ -177,16 +204,22 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
             )}
           </Card>
 
-          <Button label="Edit habit" color={c.accent} icon={<EditIcon size={18} color="#FFFFFF" />} onPress={() => navigation.navigate('HabitEditor', { id: habit.id })} />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Button label={t('Share')} variant="glass" icon={<Share2 size={17} color={theme.textPrimary} />} onPress={() => navigation.navigate('Share', { habitId: habit.id, kind: 'streak' })} style={{ flex: 1 }} />
+            {['min', 'mins', 'minutes', 'hours', 'hr', 'hrs'].includes(habit.unit.toLowerCase()) && (
+              <Button label={t('Focus')} variant="glass" icon={<Timer size={17} color={theme.textPrimary} />} onPress={() => navigation.navigate('Focus', { habitId: habit.id })} style={{ flex: 1 }} />
+            )}
+          </View>
+          <Button label={t('Edit habit')} color={c.accent} icon={<EditIcon size={18} color="#FFFFFF" />} onPress={() => navigation.navigate('HabitEditor', { id: habit.id })} />
         </View>
       </ScrollView>
 
       {/* Floating back button */}
       <View style={{ position: 'absolute', top: insets.top + 8, left: spacing.screenX, right: spacing.screenX, flexDirection: 'row', justifyContent: 'space-between' }}>
-        <GlassButton accessibilityLabel="Back" fill="rgba(255,255,255,0.55)" onPress={() => navigation.goBack()}>
+        <GlassButton accessibilityLabel={t('Back')} fill="rgba(255,255,255,0.55)" onPress={() => navigation.goBack()}>
           <ChevronLeft size={20} color="#1C1B22" strokeWidth={2.4} />
         </GlassButton>
-        <GlassButton accessibilityLabel="Edit" fill="rgba(255,255,255,0.55)" onPress={() => navigation.navigate('HabitEditor', { id: habit.id })}>
+        <GlassButton accessibilityLabel={t('Edit')} fill="rgba(255,255,255,0.55)" onPress={() => navigation.navigate('HabitEditor', { id: habit.id })}>
           <EditIcon size={18} color="#1C1B22" />
         </GlassButton>
       </View>

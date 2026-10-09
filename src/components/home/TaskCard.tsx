@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -13,7 +13,9 @@ import { LockIcon } from '@/components/ui/icons';
 import { useTheme } from '@/theme/ThemeContext';
 import { useHabitStore } from '@/store/useHabitStore';
 import { getTheme } from '@/data/themes';
-import { valueOn, weekSessions } from '@/logic/habits';
+import { daysClean, isRestDay, moneySaved, valueOn, weekSessions } from '@/logic/habits';
+import { askMood } from '@/components/mood/Mood';
+import { t } from '@/i18n';
 import { fmtNumber, qty } from '@/utils/format';
 import type { Habit } from '@/data/types';
 
@@ -28,9 +30,13 @@ interface TaskCardProps {
   tiltY?: SharedValue<number>;
   /** Pin the card to a specific day (defaults to the Home screen's selected day). */
   day?: string;
+  /** Ask the post-completion mood check-in (off for widget/routine flows). */
+  askMoodOnComplete?: boolean;
+  /** Called after a successful slide (e.g. routines advance). */
+  onCompleted?: () => void;
 }
 
-export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day: dayProp }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day: dayProp, askMoodOnComplete = true, onCompleted }: TaskCardProps) {
   const { theme } = useTheme();
   const selectedDay = useHabitStore((s) => s.selectedDay);
   const day = dayProp ?? selectedDay;
@@ -39,19 +45,31 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
   const value = useHabitStore((s) => valueOn(s.logs, day, habit.id));
   const sessions = useHabitStore((s) => (habit.schedule.kind === 'weekly' ? weekSessions(habit, s.logs, day, weekStart) : 0));
   const complete = useHabitStore((s) => s.complete);
+  const slip = useHabitStore((s) => s.slip);
+  const rest = useHabitStore((s) => isRestDay(s.logs, day));
+  const currency = useHabitStore((s) => s.settings.currency);
 
   const colors = getTheme(habit.themeId);
   const height = Math.round(width * CARD_ASPECT);
   const done = value >= habit.goalValue;
   const future = day > today;
 
+  const quit = habit.quit;
+  const clean = quit ? daysClean(habit, day > today ? today : day) : 0;
+  const saved = quit ? moneySaved(habit, today) : 0;
+
   let tone: ChipTone = done ? 'done' : value > 0 ? 'progress' : 'idle';
-  let chip = done ? 'Done' : value > 0 ? `${fmtNumber(value)} / ${qty(habit.goalValue, habit.unit)}` : 'To do';
+  let chip = done ? t('Done') : value > 0 ? `${fmtNumber(value)} / ${qty(habit.goalValue, habit.unit)}` : t('To do');
   if (future) {
     tone = 'upcoming';
-    chip = 'Upcoming';
+    chip = t('Upcoming');
+  } else if (rest && !done) {
+    tone = 'upcoming';
+    chip = t('Rest day');
+  } else if (quit) {
+    chip = done ? t('Clean today') : t('{n} days clean', { n: clean });
   } else if (habit.schedule.kind === 'weekly') {
-    chip = `${sessions}/${habit.schedule.timesPerWeek} this week`;
+    chip = t('{done}/{total} this week', { done: sessions, total: habit.schedule.timesPerWeek });
     tone = sessions >= habit.schedule.timesPerWeek ? 'done' : done ? 'done' : value > 0 ? 'progress' : 'idle';
   }
 
@@ -117,21 +135,46 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
               <Txt variant="cardTitle" color="primary" numberOfLines={1}>
                 {habit.title}
               </Txt>
-              <Txt variant="cardSubtitle" color="secondary" numberOfLines={2}>
-                {habit.subtitle || 'Small steps, every day.'}
+              <Txt variant="cardSubtitle" color={quit ? colors.accent : 'secondary'} numberOfLines={2}>
+                {quit ? t('{n} days clean', { n: clean }) : habit.subtitle || t('Small steps, every day.')}
               </Txt>
             </View>
-            <GoalBadge colors={colors} goal={habit.goalValue} unit={habit.unit} />
+            {quit ? (
+              <SavedBadge accent={colors.accent} label={quit.costPerDay > 0 ? `${currency}${fmtNumber(saved)}` : `${clean}`} caption={quit.costPerDay > 0 ? t('Saved') : t('Days')} />
+            ) : (
+              <GoalBadge colors={colors} goal={habit.goalValue} unit={habit.unit} />
+            )}
           </View>
 
           <SlideToComplete
             done={done}
-            disabled={future}
-            idleLabel={future ? 'Opens on the day' : "Slide when you're done"}
-            doneLabel={habit.doneLabel}
-            onComplete={() => complete(habit.id, day)}
+            disabled={future || (rest && !done)}
+            idleLabel={future ? t('Opens on the day') : rest ? t('Rest day — enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
+            doneLabel={quit ? t('Clean day logged. Proud of you.') : habit.doneLabel}
+            onComplete={() => {
+              complete(habit.id, day);
+              if (askMoodOnComplete) askMood(habit, day);
+              onCompleted?.();
+            }}
           />
-          <FinalNote done={done} future={future} />
+          {quit && !future ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                Alert.alert(t('Log a slip?'), t('Your clean-day counter for {habit} restarts. That’s okay — every restart is still progress.', { habit: habit.title }), [
+                  { text: t('Cancel'), style: 'cancel' },
+                  { text: t('I slipped'), style: 'destructive', onPress: () => slip(habit.id, day) },
+                ])
+              }
+              style={{ alignSelf: 'center', marginTop: -6, paddingHorizontal: 10, paddingVertical: 2 }}
+            >
+              <Txt variant="small" color="secondary" style={{ fontSize: 11.5, textDecorationLine: 'underline' }}>
+                {t('I slipped today')}
+              </Txt>
+            </Pressable>
+          ) : (
+            <FinalNote done={done} future={future || (rest && !done)} />
+          )}
         </Animated.View>
 
         <Animated.View
@@ -158,7 +201,20 @@ function FinalNote({ done, future }: { done: boolean; future: boolean }) {
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: -6 }}>
       <LockIcon size={12} color={done ? palette.success : palette.inkMuted} strokeWidth={2.2} />
       <Txt variant="small" color={done ? 'success' : 'secondary'} style={{ fontSize: 11.5 }} numberOfLines={1}>
-        {done ? 'Locked in for today — no take-backs' : 'No take-backs — slide only when it’s truly done'}
+        {done ? t('Locked in for today — no take-backs') : t('No take-backs — slide only when it’s truly done')}
+      </Txt>
+    </View>
+  );
+}
+
+function SavedBadge({ accent, label, caption }: { accent: string; label: string; caption: string }) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: accent, minWidth: 64 }}>
+      <Txt variant="goalLabel" color="rgba(255,255,255,0.85)">
+        {caption}
+      </Txt>
+      <Txt variant="goalValue" color="white" numberOfLines={1}>
+        {label}
       </Txt>
     </View>
   );

@@ -16,6 +16,8 @@ import { GlassSurface } from './Glass';
 import { useHabitStore } from '@/store/useHabitStore';
 import { haptic } from '@/utils/haptics';
 import { useMotion } from '@/theme/motion';
+import { PartyPopper } from './lucide';
+import { t } from '@/i18n';
 
 const COLORS = ['#FF986D', '#A3D9FF', '#34C759', '#B280FF', '#FFD36B', '#F59AB8', '#6FB7ED'];
 const COUNT = 46;
@@ -95,14 +97,14 @@ export function Confetti() {
       >
         <GlassSurface radius={28} elevation={12} fill="rgba(255,255,255,0.9)">
           <Animated.View entering={FadeIn.delay(120)} style={{ paddingHorizontal: 26, paddingVertical: 18, alignItems: 'center', gap: 2 }}>
-            <Txt variant="display" color="#1C1B22">
-              🎉
-            </Txt>
+            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#FFF1E0', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
+              <PartyPopper size={28} color="#F07B3F" strokeWidth={1.9} />
+            </View>
             <Txt variant="h2" color="#1C1B22">
-              Perfect day!
+              {t('Perfect day!')}
             </Txt>
             <Txt variant="small" color="#8A8A95">
-              Every habit done. Keep the streak alive.
+              {t('Every habit done. Keep the streak alive.')}
             </Txt>
           </Animated.View>
         </GlassSurface>

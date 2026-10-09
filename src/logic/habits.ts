@@ -5,6 +5,18 @@ import { addDays, dayKey, fromKey, shiftKey, startOfWeek, weekKeys } from '@/uti
 /* Basics                                                              */
 /* ------------------------------------------------------------------ */
 
+/** Reserved log key marking a planned rest day (no habit can have this id). */
+export const REST_KEY = '__rest';
+
+export function isRestDay(logs: Logs, key: string): boolean {
+  return !!logs[key]?.[REST_KEY];
+}
+
+/** Days that neither count nor break a streak: rest days and freeze-covered misses. */
+export function isExcused(h: Habit, logs: Logs, key: string): boolean {
+  return isRestDay(logs, key) || !!logs[key]?.[h.id]?.frozen;
+}
+
 export function valueOn(logs: Logs, key: string, habitId: string): number {
   return logs[key]?.[habitId]?.value ?? 0;
 }
@@ -99,7 +111,7 @@ export function streakFor(h: Habit, logs: Logs, today: string, weekStart: 0 | 1)
   for (let i = 0; i < MAX_SCAN_DAYS; i++) {
     const k = dayKey(cursor);
     if (k < start) break;
-    if (isScheduledOn(h, k)) {
+    if (isScheduledOn(h, k) && !isExcused(h, logs, k)) {
       if (isDoneOn(h, logs, k)) current++;
       else if (k !== today) break;
     }
@@ -109,7 +121,7 @@ export function streakFor(h: Habit, logs: Logs, today: string, weekStart: 0 | 1)
   let best = 0;
   let run = 0;
   for (let k = start, i = 0; k <= today && i < MAX_SCAN_DAYS; k = shiftKey(k, 1), i++) {
-    if (!isScheduledOn(h, k)) continue;
+    if (!isScheduledOn(h, k) || isExcused(h, logs, k)) continue;
     if (isDoneOn(h, logs, k)) best = Math.max(best, ++run);
     else if (k !== today) run = 0;
   }
@@ -141,7 +153,7 @@ export function completionRate(h: Habit, logs: Logs, today: string, days: number
   for (let i = 0; i < days; i++) {
     const k = shiftKey(today, -i);
     if (k < start) break;
-    if (!isScheduledOn(h, k)) continue;
+    if (!isScheduledOn(h, k) || isExcused(h, logs, k)) continue;
     // Today only counts once it's done (it isn't "missed" yet).
     if (k === today && !isDoneOn(h, logs, k)) continue;
     due++;
@@ -152,6 +164,7 @@ export function completionRate(h: Habit, logs: Logs, today: string, days: number
 
 /** Fraction of day-level habits done on `key` (null when nothing was due). */
 export function dayCompletion(habits: Habit[], logs: Logs, key: string): number | null {
+  if (isRestDay(logs, key)) return null;
   const due = dueOn(habits, key).filter((h) => key >= createdKey(h) || logs[key]?.[h.id]);
   if (!due.length) return null;
   return due.filter((h) => isDoneOn(h, logs, key)).length / due.length;
@@ -171,6 +184,27 @@ export function totalCompletions(habits: Habit[], logs: Logs): number {
 
 export function perfectDays(habits: Habit[], logs: Logs): number {
   return Object.keys(logs).filter((k) => dayCompletion(habits, logs, k) === 1).length;
+}
+
+/* ------------------------------------------------------------------ */
+/* Quit mode                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Whole days clean since the habit started or the latest slip. */
+export function daysClean(h: Habit, today: string): number {
+  if (!h.quit) return 0;
+  const from = [createdKey(h), ...h.quit.slips].sort().pop()!;
+  const ms = fromKey(today).getTime() - fromKey(from).getTime();
+  const days = Math.round(ms / 86_400_000);
+  // A slip day itself doesn't count; the start day does.
+  return h.quit.slips.includes(from) ? Math.max(0, days) : days + 1;
+}
+
+/** Total clean days ever (start → today, minus slip days) × cost per day. */
+export function moneySaved(h: Habit, today: string): number {
+  if (!h.quit) return 0;
+  const total = Math.round((fromKey(today).getTime() - fromKey(createdKey(h)).getTime()) / 86_400_000) + 1;
+  return Math.max(0, total - h.quit.slips.length) * h.quit.costPerDay;
 }
 
 /** Longest current streak across all habits — the headline "🔥" number. */

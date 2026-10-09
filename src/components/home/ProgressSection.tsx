@@ -13,7 +13,15 @@ import { ProgressCard } from './ProgressCard';
 import { useHabitStore, useActiveHabit, type ProgressView } from '@/store/useHabitStore';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, radius, spacing } from '@/theme/tokens';
-import { dueOn, isDoneOn, streakFor, valueOn, weeklyHabits, weekSessions } from '@/logic/habits';
+import { dueOn, isDoneOn, isRestDay, streakFor, valueOn, weeklyHabits, weekSessions } from '@/logic/habits';
+import { Bed, MessageCircle, Share2, type LucideIcon } from '@/components/ui/lucide';
+import { hexToRgba } from '@/theme/color';
+import { useNavigation } from '@react-navigation/native';
+import type { RootNav } from '@/navigation/types';
+import { sendToBuddy } from '@/services/buddy';
+import { overlay } from '@/components/ui/Overlay';
+import { BuddySheet } from '@/components/profile/BuddySheet';
+import { t } from '@/i18n';
 import { getTheme } from '@/data/themes';
 import { DAY_LETTERS, fromKey, relativeDayLabel, weekKeys } from '@/utils/date';
 import { fmtNumber, qty, unitFor } from '@/utils/format';
@@ -21,9 +29,9 @@ import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
 
 const VIEW_OPTIONS: SegmentOption<ProgressView>[] = [
-  { key: 'now', label: 'Now' },
-  { key: 'today', label: 'Day' },
-  { key: 'week', label: 'Week' },
+  { key: 'now', label: t('Now') },
+  { key: 'today', label: t('Day') },
+  { key: 'week', label: t('Week') },
 ];
 
 /** "Progress" heading + Now / Day / Week switch and the matching card. */
@@ -36,7 +44,7 @@ export function ProgressSection() {
 
   return (
     <View style={{ paddingHorizontal: spacing.screenX, gap: 12 }}>
-      <Txt variant="progressHeading">Progress</Txt>
+      <Txt variant="progressHeading">{t('Progress')}</Txt>
       <View style={{ gap: 10 }}>
         <SegmentedControl
           options={VIEW_OPTIONS}
@@ -87,10 +95,10 @@ function DaySummary() {
           <Txt variant="progressTitle">{relativeDayLabel(day)}</Txt>
           <Txt variant="progressSubtitle" color="secondaryStrong">
             {due.length === 0
-              ? 'Nothing scheduled'
+              ? t('Nothing scheduled')
               : doneCount === due.length
-                ? 'Perfect day — everything done ✨'
-                : `${doneCount} of ${due.length} habits done`}
+                ? t('Perfect day — everything done')
+                : t('{done} of {total} habits done', { done: doneCount, total: due.length })}
           </Txt>
         </View>
       </View>
@@ -113,7 +121,7 @@ function DaySummary() {
                   </Txt>
                   <Txt variant="small" color="secondary">
                     {isWeekly
-                      ? `${weekSessions(h, logs, day, weekStart)}/${h.schedule.kind === 'weekly' ? h.schedule.timesPerWeek : 0} this week`
+                      ? t('{done}/{total} this week', { done: weekSessions(h, logs, day, weekStart), total: h.schedule.kind === 'weekly' ? h.schedule.timesPerWeek : 0 })
                       : `${fmtNumber(v)} / ${qty(h.goalValue, h.unit)}`}
                   </Txt>
                 </View>
@@ -137,6 +145,58 @@ function DaySummary() {
           );
         })}
       </View>
+
+      <DayActions day={day} />
+    </View>
+  );
+}
+
+/** Rest day toggle, share, and buddy check-in for the selected day. */
+function DayActions({ day }: { day: string }) {
+  const { theme } = useTheme();
+  const navigation = useNavigation<RootNav>();
+  const rest = useHabitStore((s) => isRestDay(s.logs, day));
+  const toggleRestDay = useHabitStore((s) => s.toggleRestDay);
+  const buddy = useHabitStore((s) => s.extras.buddy);
+  const today = useHabitStore((s) => s.today);
+
+  const chip = (Icon: LucideIcon, label: string, onPress: () => void, on = false, color = '#4C8DF6') => (
+    <PressableScale key={label} onPress={onPress} style={{ flexGrow: 1 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 7,
+          height: 42,
+          paddingHorizontal: 14,
+          borderRadius: 21,
+          backgroundColor: on ? color : theme.cardElevated,
+        }}
+      >
+        <Icon size={17} color={on ? '#FFFFFF' : color} strokeWidth={2} />
+        <Txt variant="label" color={on ? 'white' : 'primary'}>
+          {label}
+        </Txt>
+      </View>
+    </PressableScale>
+  );
+
+  return (
+    <View style={{ gap: 10 }}>
+      {rest && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: hexToRgba('#9B6BF2', 0.12) }}>
+          <Bed size={18} color="#9B6BF2" strokeWidth={2} />
+          <Txt variant="small" color="secondaryStrong" style={{ flex: 1 }}>
+            {t('Rest day — streaks are paused, nothing is due. Enjoy it.')}
+          </Txt>
+        </View>
+      )}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {chip(Bed, rest ? t('Rest day on') : t('Rest day'), () => toggleRestDay(day), rest, '#9B6BF2')}
+        {day === today && chip(Share2, t('Share'), () => navigation.navigate('Share', { kind: 'today' }))}
+        {day === today && chip(MessageCircle, buddy ? t('Tell {name}', { name: buddy.name }) : t('Tell a buddy'), () => (buddy ? sendToBuddy() : overlay.open(<BuddySheet sendAfter />)), false, '#25A55F')}
+      </View>
     </View>
   );
 }
@@ -159,7 +219,7 @@ function WeekCard({ habit }: { habit: Habit }) {
   const bars = keys.map((k) => {
     const v = valueOn(logs, k, habit.id);
     return {
-      label: DAY_LETTERS[fromKey(k).getDay()],
+      label: t(DAY_LETTERS[fromKey(k).getDay()]),
       value: habit.goalValue ? Math.min(1, v / habit.goalValue) : 0,
       highlight: k === day,
       caption: v ? fmtNumber(v) : ' ',
@@ -175,21 +235,21 @@ function WeekCard({ habit }: { habit: Habit }) {
           </Txt>
           <Txt variant="progressSubtitle" color="secondaryStrong">
             {habit.schedule.kind === 'weekly'
-              ? `${daysDone} of ${habit.schedule.timesPerWeek} sessions this week`
-              : `${daysDone}/7 days hit this week`}
+              ? t('{done} of {total} sessions this week', { done: daysDone, total: habit.schedule.timesPerWeek })
+              : t('{done}/7 days hit this week', { done: daysDone })}
           </Txt>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Txt variant="stat">{fmtNumber(total)}</Txt>
           <Txt variant="small" color="secondary">
-            {unitFor(total, habit.unit)} total
+            {t('{unit} total', { unit: unitFor(total, habit.unit) })}
           </Txt>
         </View>
       </View>
       <BarChart bars={bars} from={colors.accent} to={colors.bgTop} height={100} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Pill label="Current streak" value={`${streak.current} ${streak.unit}${streak.current === 1 ? '' : 's'}`} />
-        <Pill label="Best streak" value={`${streak.best} ${streak.unit}${streak.best === 1 ? '' : 's'}`} />
+        <Pill label={t('Current streak')} value={streak.unit === 'week' ? t('{n} wk', { n: streak.current }) : t('{n} d', { n: streak.current })} />
+        <Pill label={t('Best streak')} value={streak.unit === 'week' ? t('{n} wk', { n: streak.best }) : t('{n} d', { n: streak.best })} />
       </View>
     </View>
   );

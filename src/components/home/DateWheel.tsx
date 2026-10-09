@@ -16,6 +16,7 @@ import { dayCompletion } from '@/logic/habits';
 import { stripDays, type StripDay } from '@/utils/date';
 import { haptic } from '@/utils/haptics';
 import { ScrollView as GHScrollView } from 'react-native-gesture-handler';
+import { t } from '@/i18n';
 
 /**
  * Date wheel. A horizontal snap-scroller over a rolling window of days: spin
@@ -54,7 +55,7 @@ function DayCell({ index, day, scrollX, completion }: DayCellProps) {
   return (
     <Animated.View style={[{ width: ITEM_WIDTH, alignItems: 'center', gap: 3 }, style]}>
       <Txt variant="weekday" color="white" style={{ opacity: day.isFuture ? 0.7 : 1 }}>
-        {day.isToday ? 'Today' : day.label}
+        {day.isToday ? t('Today') : t(day.label)}
       </Txt>
       <Txt variant="weekday" color="white" style={{ opacity: day.isFuture ? 0.7 : 1 }}>
         {day.dayOfMonth}

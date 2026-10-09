@@ -1,9 +1,10 @@
-import { AppState, Platform } from 'react-native';
+import { AppState, Linking, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
 import { useHabitStore } from '@/store/useHabitStore';
 import { dueOn, isDoneOn } from '@/logic/habits';
 import { dayKey, shiftKey, fromKey } from '@/utils/date';
+import { t } from '@/i18n';
 
 const CHANNEL = 'reminders';
 const NUDGE_DAYS = 7;
@@ -43,10 +44,10 @@ export async function ensurePermission(): Promise<boolean> {
 }
 
 const NUDGE_LINES = [
-  'keep your streak alive 🔥',
-  'a few minutes is all it takes ✨',
-  'future you says thanks 🙌',
-  'small steps, big change 🌱',
+  'keep your streak alive.',
+  'a few minutes is all it takes.',
+  'future you says thanks.',
+  'small steps, big change.',
 ];
 
 /**
@@ -60,14 +61,20 @@ export async function syncNotifications() {
   if (!(await hasPermission())) return;
   const { habits, logs, settings } = useHabitStore.getState();
 
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  // Only replace the notifications this function owns (focus sessions schedule their own).
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled
+      .filter((n) => OWNED.includes(String(n.content.data?.kind ?? 'reminder')))
+      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+  );
 
   for (const h of habits) {
     if (h.archived || !h.reminder.enabled) continue;
     const content: Notifications.NotificationContentInput = {
       title: h.title,
       body: `Time for ${h.title.toLowerCase()} — goal ${h.goalValue} ${h.unit}. ${h.subtitle}`.trim(),
-      data: { habitId: h.id },
+      data: { kind: 'reminder', habitId: h.id, url: `habittracker://complete/${h.id}` },
     };
     const { hour, minute } = h.reminder;
     if (h.schedule.kind === 'days') {
@@ -99,13 +106,40 @@ export async function syncNotifications() {
       const line = NUDGE_LINES[(at.getDate() + open.length) % NUDGE_LINES.length];
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: open.length === 1 ? `${open[0].title} is still open` : `${open.length} habits left today`,
-          body: `Check them off before bed — ${line}`,
+          title: open.length === 1 ? t('{habit} is still open', { habit: open[0].title }) : t('{n} habits left today', { n: open.length }),
+          body: `${t('Check them off before bed —')} ${t(line)}`,
+          data: { kind: 'nudge' },
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNEL },
       });
     }
   }
+
+  if (settings.weeklyReview && habits.some((h) => !h.archived)) {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: t('Your week in habits is ready'),
+        body: t('See your best day, longest streak and one idea for next week.'),
+        data: { kind: 'review', url: 'habittracker://review' },
+      },
+      // Sunday (1) at 7 PM.
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 19, minute: 0, channelId: CHANNEL },
+    });
+  }
+}
+
+/** Notification kinds owned (and rebuilt) by syncNotifications. */
+const OWNED = ['reminder', 'nudge', 'review'];
+
+/** Open the deep link carried by a tapped notification. */
+export function startNotificationTaps() {
+  const open = (r: Notifications.NotificationResponse | null) => {
+    const url = r?.notification.request.content.data?.url;
+    if (typeof url === 'string') Linking.openURL(url).catch(() => {});
+  };
+  Notifications.getLastNotificationResponseAsync().then(open).catch(() => {});
+  const sub = Notifications.addNotificationResponseReceivedListener(open);
+  return () => sub.remove();
 }
 
 let timer: ReturnType<typeof setTimeout> | null = null;

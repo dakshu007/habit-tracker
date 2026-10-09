@@ -18,6 +18,12 @@ jobs:
     timeout-minutes: 60
     env:
       BUILD_NUMBER: ${{ github.run_number }}
+      # Optional secrets — the build works without them.
+      EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -42,12 +48,20 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
 
-      - name: Build release APK
+      - name: Build release APK (+ AAB when a signing key is configured)
         working-directory: android
         run: |
           # gradle.properties has no trailing newline — start on a fresh line.
           printf '\norg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g\n' >> gradle.properties
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          SIGNING=""
+          TASKS="assembleRelease"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            SIGNING="-Pandroid.injected.signing.store.file=$RUNNER_TEMP/upload.jks -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD -Pandroid.injected.signing.key.alias=$KEY_ALIAS -Pandroid.injected.signing.key.password=$KEY_PASSWORD"
+            TASKS="assembleRelease bundleRelease"
+            echo "Signing with the release upload key; building AAB for Google Play."
+          fi
+          ./gradlew $TASKS $SIGNING --no-daemon --stacktrace
 
       - name: Upload Gradle reports on failure
         if: failure()
@@ -56,19 +70,25 @@ jobs:
           name: gradle-reports
           path: android/build/reports/
 
-      - name: Collect APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk "HabitTracker-build-${BUILD_NUMBER}.apk"
+      - name: Collect APK / AAB
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "HabitTracker-build-${BUILD_NUMBER}.apk"
+          if [ -f android/app/build/outputs/bundle/release/app-release.aab ]; then
+            cp android/app/build/outputs/bundle/release/app-release.aab "HabitTracker-build-${BUILD_NUMBER}.aab"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: HabitTracker-build-${{ github.run_number }}
-          path: HabitTracker-build-*.apk
+          path: |
+            HabitTracker-build-*.apk
+            HabitTracker-build-*.aab
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "build-${BUILD_NUMBER}" "HabitTracker-build-${BUILD_NUMBER}.apk" \
+          gh release create "build-${BUILD_NUMBER}" HabitTracker-build-${BUILD_NUMBER}.* \
             --title "Habit Tracker · build ${BUILD_NUMBER}" \
             --target "${GITHUB_SHA}" \
             --prerelease \

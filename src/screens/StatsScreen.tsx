@@ -28,6 +28,10 @@ import {
 import { getTheme } from '@/data/themes';
 import { DAY_NAMES, DAY_LETTERS, fromKey, shiftKey } from '@/utils/date';
 import { pct } from '@/utils/format';
+import { CalendarCheck, Snowflake, Trophy, type LucideIcon } from '@/components/ui/lucide';
+import { MOODS } from '@/components/mood/Mood';
+import { hexToRgba } from '@/theme/color';
+import { t } from '@/i18n';
 import type { RootNav } from '@/navigation/types';
 
 export function StatsScreen() {
@@ -93,7 +97,7 @@ export function StatsScreen() {
   );
 
   return (
-    <Screen title="Stats" subtitle="Your consistency, at a glance." accent="#B280FF">
+    <Screen title={t('Stats')} subtitle={t('Your consistency, at a glance.')} accent="#B280FF">
       {/* Level hero */}
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <LinearGradient colors={['#8E6CFF', '#5E9BFF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 16 }}>
@@ -105,10 +109,10 @@ export function StatsScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Txt variant="micro" color="rgba(255,255,255,0.8)">
-                Level {stats.lvl.level}
+                {t('Level {n}', { n: stats.lvl.level })}
               </Txt>
               <Txt variant="title" color="white">
-                {levelTitle(stats.lvl.level)}
+                {t(levelTitle(stats.lvl.level))}
               </Txt>
             </View>
             <SparkleIcon size={26} color="rgba(255,255,255,0.9)" />
@@ -118,31 +122,40 @@ export function StatsScreen() {
               <View style={{ height: '100%', width: `${Math.max(3, (stats.lvl.into / stats.lvl.span) * 100)}%`, backgroundColor: '#FFFFFF', borderRadius: 5 }} />
             </View>
             <Txt variant="small" color="rgba(255,255,255,0.85)">
-              {stats.lvl.span - stats.lvl.into} XP to level {stats.lvl.level + 1} · {stats.xp} XP total
+              {t('{xp} XP to level {n} · {total} XP total', { xp: stats.lvl.span - stats.lvl.into, n: stats.lvl.level + 1, total: stats.xp })}
             </Txt>
           </View>
         </LinearGradient>
       </Card>
 
+      {/* Quick entries */}
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <EntryCard Icon={Trophy} color="#F5A623" title={t('Challenges')} sub={t('7 · 21 · 30 days')} onPress={() => navigation.navigate('Challenges')} />
+        <EntryCard Icon={CalendarCheck} color="#7E6CF0" title={t('Weekly review')} sub={t('Your week, story-style')} onPress={() => navigation.navigate('Review')} />
+      </View>
+
+      <MoodInsights />
+      <FreezeCard />
+
       {/* Tiles */}
       <View style={{ flexDirection: 'row', gap: 12 }}>
-        <Tile icon={<FlameIcon size={22} />} value={`${stats.best?.streak.current ?? 0}`} label={stats.best?.streak.unit === 'week' ? 'Week streak' : 'Day streak'} delay={60} />
-        <Tile icon={<CheckIcon size={20} color={palette.success} strokeWidth={2.8} />} value={pct(stats.rate7)} label="Last 7 days" delay={100} />
+        <Tile icon={<FlameIcon size={22} />} value={`${stats.best?.streak.current ?? 0}`} label={stats.best?.streak.unit === 'week' ? t('Week streak') : t('Day streak')} delay={60} />
+        <Tile icon={<CheckIcon size={20} color={palette.success} strokeWidth={2.8} />} value={pct(stats.rate7)} label={t('Last 7 days')} delay={100} />
       </View>
       <View style={{ flexDirection: 'row', gap: 12 }}>
-        <Tile icon={<TrophyIcon size={20} color="#F5A623" />} value={`${stats.perfect}`} label="Perfect days" delay={140} />
-        <Tile icon={<SparkleIcon size={20} color="#B280FF" />} value={`${stats.total}`} label="Check-ins" delay={180} />
+        <Tile icon={<TrophyIcon size={20} color="#F5A623" />} value={`${stats.perfect}`} label={t('Perfect days')} delay={140} />
+        <Tile icon={<SparkleIcon size={20} color="#B280FF" />} value={`${stats.total}`} label={t('Check-ins')} delay={180} />
       </View>
 
       {/* Chart */}
       <Card delay={200} style={{ gap: 18 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Txt variant="h2">Completion</Txt>
+          <Txt variant="h2">{t('Completion')}</Txt>
           <View style={{ width: 170 }}>
             <SegmentedControl
               options={[
-                { key: 'week', label: '7 days' },
-                { key: 'month', label: '30 days' },
+                { key: 'week', label: t('7 days') },
+                { key: 'month', label: t('30 days') },
               ]}
               value={range}
               onChange={setRange}
@@ -154,19 +167,17 @@ export function StatsScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: theme.inputBg }}>
             <SparkleIcon size={18} color="#B280FF" />
             <Txt variant="small" color="secondaryStrong" style={{ flex: 1 }}>
-              You&rsquo;re most consistent on{' '}
-              <Txt variant="label">{DAY_NAMES[stats.bestDow.d]}s</Txt>{' '}
-              — {pct(stats.bestDow.avg)} on average.
+              {t('You’re most consistent on {day} — {pct} on average.', { day: t(DAY_NAMES[stats.bestDow.d]), pct: pct(stats.bestDow.avg) })}
             </Txt>
           </View>
         )}
       </Card>
 
-      <SectionTitle>By habit · last 30 days</SectionTitle>
+      <SectionTitle>{t('By habit · last 30 days')}</SectionTitle>
       <Card delay={240} style={{ paddingVertical: 6 }}>
         {perHabit.length === 0 ? (
           <Txt variant="bodyRegular" color="secondary" style={{ paddingVertical: 16, textAlign: 'center' }}>
-            Create a habit to see its stats here.
+            {t('Create a habit to see its stats here.')}
           </Txt>
         ) : (
           perHabit.map(({ h, streak, rate }, i) => {
@@ -226,6 +237,106 @@ function Tile({ icon, value, label, delay }: { icon: React.ReactNode; value: str
           {label}
         </Txt>
       </View>
+    </Card>
+  );
+}
+
+function EntryCard({ Icon, color, title, sub, onPress }: { Icon: LucideIcon; color: string; title: string; sub: string; onPress: () => void }) {
+  return (
+    <PressableScale onPress={onPress} style={{ flex: 1 }} scaleTo={0.97}>
+      <Card style={{ gap: 10 }}>
+        <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: hexToRgba(color, 0.15), alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={21} color={color} strokeWidth={2} />
+        </View>
+        <View>
+          <Txt variant="h3">{title}</Txt>
+          <Txt variant="small" color="secondary">
+            {sub}
+          </Txt>
+        </View>
+      </Card>
+    </PressableScale>
+  );
+}
+
+function FreezeCard() {
+  const freezes = useHabitStore((s) => s.extras.freezes);
+  return (
+    <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <View style={{ flexDirection: 'row', gap: 4 }}>
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={{ width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: i < freezes ? '#E3F3FD' : 'rgba(138,138,149,0.12)' }}>
+            <Snowflake size={18} color={i < freezes ? '#3BA4E6' : '#B9B9C2'} strokeWidth={2.2} />
+          </View>
+        ))}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Txt variant="h3">{t('{n} streak freezes', { n: freezes })}</Txt>
+        <Txt variant="small" color="secondary">
+          {t('Earn one per 7-day streak. Used automatically on a missed day.')}
+        </Txt>
+      </View>
+    </Card>
+  );
+}
+
+/** Mood distribution (last 30 days) + which habit lifts it most. */
+function MoodInsights() {
+  const habits = useHabitStore((s) => s.habits);
+  const logs = useHabitStore((s) => s.logs);
+  const today = useHabitStore((s) => s.today);
+  const { theme } = useTheme();
+
+  const data = useMemo(() => {
+    const counts = [0, 0, 0, 0];
+    const perHabit = new Map<string, { sum: number; n: number }>();
+    for (let i = 0; i < 30; i++) {
+      const k = shiftKey(today, -i);
+      const day = logs[k];
+      if (!day) continue;
+      for (const [id, e] of Object.entries(day)) {
+        if (!e.mood) continue;
+        counts[e.mood - 1]++;
+        const cur = perHabit.get(id) ?? { sum: 0, n: 0 };
+        perHabit.set(id, { sum: cur.sum + e.mood, n: cur.n + 1 });
+      }
+    }
+    const total = counts.reduce((a, b) => a + b, 0);
+    let best: { habit: (typeof habits)[number]; avg: number } | null = null;
+    for (const [id, v] of perHabit) {
+      const h = habits.find((x) => x.id === id);
+      if (!h || v.n < 2) continue;
+      const avg = v.sum / v.n;
+      if (!best || avg > best.avg) best = { habit: h, avg };
+    }
+    return { counts, total, best };
+  }, [habits, logs, today]);
+
+  if (!data.total) return null;
+  return (
+    <Card style={{ gap: 14 }}>
+      <Txt variant="h2">{t('Mood')}</Txt>
+      <View style={{ flexDirection: 'row', height: 14, borderRadius: 7, overflow: 'hidden', backgroundColor: theme.progressTrack }}>
+        {MOODS.map((m, i) => (data.counts[i] ? <View key={m.value} style={{ flex: data.counts[i], backgroundColor: m.color }} /> : null))}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        {MOODS.map((m, i) => (
+          <View key={m.value} style={{ alignItems: 'center', gap: 3 }}>
+            <m.Icon size={22} color={m.color} strokeWidth={2} />
+            <Txt variant="small" color="secondary">
+              {data.counts[i]}
+            </Txt>
+          </View>
+        ))}
+      </View>
+      {data.best && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: theme.inputBg }}>
+          <SparkleIcon size={18} color="#F5A623" />
+          <Txt variant="small" color="secondaryStrong" style={{ flex: 1 }}>
+            {t('You feel best on days you do {habit}.', { habit: data.best.habit.title })}
+          </Txt>
+        </View>
+      )}
     </Card>
   );
 }

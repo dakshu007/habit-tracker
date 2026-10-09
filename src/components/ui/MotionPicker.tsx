@@ -10,6 +10,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { MOTION_ORDER, MOTION_PRESETS, type MotionPreset } from '@/theme/motion';
 import { useHabitStore } from '@/store/useHabitStore';
 import { haptic } from '@/utils/haptics';
+import { t } from '@/i18n';
 
 const ACCENT = '#4C8DF6';
 const BALL = 34;
@@ -63,13 +64,13 @@ export function MotionPicker() {
 
   return (
     <View style={{ gap: 14 }}>
-      <PressableScale silent onPress={() => choose(preset)} accessibilityLabel="Replay animation preview">
+      <PressableScale silent onPress={() => choose(preset)} accessibilityLabel={t('Replay animation preview')}>
         <View
           onLayout={(e) => setTrackW(e.nativeEvent.layout.width)}
           style={{ height: BALL + 8, borderRadius: (BALL + 8) / 2, backgroundColor: theme.inputBg, justifyContent: 'center', paddingHorizontal: 4 }}
         >
           <Txt variant="micro" color="tertiary" style={{ position: 'absolute', alignSelf: 'center' }}>
-            Tap to preview
+            {t('Tap to preview')}
           </Txt>
           <Animated.View style={[{ width: BALL, height: BALL, borderRadius: BALL / 2, overflow: 'hidden' }, ballStyle]}>
             <LinearGradient colors={['#6CC3F7', '#8E7CF5']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }} />
@@ -82,7 +83,7 @@ export function MotionPicker() {
           const p = MOTION_PRESETS[id];
           const on = id === preset;
           return (
-            <PressableScale key={id} silent onPress={() => choose(id)} accessibilityLabel={`${p.label} animations`} style={{ width: '48.5%' }}>
+            <PressableScale key={id} silent onPress={() => choose(id)} accessibilityLabel={t(p.label)} style={{ width: '48.5%' }}>
               <View
                 style={{
                   padding: 12,
@@ -96,12 +97,12 @@ export function MotionPicker() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Txt variant="h3" color={on ? ACCENT : 'primary'}>
-                    {p.label}
+                    {t(p.label)}
                   </Txt>
                   {on && <CheckIcon size={16} color={ACCENT} strokeWidth={3} />}
                 </View>
                 <Txt variant="small" color="secondary" numberOfLines={2}>
-                  {p.description}
+                  {t(p.description)}
                 </Txt>
               </View>
             </PressableScale>

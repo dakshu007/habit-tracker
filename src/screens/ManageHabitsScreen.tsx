@@ -12,6 +12,7 @@ import { getTheme } from '@/data/themes';
 import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
 import type { RootScreenProps } from '@/navigation/types';
+import { t } from '@/i18n';
 
 export function ManageHabitsScreen({ navigation }: RootScreenProps<'ManageHabits'>) {
   const { theme } = useTheme();
@@ -47,7 +48,7 @@ export function ManageHabitsScreen({ navigation }: RootScreenProps<'ManageHabits
                 {h.title}
               </Txt>
               <Txt variant="small" color="secondary">
-                Tap to edit
+                {t('Tap to edit')}
               </Txt>
             </View>
           </View>
@@ -60,7 +61,7 @@ export function ManageHabitsScreen({ navigation }: RootScreenProps<'ManageHabits
             }}
           >
             <View style={{ paddingHorizontal: 12, height: 34, borderRadius: 17, justifyContent: 'center', backgroundColor: theme.inputBg }}>
-              <Txt variant="label">Restore</Txt>
+              <Txt variant="label">{t('Restore')}</Txt>
             </View>
           </PressableScale>
         ) : (
@@ -68,7 +69,7 @@ export function ManageHabitsScreen({ navigation }: RootScreenProps<'ManageHabits
             <MoveBtn disabled={i === 0} up onPress={() => moveHabit(h.id, -1)} />
             <MoveBtn disabled={i === list.length - 1} onPress={() => moveHabit(h.id, 1)} />
             <PressableScale
-              accessibilityLabel={`Archive ${h.title}`}
+              accessibilityLabel={t('Archive {habit}', { habit: h.title })}
               onPress={() => {
                 haptic.medium();
                 setArchived(h.id, true);
@@ -86,12 +87,12 @@ export function ManageHabitsScreen({ navigation }: RootScreenProps<'ManageHabits
 
   return (
     <Screen
-      title="Your habits"
-      subtitle="Reorder, archive or edit."
+      title={t('Your habits')}
+      subtitle={t('Reorder, archive or edit.')}
       accent="#5E86A4"
       tabBar={false}
       left={
-        <GlassButton accessibilityLabel="Back" fill={theme.inputBg} onPress={() => navigation.goBack()}>
+        <GlassButton accessibilityLabel={t('Back')} fill={theme.inputBg} onPress={() => navigation.goBack()}>
           <ChevronLeft size={20} color={theme.textPrimary} strokeWidth={2.4} />
         </GlassButton>
       }
@@ -101,15 +102,15 @@ export function ManageHabitsScreen({ navigation }: RootScreenProps<'ManageHabits
           active.map((h, i) => row(h, i, active))
         ) : (
           <Txt variant="bodyRegular" color="secondary" style={{ paddingVertical: 16, textAlign: 'center' }}>
-            No active habits.
+            {t('No active habits.')}
           </Txt>
         )}
       </Card>
-      <Button label="New habit" icon={<PlusIcon size={18} color={theme.mode === 'dark' ? '#1C1B22' : '#FFFFFF'} />} onPress={() => navigation.navigate('HabitEditor')} />
+      <Button label={t('New habit')} icon={<PlusIcon size={18} color={theme.mode === 'dark' ? '#1C1B22' : '#FFFFFF'} />} onPress={() => navigation.navigate('HabitEditor')} />
 
       {archived.length > 0 && (
         <>
-          <SectionTitle>Archived</SectionTitle>
+          <SectionTitle>{t('Archived')}</SectionTitle>
           <Card style={{ paddingVertical: 4 }}>{archived.map((h, i) => row(h, i, archived))}</Card>
         </>
       )}
@@ -120,7 +121,7 @@ export function ManageHabitsScreen({ navigation }: RootScreenProps<'ManageHabits
 function MoveBtn({ up, disabled, onPress }: { up?: boolean; disabled?: boolean; onPress: () => void }) {
   const { theme } = useTheme();
   return (
-    <PressableScale disabled={disabled} accessibilityLabel={up ? 'Move up' : 'Move down'} onPress={() => (haptic.tick(), onPress())} silent>
+    <PressableScale disabled={disabled} accessibilityLabel={up ? t('Move up') : t('Move down')} onPress={() => (haptic.tick(), onPress())} silent>
       <View
         style={{
           width: 34,

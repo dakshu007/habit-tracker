@@ -16,6 +16,10 @@ import { bestCurrentStreak, levelFor, levelTitle, perfectDays, totalCompletions,
 import { computeAchievements, type Achievement } from '@/logic/achievements';
 import { MONTH_LABELS } from '@/utils/date';
 import { haptic } from '@/utils/haptics';
+import { t } from '@/i18n';
+import { Gift } from '@/components/ui/lucide';
+import { isUnlocked, rewardsFor, useUnlockedAchievements } from '@/logic/unlocks';
+import { Alert } from 'react-native';
 
 /* ------------------------------------------------------------------ */
 /* Avatar                                                              */
@@ -101,7 +105,7 @@ export function IdentityCard() {
         <View pointerEvents="none" style={{ position: 'absolute', bottom: -80, left: -50, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(255,255,255,0.08)' }} />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          <PressableScale accessibilityLabel="Change profile photo" onPress={() => overlay.open(<EditProfileSheet />)}>
+          <PressableScale accessibilityLabel={t('Change profile photo')} onPress={() => overlay.open(<EditProfileSheet />)}>
             <Avatar size={76} />
             <View
               style={{
@@ -122,22 +126,22 @@ export function IdentityCard() {
           </PressableScale>
           <View style={{ flex: 1, gap: 3 }}>
             <Txt variant="title" color="white" numberOfLines={1}>
-              {profile.name || 'Add your name'}
+              {profile.name || t('Add your name')}
             </Txt>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.22)' }}>
                 <Txt variant="micro" color="white">
-                  Lv {stats.lvl.level} · {levelTitle(stats.lvl.level)}
+                  {t('Lv {n}', { n: stats.lvl.level })} · {t(levelTitle(stats.lvl.level))}
                 </Txt>
               </View>
               {joinedLabel && (
                 <Txt variant="small" color="rgba(255,255,255,0.85)" numberOfLines={1}>
-                  since {joinedLabel}
+                  {t('since {date}', { date: joinedLabel })}
                 </Txt>
               )}
             </View>
           </View>
-          <PressableScale accessibilityLabel="Edit profile" onPress={() => overlay.open(<EditProfileSheet />)}>
+          <PressableScale accessibilityLabel={t('Edit profile')} onPress={() => overlay.open(<EditProfileSheet />)}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
               <EditIcon size={18} color="#FFFFFF" />
             </View>
@@ -156,17 +160,17 @@ export function IdentityCard() {
             <View style={{ height: '100%', width: `${Math.max(3, (stats.lvl.into / stats.lvl.span) * 100)}%`, backgroundColor: '#FFFFFF', borderRadius: 4 }} />
           </View>
           <Txt variant="small" color="rgba(255,255,255,0.85)">
-            {stats.lvl.span - stats.lvl.into} XP to level {stats.lvl.level + 1}
+            {t('{xp} XP to level {n}', { xp: stats.lvl.span - stats.lvl.into, n: stats.lvl.level + 1 })}
           </Txt>
         </View>
 
         {/* Stat strip */}
         <View style={{ flexDirection: 'row', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)', paddingVertical: 12 }}>
-          <Stat icon={<FlameIcon size={16} />} value={stats.streak} label="Streak" />
+          <Stat icon={<FlameIcon size={16} />} value={stats.streak} label={t('Streak')} />
           <Divider />
-          <Stat icon={<CheckIcon size={15} color="#FFFFFF" strokeWidth={3} />} value={stats.checkins} label="Check-ins" />
+          <Stat icon={<CheckIcon size={15} color="#FFFFFF" strokeWidth={3} />} value={stats.checkins} label={t('Check-ins')} />
           <Divider />
-          <Stat icon={<SparkleIcon size={15} color="#FFFFFF" />} value={stats.perfect} label="Perfect days" />
+          <Stat icon={<SparkleIcon size={15} color="#FFFFFF" />} value={stats.perfect} label={t('Perfect days')} />
         </View>
       </LinearGradient>
     </View>
@@ -202,6 +206,7 @@ export function EditProfileSheet() {
   const [name, setName] = useState(profile.name);
   const [motto, setMotto] = useState(profile.motto ?? '');
   const [styleId, setStyleId] = useState(getProfileStyle(profile.cardStyle).id);
+  const unlocked = useUnlockedAchievements();
 
   const save = () => {
     setProfile({ name: name.trim(), motto: motto.trim() || undefined, cardStyle: styleId });
@@ -211,36 +216,47 @@ export function EditProfileSheet() {
 
   return (
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, gap: 18 }}>
-      <Txt variant="h2">Edit profile</Txt>
+      <Txt variant="h2">{t('Edit profile')}</Txt>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
         <Avatar size={72} ring={theme.hairline} />
         <View style={{ flex: 1, gap: 8 }}>
-          <Button label={profile.photoUri ? 'Change photo' : 'Add photo'} variant="glass" icon={<CameraIcon size={17} color={theme.textPrimary} />} onPress={() => pickProfilePhoto().catch(() => {})} />
-          {profile.photoUri && <Button label="Remove photo" variant="ghost" color={theme.danger} icon={<TrashIcon size={16} color={theme.danger} />} onPress={removeProfilePhoto} />}
+          <Button label={profile.photoUri ? t('Change photo') : t('Add photo')} variant="glass" icon={<CameraIcon size={17} color={theme.textPrimary} />} onPress={() => pickProfilePhoto().catch(() => {})} />
+          {profile.photoUri && <Button label={t('Remove photo')} variant="ghost" color={theme.danger} icon={<TrashIcon size={16} color={theme.danger} />} onPress={removeProfilePhoto} />}
         </View>
       </View>
 
-      <Field label="Name" value={name} onChangeText={setName} placeholder="Your name" maxLength={24} />
-      <Field label="Your motto" value={motto} onChangeText={setMotto} placeholder="e.g. Small steps, every day." maxLength={60} />
+      <Field label={t('Name')} value={name} onChangeText={setName} placeholder={t('Your name')} maxLength={24} />
+      <Field label={t('Your motto')} value={motto} onChangeText={setMotto} placeholder={t('e.g. Small steps, every day.')} maxLength={60} />
 
       <View style={{ gap: 10 }}>
         <Txt variant="micro" color="secondary">
-          Card color
+          {t('Card color')}
         </Txt>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {profileStyles.map((p) => {
             const on = p.id === styleId;
+            const locked = !isUnlocked(p.unlock, unlocked);
             return (
-              <PressableScale key={p.id} silent onPress={() => (haptic.tick(), setStyleId(p.id))} accessibilityLabel={p.name}>
+              <PressableScale
+                key={p.id}
+                silent
+                onPress={() => {
+                  if (locked) return showLocked(p.name, unlocked.get(p.unlock!));
+                  haptic.tick();
+                  setStyleId(p.id);
+                }}
+                accessibilityLabel={locked ? t('{name} (locked)', { name: p.name }) : p.name}
+              >
                 <View style={{ alignItems: 'center', gap: 4 }}>
                   <View style={{ padding: 3, borderRadius: 18, borderWidth: 2, borderColor: on ? theme.textPrimary : 'transparent' }}>
-                    <LinearGradient colors={p.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 54, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' }}>
+                    <LinearGradient colors={p.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 54, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', opacity: locked ? 0.45 : 1 }}>
                       {on && <CheckIcon size={16} color="#FFFFFF" strokeWidth={3} />}
+                      {locked && <LockIcon size={15} color="#FFFFFF" strokeWidth={2.4} />}
                     </LinearGradient>
                   </View>
                   <Txt variant="small" color={on ? 'primary' : 'secondary'}>
-                    {p.name}
+                    {t(p.name)}
                   </Txt>
                 </View>
               </PressableScale>
@@ -250,8 +266,8 @@ export function EditProfileSheet() {
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button label="Cancel" variant="glass" onPress={overlay.close} style={{ flex: 1 }} />
-        <Button label="Save" onPress={save} style={{ flex: 1 }} />
+        <Button label={t('Cancel')} variant="glass" onPress={overlay.close} style={{ flex: 1 }} />
+        <Button label={t('Save')} onPress={save} style={{ flex: 1 }} />
       </View>
     </ScrollView>
   );
@@ -275,15 +291,11 @@ export function Badge({ a, size = 64 }: { a: Achievement; size?: number }) {
     <View style={{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden', opacity: a.unlocked ? 1 : 0.55 }}>
       {a.unlocked ? (
         <LinearGradient colors={a.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Txt variant="title" style={{ fontSize: size * 0.44, lineHeight: size * 0.56 }}>
-            {a.emoji}
-          </Txt>
+          <a.icon size={size * 0.46} color="#FFFFFF" strokeWidth={1.9} />
         </LinearGradient>
       ) : (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.inputBg }}>
-          <Txt variant="title" style={{ fontSize: size * 0.4, lineHeight: size * 0.52, opacity: 0.35 }}>
-            {a.emoji}
-          </Txt>
+          <a.icon size={size * 0.42} color={theme.textTertiary} strokeWidth={1.8} />
           <View style={{ position: 'absolute', right: size * 0.08, bottom: size * 0.08, width: 20, height: 20, borderRadius: 10, backgroundColor: theme.cardElevated, alignItems: 'center', justifyContent: 'center' }}>
             <LockIcon size={11} color={theme.textSecondary} strokeWidth={2.4} />
           </View>
@@ -300,10 +312,10 @@ export function AchievementsGrid() {
     <View style={{ gap: 14 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Txt variant="h3">
-          {unlocked} of {list.length} unlocked
+          {t('{a} of {b} unlocked', { a: unlocked, b: list.length })}
         </Txt>
         <Txt variant="small" color="secondary">
-          Tap a badge
+          {t('Tap a badge')}
         </Txt>
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 16 }}>
@@ -311,7 +323,7 @@ export function AchievementsGrid() {
           <PressableScale key={a.id} silent onPress={() => (haptic.light(), overlay.open(<BadgeSheet a={a} />))} style={{ width: '25%', alignItems: 'center', gap: 6 }}>
             <Badge a={a} size={58} />
             <Txt variant="small" color={a.unlocked ? 'primary' : 'secondary'} numberOfLines={1} style={{ fontSize: 11.5 }}>
-              {a.title}
+              {t(a.title)}
             </Txt>
           </PressableScale>
         ))}
@@ -325,19 +337,34 @@ function BadgeSheet({ a }: { a: Achievement }) {
   return (
     <View style={{ padding: 24, alignItems: 'center', gap: 12 }}>
       <Badge a={a} size={110} />
-      <Txt variant="title">{a.title}</Txt>
+      <Txt variant="title">{t(a.title)}</Txt>
       <Txt variant="bodyRegular" color="secondary" style={{ textAlign: 'center' }}>
-        {a.description}
+        {t(a.description)}
       </Txt>
+      {rewardsFor(a.id).length > 0 && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 14, backgroundColor: theme.inputBg }}>
+          <Gift size={15} color={theme.textPrimary} strokeWidth={2} />
+          <Txt variant="small">{t('Unlocks: {list}', { list: rewardsFor(a.id).map((r) => t(r)).join(', ') })}</Txt>
+        </View>
+      )}
       <View style={{ alignSelf: 'stretch', gap: 6, marginTop: 6 }}>
         <View style={{ height: 10, borderRadius: 5, backgroundColor: theme.progressTrack, overflow: 'hidden' }}>
           <LinearGradient colors={a.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: '100%', width: `${Math.max(4, (a.value / a.target) * 100)}%`, borderRadius: 5 }} />
         </View>
         <Txt variant="label" color={a.unlocked ? 'success' : 'secondary'} style={{ textAlign: 'center' }}>
-          {a.unlocked ? 'Unlocked 🎉' : `${a.value} / ${a.target}`}
+          {a.unlocked ? t('Unlocked') : `${a.value} / ${a.target}`}
         </Txt>
       </View>
-      <Button label="Close" variant="glass" onPress={overlay.close} style={{ alignSelf: 'stretch', marginTop: 6 }} />
+      <Button label={t('Close')} variant="glass" onPress={overlay.close} style={{ alignSelf: 'stretch', marginTop: 6 }} />
     </View>
+  );
+}
+
+/** Explain how to earn a locked reward. */
+export function showLocked(name: string, a?: Achievement) {
+  haptic.warning();
+  Alert.alert(
+    t('{name} is locked', { name }),
+    a ? t('Unlock it by earning “{title}”: {desc} ({value}/{target})', { title: t(a.title), desc: t(a.description), value: a.value, target: a.target }) : t('Keep going to unlock it.'),
   );
 }

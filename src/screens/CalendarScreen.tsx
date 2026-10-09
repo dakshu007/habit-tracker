@@ -14,7 +14,10 @@ import { useHabitStore } from '@/store/useHabitStore';
 import { useTabs } from '@/navigation/MainTabs';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, spacing } from '@/theme/tokens';
-import { dayCompletion, dueOn, isScheduledOn, valueOn, weeklyHabits } from '@/logic/habits';
+import { dayCompletion, dueOn, isRestDay, isScheduledOn, valueOn, weeklyHabits } from '@/logic/habits';
+import { Bed } from '@/components/ui/lucide';
+import { hexToRgba } from '@/theme/color';
+import { t } from '@/i18n';
 import { getTheme } from '@/data/themes';
 import { DAY_LETTERS, MONTH_LABELS, fromKey, monthGrid, relativeDayLabel, weekdayOrder } from '@/utils/date';
 import { fmtNumber, pct, qty } from '@/utils/format';
@@ -73,15 +76,15 @@ export function CalendarScreen() {
 
   return (
     <Screen
-      title="Calendar"
-      subtitle="Every check-in, day by day."
+      title={t('Calendar')}
+      subtitle={t('Every check-in, day by day.')}
       accent={accent}
       right={
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <GlassButton accessibilityLabel="Previous month" size={40} onPress={() => shift(-1)}>
+          <GlassButton accessibilityLabel={t('Previous month')} size={40} onPress={() => shift(-1)}>
             <ChevronLeft size={18} color={theme.textPrimary} strokeWidth={2.4} />
           </GlassButton>
-          <GlassButton accessibilityLabel="Next month" size={40} onPress={() => shift(1)}>
+          <GlassButton accessibilityLabel={t('Next month')} size={40} onPress={() => shift(1)}>
             <ChevronRight size={18} color={theme.textPrimary} strokeWidth={2.4} />
           </GlassButton>
         </View>
@@ -89,7 +92,7 @@ export function CalendarScreen() {
     >
       {/* Habit filter */}
       <GHScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.screenX }} contentContainerStyle={{ gap: 8, paddingHorizontal: spacing.screenX }}>
-        <Chip label="All habits" color={BRAND} active={!habit} onPress={() => setHabitId(null)} />
+        <Chip label={t('All habits')} color={BRAND} active={!habit} onPress={() => setHabitId(null)} />
         {live.map((h) => (
           <Chip key={h.id} label={h.title} color={getTheme(h.themeId).accent} active={habit?.id === h.id} onPress={() => setHabitId(h.id)} />
         ))}
@@ -98,12 +101,12 @@ export function CalendarScreen() {
       <Card style={{ gap: 14 }}>
         <Animated.View key={`${ym.y}-${ym.m}`} entering={FadeIn.duration(250)} style={{ gap: 14 }}>
           <Txt variant="h2">
-            {MONTH_LABELS[ym.m]} {ym.y}
+            {t(MONTH_LABELS[ym.m])} {ym.y}
           </Txt>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             {weekdayOrder(weekStart).map((d, i) => (
               <Txt key={i} variant="label" color="secondary" style={{ width: cell, textAlign: 'center' }}>
-                {DAY_LETTERS[d]}
+                {t(DAY_LETTERS[d])}
               </Txt>
             ))}
           </View>
@@ -127,7 +130,7 @@ export function CalendarScreen() {
                     borderRadius: cell * 0.32,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: heatColor(v, accent, theme.inputBg),
+                    backgroundColor: isRestDay(logs, key) ? hexToRgba('#9B6BF2', 0.2) : heatColor(v, accent, theme.inputBg),
                     borderWidth: isToday ? 2 : 0,
                     borderColor: theme.textPrimary,
                     opacity: future ? 0.45 : 1,
@@ -145,13 +148,13 @@ export function CalendarScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Txt variant="small" color="secondary">
-              Less
+              {t('Less')}
             </Txt>
             {[0, 0.25, 0.5, 0.75, 1].map((v) => (
               <View key={v} style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: heatColor(v, accent, theme.inputBg) }} />
             ))}
             <Txt variant="small" color="secondary">
-              More
+              {t('More')}
             </Txt>
           </View>
         </View>
@@ -161,13 +164,13 @@ export function CalendarScreen() {
         <Card style={{ flex: 1 }} delay={80}>
           <Txt variant="stat">{summary.perfect}</Txt>
           <Txt variant="small" color="secondary">
-            {habit ? 'Goal days' : 'Perfect days'} this month
+            {habit ? t('Goal days this month') : t('Perfect days this month')}
           </Txt>
         </Card>
         <Card style={{ flex: 1 }} delay={120}>
           <Txt variant="stat">{pct(summary.rate)}</Txt>
           <Txt variant="small" color="secondary">
-            Average completion
+            {t('Average completion')}
           </Txt>
         </Card>
       </View>
@@ -216,6 +219,8 @@ function DaySheet({ day }: { day: string }) {
   const today = useHabitStore((s) => s.today);
   const complete = useHabitStore((s) => s.complete);
   const setSelectedDay = useHabitStore((s) => s.setSelectedDay);
+  const toggleRestDay = useHabitStore((s) => s.toggleRestDay);
+  const rest = useHabitStore((s) => isRestDay(s.logs, day));
 
   const list = [...dueOn(habits, day), ...weeklyHabits(habits)];
   const future = day > today;
@@ -227,14 +232,14 @@ function DaySheet({ day }: { day: string }) {
         <View>
           <Txt variant="title">{relativeDayLabel(day)}</Txt>
           <Txt variant="small" color="secondary">
-            {future ? 'Coming up' : frac === null ? 'Nothing scheduled' : `${pct(frac)} complete`}
+            {future ? t('Coming up') : frac === null ? t('Nothing scheduled') : t('{pct} complete', { pct: pct(frac) })}
           </Txt>
         </View>
       </View>
       <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ gap: 8 }}>
         {list.length === 0 && (
           <Txt variant="bodyRegular" color="secondary">
-            No habits on this day.
+            {t('No habits on this day.')}
           </Txt>
         )}
         {list.map((h) => {
@@ -257,7 +262,7 @@ function DaySheet({ day }: { day: string }) {
               <PressableScale
                 disabled={future}
                 silent={done}
-                accessibilityLabel={done ? `${h.title} completed` : `Complete ${h.title}`}
+                accessibilityLabel={done ? t('{habit} done', { habit: h.title }) : t('Complete {habit}', { habit: h.title })}
                 onPress={() => {
                   if (done) return; // completions are final
                   complete(h.id, day);
@@ -284,8 +289,16 @@ function DaySheet({ day }: { day: string }) {
           );
         })}
       </ScrollView>
+      <PressableScale onPress={() => toggleRestDay(day)}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: rest ? hexToRgba('#9B6BF2', 0.16) : theme.inputBg }}>
+          <Bed size={18} color="#9B6BF2" strokeWidth={2} />
+          <Txt variant="label" style={{ flex: 1 }}>
+            {rest ? t('Rest day — tap to undo') : t('Mark as a rest day')}
+          </Txt>
+        </View>
+      </PressableScale>
       <Button
-        label="Open this day on Home"
+        label={t('Open this day on Home')}
         onPress={() => {
           setSelectedDay(day);
           overlay.close();

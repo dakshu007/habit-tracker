@@ -5,6 +5,7 @@ import { useHabitStore } from '@/store/useHabitStore';
 import { dueOn, isDoneOn } from '@/logic/habits';
 import { dayKey } from '@/utils/date';
 import { CARD_WIDGET, LIST_WIDGET, renderCardWidget, renderTodayWidget } from './TodayWidget';
+import { resolveLang, setLang } from '@/i18n/core';
 
 /** Current store state shaped for widgets (always "today", not the app's selected day). */
 export function widgetData() {
@@ -48,6 +49,7 @@ export async function widgetTaskHandler({ widgetInfo, widgetAction, clickAction,
 
   // Headless start: make sure persisted data is loaded before reading/writing it.
   if (!useHabitStore.persist.hasHydrated()) await useHabitStore.persist.rehydrate();
+  setLang(resolveLang(useHabitStore.getState().settings.language));
 
   if (widgetAction === 'WIDGET_CLICK') {
     const id = typeof clickActionData?.id === 'string' ? clickActionData.id : null;

@@ -11,6 +11,7 @@ import { relativeDayLabel } from '@/utils/date';
 import { fmtNumber, qty } from '@/utils/format';
 import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
+import { t } from '@/i18n';
 
 /** Dialog to type an exact progress value for a habit on a day. */
 export function ValueDialog({ habit, day, initial }: { habit: Habit; day: string; initial: number }) {
@@ -46,8 +47,8 @@ export function ValueDialog({ habit, day, initial }: { habit: Habit; day: string
         returnKeyType="done"
       />
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button label="Cancel" variant="glass" onPress={overlay.close} style={{ flex: 1 }} />
-        <Button label="Save" color={colors.accent} onPress={save} disabled={!valid} style={{ flex: 1 }} />
+        <Button label={t('Cancel')} variant="glass" onPress={overlay.close} style={{ flex: 1 }} />
+        <Button label={t('Save')} color={colors.accent} onPress={save} disabled={!valid} style={{ flex: 1 }} />
       </View>
     </View>
   );

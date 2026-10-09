@@ -29,6 +29,8 @@ import { spacing } from '@/theme/tokens';
 import { haptic } from '@/utils/haptics';
 import { qty } from '@/utils/format';
 import { useMotion } from '@/theme/motion';
+import { BellRing } from '@/components/ui/lucide';
+import { t } from '@/i18n';
 
 const STEP_COLORS = [getTheme('sky').bgTop, getTheme('lavender').bgTop, getTheme('mint').bgTop, getTheme('sunset').bgTop];
 
@@ -89,15 +91,15 @@ export function OnboardingScreen() {
           {step === 1 && (
             <View style={{ flex: 1, paddingHorizontal: spacing.screenX + 4, gap: 22, justifyContent: 'center' }}>
               <Txt variant="display" color="white">
-                First things first —{'\n'}what should we call you?
+                {t('First things first —\nwhat should we call you?')}
               </Txt>
               <GlassSurface radius={24} fill="rgba(255,255,255,0.85)">
                 <View style={{ padding: 6 }}>
-                  <Field autoFocus value={name} onChangeText={setName} placeholder="Your name" maxLength={24} onSubmitEditing={next} returnKeyType="next" style={{ backgroundColor: 'transparent', color: '#1C1B22', fontSize: 20 }} />
+                  <Field autoFocus value={name} onChangeText={setName} placeholder={t('Your name')} maxLength={24} onSubmitEditing={next} returnKeyType="next" style={{ backgroundColor: 'transparent', color: '#1C1B22', fontSize: 20 }} />
                 </View>
               </GlassSurface>
               <View style={{ flex: 1 }} />
-              <Button label={name.trim() ? `Nice to meet you, ${name.trim()}` : 'Skip for now'} onPress={next} />
+              <Button label={name.trim() ? t('Nice to meet you, {name}', { name: name.trim() }) : t('Skip for now')} onPress={next} />
             </View>
           )}
           {step === 2 && <PickHabits picked={picked} setPicked={setPicked} onNext={next} />}
@@ -107,14 +109,14 @@ export function OnboardingScreen() {
                 <Bell />
               </Animated.View>
               <Txt variant="display" color="white" style={{ textAlign: 'center' }}>
-                Want a gentle nudge?
+                {t('Want a gentle nudge?')}
               </Txt>
               <Txt variant="body" color="rgba(255,255,255,0.9)" style={{ textAlign: 'center' }}>
-                One quiet reminder in the evening — only on days you still have habits open. You can set per-habit reminders later.
+                {t('One quiet reminder in the evening — only on days you still have habits open. You can set per-habit reminders later.')}
               </Txt>
               <View style={{ flex: 1 }} />
-              <Button label="Turn on reminders" onPress={() => complete(true)} />
-              <Button label="Maybe later" variant="ghost" color="#FFFFFF" onPress={() => complete(false)} />
+              <Button label={t('Turn on reminders')} onPress={() => complete(true)} />
+              <Button label={t('Maybe later')} variant="ghost" color="#FFFFFF" onPress={() => complete(false)} />
             </View>
           )}
         </Animated.View>
@@ -140,12 +142,12 @@ function Welcome({ onNext }: { onNext: () => void }) {
       </View>
       <Animated.View entering={FadeInDown.delay(150).duration(500)} style={{ gap: 12 }}>
         <Txt variant="display" color="white" style={{ fontSize: 36, lineHeight: 42 }}>
-          Habits that feel{'\n'}like a reward.
+          {t('Habits that feel\nlike a reward.')}
         </Txt>
         <Txt variant="body" color="rgba(255,255,255,0.92)">
-          Swipe through beautiful cards, slide to complete, and watch your streaks grow — all private, all on your phone.
+          {t('Swipe through beautiful cards, slide to complete, and watch your streaks grow — all private, all on your phone.')}
         </Txt>
-        <Button label="Get started" onPress={onNext} style={{ marginTop: 10 }} />
+        <Button label={t('Get started')} onPress={onNext} style={{ marginTop: 10 }} />
       </Animated.View>
     </View>
   );
@@ -187,19 +189,19 @@ function PickHabits({ picked, setPicked, onNext }: { picked: string[]; setPicked
     <View style={{ flex: 1 }}>
       <View style={{ paddingHorizontal: spacing.screenX + 4, gap: 6, marginBottom: 14 }}>
         <Txt variant="display" color="white">
-          Pick a few to start
+          {t('Pick a few to start')}
         </Txt>
         <Txt variant="body" color="rgba(255,255,255,0.9)">
-          Start small — you can add, edit or remove any time.
+          {t('Start small — you can add, edit or remove any time.')}
         </Txt>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.screenX + 4, flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingBottom: 20 }}>
-        {templates.map((t, i) => {
-          const on = picked.includes(t.key);
-          const c = getTheme(t.themeId);
+        {templates.map((tpl, i) => {
+          const on = picked.includes(tpl.key);
+          const c = getTheme(tpl.themeId);
           return (
-            <Animated.View key={t.key} entering={FadeIn.delay(i * 30)}>
-              <PressableScale onPress={() => toggle(t.key)} silent accessibilityLabel={t.title}>
+            <Animated.View key={tpl.key} entering={FadeIn.delay(i * 30)}>
+              <PressableScale onPress={() => toggle(tpl.key)} silent accessibilityLabel={t(tpl.title)}>
                 <View
                   style={{
                     width: col,
@@ -211,13 +213,13 @@ function PickHabits({ picked, setPicked, onNext }: { picked: string[]; setPicked
                     borderColor: on ? '#FFFFFF' : 'rgba(255,255,255,0.25)',
                   }}
                 >
-                  <HabitArt artId={t.artId} colors={c} compact={false} />
+                  <HabitArt artId={tpl.artId} colors={c} compact={false} />
                   <View style={{ position: 'absolute', left: 6, right: 6, bottom: 6, padding: 10, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.94)' }}>
                     <Txt variant="label" color="#1C1B22" numberOfLines={1}>
-                      {t.title}
+                      {t(tpl.title)}
                     </Txt>
                     <Txt variant="small" color="#8A8A95" numberOfLines={1}>
-                      {qty(t.goalValue, t.unit)}
+                      {qty(tpl.goalValue, tpl.unit)}
                     </Txt>
                   </View>
                   <View
@@ -244,7 +246,7 @@ function PickHabits({ picked, setPicked, onNext }: { picked: string[]; setPicked
         })}
       </ScrollView>
       <View style={{ paddingHorizontal: spacing.screenX + 4, paddingTop: 8 }}>
-        <Button label={picked.length ? `Continue with ${picked.length}` : 'Start with an empty slate'} onPress={onNext} />
+        <Button label={picked.length ? t('Continue with {n}', { n: picked.length }) : t('Start with an empty slate')} onPress={onNext} />
       </View>
     </View>
   );
@@ -259,7 +261,9 @@ function Bell() {
   return (
     <GlassSurface radius={60} fill="rgba(255,255,255,0.3)">
       <View style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}>
-        <Animated.Text style={[{ fontSize: 54 }, style]}>🔔</Animated.Text>
+        <Animated.View style={style}>
+          <BellRing size={54} color="#FFFFFF" strokeWidth={1.7} />
+        </Animated.View>
       </View>
     </GlassSurface>
   );

@@ -1,23 +1,21 @@
-import { Text, type TextProps, type TextStyle } from 'react-native';
+import { Text, type StyleProp, type TextProps, type TextStyle } from 'react-native';
 
 import { useTheme } from '@/theme/ThemeContext';
-import { type } from '@/theme/tokens';
-
-type Variant = keyof typeof type;
+import { type, type TypeVariant } from '@/theme/tokens';
 
 /** Semantic color roles resolved from the active theme. */
-type ColorRole = 'primary' | 'secondary' | 'secondaryStrong' | 'tertiary' | 'success' | 'white' | 'inherit';
+type ColorRole = 'primary' | 'secondary' | 'secondaryStrong' | 'tertiary' | 'success' | 'danger' | 'white' | 'inherit';
 
 interface TxtProps extends TextProps {
-  variant: Variant;
-  /** Theme role, or any raw color string (e.g. a task accent). */
+  variant: TypeVariant;
+  /** Theme role, or any raw color string (e.g. a habit accent). */
   color?: ColorRole | string;
-  style?: TextStyle | TextStyle[];
+  style?: StyleProp<TextStyle>;
 }
 
 /**
- * Typography primitive — applies an exact Figma type ramp entry plus a theme
- * color role. Pass a raw hex/rgba to `color` for per-task accent text.
+ * Typography primitive — applies a type ramp entry plus a theme color role.
+ * Pass a raw hex/rgba to `color` for per-habit accent text.
  */
 export function Txt({ variant, color = 'primary', style, ...rest }: TxtProps) {
   const { theme } = useTheme();
@@ -28,15 +26,12 @@ export function Txt({ variant, color = 'primary', style, ...rest }: TxtProps) {
     secondaryStrong: theme.textSecondaryStrong,
     tertiary: theme.textTertiary,
     success: theme.success,
+    danger: theme.danger,
     white: '#FFFFFF',
   };
 
   const resolved =
-    color === 'inherit'
-      ? undefined
-      : color in roleColor
-        ? roleColor[color as keyof typeof roleColor]
-        : color; // raw color string
+    color === 'inherit' ? undefined : color in roleColor ? roleColor[color as keyof typeof roleColor] : color;
 
   return <Text {...rest} style={[type[variant], resolved ? { color: resolved } : null, style]} />;
 }

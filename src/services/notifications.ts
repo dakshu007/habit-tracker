@@ -1,0 +1,133 @@
+import { AppState, Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+
+import { useHabitStore } from '@/store/useHabitStore';
+import { dueOn, isDoneOn } from '@/logic/habits';
+import { dayKey, shiftKey, fromKey } from '@/utils/date';
+
+const CHANNEL = 'reminders';
+const NUDGE_DAYS = 7;
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+export async function setupNotifications() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(CHANNEL, {
+      name: 'Habit reminders',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 180, 120, 180],
+      lightColor: '#4C8DF6',
+    });
+  }
+}
+
+export async function hasPermission(): Promise<boolean> {
+  const p = await Notifications.getPermissionsAsync();
+  return p.granted;
+}
+
+/** Ask for notification permission (Android 13+ shows the system prompt). */
+export async function ensurePermission(): Promise<boolean> {
+  const cur = await Notifications.getPermissionsAsync();
+  if (cur.granted) return true;
+  if (!cur.canAskAgain) return false;
+  const next = await Notifications.requestPermissionsAsync();
+  return next.granted;
+}
+
+const NUDGE_LINES = [
+  'keep your streak alive 🔥',
+  'a few minutes is all it takes ✨',
+  'future you says thanks 🙌',
+  'small steps, big change 🌱',
+];
+
+/**
+ * Rebuild every scheduled notification from current state. Cheap and
+ * idempotent, so we simply call it whenever habits/settings/today's logs change.
+ *  - Per-habit reminders: repeating daily, or weekly on the habit's weekdays.
+ *  - Evening nudge: one-shot for each of the next 7 days, skipped when that
+ *    day is already complete (today) or has nothing due.
+ */
+export async function syncNotifications() {
+  if (!(await hasPermission())) return;
+  const { habits, logs, settings } = useHabitStore.getState();
+
+  await Notifications.cancelAllScheduledNotificationsAsync();
+
+  for (const h of habits) {
+    if (h.archived || !h.reminder.enabled) continue;
+    const content: Notifications.NotificationContentInput = {
+      title: h.title,
+      body: `Time for ${h.title.toLowerCase()} — goal ${h.goalValue} ${h.unit}. ${h.subtitle}`.trim(),
+      data: { habitId: h.id },
+    };
+    const { hour, minute } = h.reminder;
+    if (h.schedule.kind === 'days') {
+      for (const d of h.schedule.days) {
+        await Notifications.scheduleNotificationAsync({
+          content,
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: d + 1, hour, minute, channelId: CHANNEL },
+        });
+      }
+    } else {
+      await Notifications.scheduleNotificationAsync({
+        content,
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: CHANNEL },
+      });
+    }
+  }
+
+  if (settings.nudge.enabled) {
+    const today = dayKey();
+    const now = Date.now();
+    for (let i = 0; i < NUDGE_DAYS; i++) {
+      const key = shiftKey(today, i);
+      const at = fromKey(key);
+      at.setHours(settings.nudge.hour, settings.nudge.minute, 0, 0);
+      if (at.getTime() <= now + 30_000) continue;
+      const due = dueOn(habits, key);
+      const open = i === 0 ? due.filter((h) => !isDoneOn(h, logs, key)) : due;
+      if (!open.length) continue;
+      const line = NUDGE_LINES[(at.getDate() + open.length) % NUDGE_LINES.length];
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: open.length === 1 ? `${open[0].title} is still open` : `${open.length} habits left today`,
+          body: `Check them off before bed — ${line}`,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNEL },
+      });
+    }
+  }
+}
+
+let timer: ReturnType<typeof setTimeout> | null = null;
+function scheduleSync() {
+  if (timer) clearTimeout(timer);
+  timer = setTimeout(() => {
+    timer = null;
+    syncNotifications().catch(() => {});
+  }, 1200);
+}
+
+/** Keep notifications in sync with the store; returns an unsubscribe. */
+export function startNotificationSync() {
+  scheduleSync();
+  const unsub = useHabitStore.subscribe((s, prev) => {
+    if (s.habits !== prev.habits || s.settings !== prev.settings || s.logs !== prev.logs) scheduleSync();
+  });
+  const app = AppState.addEventListener('change', (st) => {
+    if (st === 'active') scheduleSync();
+  });
+  return () => {
+    unsub();
+    app.remove();
+  };
+}

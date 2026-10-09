@@ -1,4 +1,4 @@
-import { Platform, TextStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 
 /**
  * Design tokens — values harvested EXACTLY from the Figma Home frame
@@ -33,6 +33,8 @@ export const palette = {
   progressFillFrom: '#FF986D',
   progressFillTo: '#A3D9FF',
   progressFillStop: 0.84, // gradient stop ~83.98%
+
+  danger: '#FF5A5F',
 
   // Misc accents seen in-frame
   countBadgeText: '#4387BA', // "Today's task" count badge number
@@ -88,48 +90,63 @@ export const layout = {
 /* Typography                                                         */
 /* ------------------------------------------------------------------ */
 /**
- * Figma uses "SF Pro Display" (large/headings) and "SF Pro Text" (body).
- * On iOS the native system font IS San Francisco and applies the correct
- * optical variant by size automatically, so we use the system font + the
- * exact weights. Android falls back to its system font (per design call).
+ * Plus Jakarta Sans everywhere — embedded at build time by the expo-font
+ * config plugin (app.json) and also loaded at runtime in App.tsx. Android
+ * ignores fontWeight for custom families, so each weight maps to its own file.
  */
-const systemFont = Platform.select({ ios: undefined, default: undefined });
+export const fonts = {
+  regular: 'PlusJakartaSans_400Regular',
+  medium: 'PlusJakartaSans_500Medium',
+  semibold: 'PlusJakartaSans_600SemiBold',
+  bold: 'PlusJakartaSans_700Bold',
+  extrabold: 'PlusJakartaSans_800ExtraBold',
+} as const;
 
-type Weight = TextStyle['fontWeight'];
-const W = {
-  regular: '400' as Weight,
-  medium: '500' as Weight,
-  semibold: '600' as Weight,
-};
+type FontWeightName = keyof typeof fonts;
 
-const make = (s: Omit<TextStyle, 'fontFamily'>): TextStyle => ({
-  fontFamily: systemFont,
+const make = (weight: FontWeightName, s: Omit<TextStyle, 'fontFamily' | 'fontWeight'>): TextStyle => ({
+  fontFamily: fonts[weight],
+  includeFontPadding: false,
   ...s,
 });
 
 export const type = {
-  statusBarTime: make({ fontSize: 17, fontWeight: W.semibold, lineHeight: 22, letterSpacing: -0.408 }),
-  weekday: make({ fontSize: 16, fontWeight: W.medium }),
-  pillToggle: make({ fontSize: 16, fontWeight: W.regular }),
-  countBadge: make({ fontSize: 12, fontWeight: W.medium }),
+  // Original Figma ramp
+  weekday: make('semibold', { fontSize: 15 }),
+  pillToggle: make('medium', { fontSize: 15 }),
+  countBadge: make('bold', { fontSize: 11 }),
 
-  cardTitle: make({ fontSize: 24, fontWeight: W.semibold }), // SF Pro Display Semibold
-  cardSubtitle: make({ fontSize: 14, fontWeight: W.regular }),
-  goalLabel: make({ fontSize: 14, fontWeight: W.medium }),
-  goalValue: make({ fontSize: 16, fontWeight: W.medium }),
-  slideLabel: make({ fontSize: 16, fontWeight: W.regular }),
-  statusChip: make({ fontSize: 12, fontWeight: W.regular }),
+  cardTitle: make('bold', { fontSize: 23, letterSpacing: -0.4 }),
+  cardSubtitle: make('regular', { fontSize: 13.5, lineHeight: 18 }),
+  goalLabel: make('medium', { fontSize: 12.5 }),
+  goalValue: make('bold', { fontSize: 15 }),
+  slideLabel: make('medium', { fontSize: 15 }),
+  statusChip: make('semibold', { fontSize: 11.5 }),
 
-  progressHeading: make({ fontSize: 18, fontWeight: W.semibold }),
-  segmentLabel: make({ fontSize: 14, fontWeight: W.medium }),
-  progressTitle: make({ fontSize: 22, fontWeight: W.semibold }),
-  progressSubtitle: make({ fontSize: 14, fontWeight: W.regular }),
-  bigValue: make({ fontSize: 42, fontWeight: W.semibold }),
-  bigValueUnit: make({ fontSize: 20, fontWeight: W.medium }),
-  axisLabel: make({ fontSize: 14, fontWeight: W.semibold }),
-  lastUpdated: make({ fontSize: 13, fontWeight: W.regular }),
-  statusLabel: make({ fontSize: 13, fontWeight: W.medium }),
-  caption: make({ fontSize: 13, fontWeight: W.regular }),
+  progressHeading: make('bold', { fontSize: 18, letterSpacing: -0.2 }),
+  segmentLabel: make('semibold', { fontSize: 13.5 }),
+  progressTitle: make('bold', { fontSize: 21, letterSpacing: -0.3 }),
+  progressSubtitle: make('regular', { fontSize: 13.5 }),
+  bigValue: make('extrabold', { fontSize: 42, letterSpacing: -1.2 }),
+  bigValueUnit: make('semibold', { fontSize: 18 }),
+  axisLabel: make('semibold', { fontSize: 12.5 }),
+  lastUpdated: make('regular', { fontSize: 12.5 }),
+  statusLabel: make('semibold', { fontSize: 12.5 }),
+  caption: make('medium', { fontSize: 12.5 }),
+
+  // App-wide ramp
+  display: make('extrabold', { fontSize: 32, letterSpacing: -0.9, lineHeight: 38 }),
+  title: make('bold', { fontSize: 26, letterSpacing: -0.6 }),
+  h2: make('bold', { fontSize: 19, letterSpacing: -0.3 }),
+  h3: make('semibold', { fontSize: 16 }),
+  body: make('medium', { fontSize: 15, lineHeight: 21 }),
+  bodyRegular: make('regular', { fontSize: 15, lineHeight: 21 }),
+  small: make('medium', { fontSize: 13, lineHeight: 18 }),
+  label: make('semibold', { fontSize: 13 }),
+  micro: make('bold', { fontSize: 10.5, letterSpacing: 0.9, textTransform: 'uppercase' }),
+  button: make('bold', { fontSize: 15.5 }),
+  stat: make('extrabold', { fontSize: 26, letterSpacing: -0.6 }),
+  statSmall: make('bold', { fontSize: 18, letterSpacing: -0.3 }),
 } as const;
 
-export const weights = W;
+export type TypeVariant = keyof typeof type;

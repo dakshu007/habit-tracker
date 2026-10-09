@@ -21,11 +21,17 @@ const RECENTER = 0.015; // per-sample drift correction toward the held angle
  * reading and slowly follows posture changes so it never drifts to an extreme.
  * No-ops (stays at 0) on devices/platforms without device-motion.
  */
-export function useDeviceTilt(): DeviceTilt {
+export function useDeviceTilt(enabled = true): DeviceTilt {
   const tiltX = useSharedValue(0);
   const tiltY = useSharedValue(0);
 
   useEffect(() => {
+    if (!enabled) {
+      // Sensors off (setting disabled or screen hidden): settle flat, save battery.
+      tiltX.value = withTiming(0, { duration: 300 });
+      tiltY.value = withTiming(0, { duration: 300 });
+      return;
+    }
     let mounted = true;
     let origin: { beta: number; gamma: number } | null = null;
     let sub: { remove: () => void } | null = null;
@@ -69,7 +75,7 @@ export function useDeviceTilt(): DeviceTilt {
       mounted = false;
       sub?.remove();
     };
-  }, [tiltX, tiltY]);
+  }, [enabled, tiltX, tiltY]);
 
   return { tiltX, tiltY };
 }

@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { Txt } from '@/components/ui/Txt';
 import { palette, radius, spacing } from '@/theme/tokens';
-import { useTaskStore } from '@/store/useTaskStore';
+import { useHabitStore } from '@/store/useHabitStore';
+import { dueOn, isDoneOn, weekSessions, weeklyHabits, weeklyTarget } from '@/logic/habits';
+import { haptic } from '@/utils/haptics';
 
 const SPRING = { damping: 18, stiffness: 210, mass: 0.7 } as const;
 
@@ -20,11 +22,23 @@ interface Seg {
  * measured because their widths differ).
  */
 export function SegmentedPill() {
-  const filter = useTaskStore((s) => s.filter);
-  const setFilter = useTaskStore((s) => s.setFilter);
-  const tasks = useTaskStore((s) => s.tasks);
+  const filter = useHabitStore((s) => s.filter);
+  const setFilterRaw = useHabitStore((s) => s.setFilter);
+  const habits = useHabitStore((s) => s.habits);
+  const logs = useHabitStore((s) => s.logs);
+  const day = useHabitStore((s) => s.selectedDay);
+  const weekStart = useHabitStore((s) => s.settings.weekStart);
 
-  const todayRemaining = tasks.filter((t) => t.isDaily && t.status === 'inProgress').length;
+  const setFilter = (f: typeof filter) => {
+    if (f !== filter) haptic.tick();
+    setFilterRaw(f);
+  };
+
+  const todayRemaining = useMemo(() => dueOn(habits, day).filter((h) => !isDoneOn(h, logs, day)).length, [habits, logs, day]);
+  const weeklyRemaining = useMemo(
+    () => weeklyHabits(habits).filter((h) => weekSessions(h, logs, day, weekStart) < weeklyTarget(h)).length,
+    [habits, logs, day, weekStart],
+  );
 
   const [segs, setSegs] = useState<Seg[]>([]);
   const ax = useSharedValue(0);
@@ -91,7 +105,7 @@ export function SegmentedPill() {
         }}
       >
         <Txt variant="pillToggle" color="white">
-          Today&rsquo;s task
+          Today&rsquo;s tasks
         </Txt>
         <View
           style={{
@@ -125,6 +139,23 @@ export function SegmentedPill() {
         <Txt variant="pillToggle" color="white" style={{ opacity: filter === 'weekly' ? 1 : 0.9 }}>
           Weekly tasks
         </Txt>
+        {weeklyRemaining > 0 && (
+          <View
+            style={{
+              width: 19,
+              height: 19,
+              marginLeft: 10,
+              borderRadius: radius.countBadge,
+              backgroundColor: 'rgba(255,255,255,0.35)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Txt variant="countBadge" color="white">
+              {weeklyRemaining}
+            </Txt>
+          </View>
+        )}
       </Pressable>
     </View>
   );

@@ -2,9 +2,9 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 
 import { darkTheme, lightTheme, type Theme } from './theme';
-import { useTaskStore } from '@/store/useTaskStore';
+import { useHabitStore, type ThemeMode } from '@/store/useHabitStore';
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type { ThemeMode };
 
 interface ThemeContextValue {
   /** Resolved theme object to read colors from. */
@@ -14,8 +14,6 @@ interface ThemeContextValue {
   /** True when the resolved theme is dark. */
   isDark: boolean;
   setMode: (mode: ThemeMode) => void;
-  /** Quick toggle between explicit light/dark (ignores 'system'). */
-  toggle: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -26,20 +24,19 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemScheme = useColorScheme(); // 'light' | 'dark' | null
-  const mode = useTaskStore((s) => s.themeMode);
-  const setMode = useTaskStore((s) => s.setThemeMode);
+  const mode = useHabitStore((s) => s.settings.themeMode);
+  const updateSettings = useHabitStore((s) => s.updateSettings);
 
   const value = useMemo<ThemeContextValue>(() => {
-    const resolved = mode === 'system' ? systemScheme ?? 'light' : mode;
+    const resolved = mode === 'system' ? (systemScheme ?? 'light') : mode;
     const isDark = resolved === 'dark';
     return {
       theme: isDark ? darkTheme : lightTheme,
       mode,
       isDark,
-      setMode,
-      toggle: () => setMode(isDark ? 'light' : 'dark'),
+      setMode: (themeMode) => updateSettings({ themeMode }),
     };
-  }, [mode, systemScheme, setMode]);
+  }, [mode, systemScheme, updateSettings]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

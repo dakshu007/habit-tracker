@@ -7,6 +7,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } fr
 import { useTheme } from '@/theme/ThemeContext';
 import { haptic } from '@/utils/haptics';
 import { Txt } from './Txt';
+import { useMotion } from '@/theme/motion';
 
 /* ------------------------------------------------------------------ */
 /* Blur target plumbing                                                */
@@ -128,29 +129,39 @@ interface PressableScaleProps extends Omit<PressableProps, 'style'> {
   silent?: boolean;
 }
 
-/** Pressable that springs down on touch — the app's universal tap feel. */
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/**
+ * Pressable that eases down on touch — the app's universal tap feel. Layout
+ * styles (flex, size, margins) apply to the pressable itself so it can grow
+ * inside rows; depth and spring come from the motion preset.
+ */
 export function PressableScale({ children, style, scaleTo = 0.96, silent, onPress, disabled, ...rest }: PressableScaleProps) {
+  const m = useMotion();
   const s = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  // Presets scale the requested depth (minimal/off barely move).
+  const depth = 1 - (1 - scaleTo) * ((1 - m.pressScale) / 0.04);
   return (
-    <Pressable
+    <AnimatedPressable
       {...rest}
       disabled={disabled}
       onPressIn={(e) => {
-        s.value = withTiming(scaleTo, { duration: 90 });
+        s.value = withTiming(Math.min(1, depth), { duration: 90 });
         rest.onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        s.value = withSpring(1, { damping: 12, stiffness: 260 });
+        s.value = withSpring(1, m.release);
         rest.onPressOut?.(e);
       }}
       onPress={(e) => {
         if (!silent) haptic.light();
         onPress?.(e);
       }}
+      style={[style, anim, disabled && { opacity: 0.45 }]}
     >
-      <Animated.View style={[anim, style, disabled && { opacity: 0.45 }]}>{children}</Animated.View>
-    </Pressable>
+      {children}
+    </AnimatedPressable>
   );
 }
 

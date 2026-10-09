@@ -33,6 +33,7 @@ export const artList: Art[] = [
   { id: 'aura-sun', name: 'Morning', kind: 'aura', glyph: 'sun' },
   { id: 'aura-pen', name: 'Journal', kind: 'aura', glyph: 'pen' },
   { id: 'aura-dumbbell', name: 'Workout', kind: 'aura', glyph: 'dumbbell' },
+  { id: 'aura-shoe', name: 'Running', kind: 'aura', glyph: 'shoe' },
   { id: 'aura-steps', name: 'Walking', kind: 'aura', glyph: 'steps' },
   { id: 'aura-leaf', name: 'Healthy', kind: 'aura', glyph: 'leaf' },
   { id: 'aura-heart', name: 'Self-care', kind: 'aura', glyph: 'heart' },

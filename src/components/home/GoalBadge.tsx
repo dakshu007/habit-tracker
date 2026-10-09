@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { Txt } from '@/components/ui/Txt';
 import { radius, spacing } from '@/theme/tokens';
 import { hexToRgba } from '@/theme/color';
-import { fmtNumber } from '@/utils/format';
+import { qty } from '@/utils/format';
 import type { HabitColors } from '@/data/types';
 
 /**
@@ -28,7 +28,7 @@ export function GoalBadge({ colors, goal, unit }: { colors: HabitColors; goal: n
         Goal
       </Txt>
       <Txt variant="goalValue" color="white" numberOfLines={1}>
-        {fmtNumber(goal)} {unit}
+        {qty(goal, unit)}
       </Txt>
     </View>
   );

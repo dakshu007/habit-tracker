@@ -6,6 +6,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { ActiveTimer, Habit, Logs } from '@/data/types';
 import { dayKey } from '@/utils/date';
 import { dueOn, weeklyHabits } from '@/logic/habits';
+import type { MotionPreset } from '@/theme/motion';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type TaskFilter = 'today' | 'weekly';
@@ -16,6 +17,10 @@ export interface Settings {
   haptics: boolean;
   /** Gyroscope tilt / parallax on the card stack. */
   motion: boolean;
+  /** App-wide animation style (see theme/motion). */
+  motionPreset: MotionPreset;
+  /** Swipe left/right on a screen to change tabs. */
+  swipeTabs: boolean;
   weekStart: 0 | 1;
   /** Evening nudge if day habits are still open. */
   nudge: { enabled: boolean; hour: number; minute: number };
@@ -81,6 +86,8 @@ const defaultSettings: Settings = {
   themeMode: 'system',
   haptics: true,
   motion: true,
+  motionPreset: 'smooth',
+  swipeTabs: true,
   weekStart: 1,
   nudge: { enabled: true, hour: 20, minute: 30 },
 };

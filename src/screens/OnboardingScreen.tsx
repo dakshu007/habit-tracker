@@ -27,6 +27,8 @@ import { DEFAULT_TEMPLATE_KEYS, habitFromTemplate, templates } from '@/data/temp
 import { ensurePermission } from '@/services/notifications';
 import { spacing } from '@/theme/tokens';
 import { haptic } from '@/utils/haptics';
+import { qty } from '@/utils/format';
+import { useMotion } from '@/theme/motion';
 
 const STEP_COLORS = [getTheme('sky').bgTop, getTheme('lavender').bgTop, getTheme('mint').bgTop, getTheme('sunset').bgTop];
 
@@ -37,6 +39,7 @@ export function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [picked, setPicked] = useState<string[]>(DEFAULT_TEMPLATE_KEYS);
+  const m = useMotion();
 
   const pos = useSharedValue(0);
   useEffect(() => {
@@ -71,7 +74,9 @@ export function OnboardingScreen() {
 
   return (
     <GradientBackground colors={STEP_COLORS} pos={pos}>
-      <KeyboardAvoidingView behavior="padding" style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 }}>
+      {/* KeyboardAvoidingView owns paddingBottom, so the safe-area padding lives on an inner view. */}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 16) + 12 }}>
         {/* Progress dots */}
         <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
           {[0, 1, 2, 3].map((i) => (
@@ -79,7 +84,7 @@ export function OnboardingScreen() {
           ))}
         </View>
 
-        <Animated.View key={step} entering={FadeInRight.duration(380).springify().damping(18)} exiting={FadeOutLeft.duration(200)} style={{ flex: 1 }}>
+        <Animated.View key={step} entering={m.enter === 'none' ? undefined : m.enter === 'fade' ? FadeIn.duration(200) : FadeInRight.springify().damping(m.enterSpring.damping).stiffness(m.enterSpring.stiffness)} exiting={m.enter === 'none' ? undefined : FadeOutLeft.duration(180 * m.speed)} style={{ flex: 1 }}>
           {step === 0 && <Welcome onNext={next} />}
           {step === 1 && (
             <View style={{ flex: 1, paddingHorizontal: spacing.screenX + 4, gap: 22, justifyContent: 'center' }}>
@@ -113,6 +118,7 @@ export function OnboardingScreen() {
             </View>
           )}
         </Animated.View>
+        </View>
       </KeyboardAvoidingView>
     </GradientBackground>
   );
@@ -211,7 +217,7 @@ function PickHabits({ picked, setPicked, onNext }: { picked: string[]; setPicked
                       {t.title}
                     </Txt>
                     <Txt variant="small" color="#8A8A95" numberOfLines={1}>
-                      {t.goalValue} {t.unit}
+                      {qty(t.goalValue, t.unit)}
                     </Txt>
                   </View>
                   <View

@@ -13,7 +13,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { useHabitStore } from '@/store/useHabitStore';
 import { getTheme } from '@/data/themes';
 import { valueOn, weekSessions } from '@/logic/habits';
-import { fmtNumber } from '@/utils/format';
+import { fmtNumber, qty } from '@/utils/format';
 import type { Habit } from '@/data/types';
 
 /** Front card aspect ratio from Figma: 358 × 503. */
@@ -42,7 +42,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY }: T
   const future = day > today;
 
   let tone: ChipTone = done ? 'done' : value > 0 ? 'progress' : 'idle';
-  let chip = done ? 'Done' : value > 0 ? `${fmtNumber(value)} / ${fmtNumber(habit.goalValue)} ${habit.unit}` : 'To do';
+  let chip = done ? 'Done' : value > 0 ? `${fmtNumber(value)} / ${qty(habit.goalValue, habit.unit)}` : 'To do';
   if (future) {
     tone = 'upcoming';
     chip = 'Upcoming';

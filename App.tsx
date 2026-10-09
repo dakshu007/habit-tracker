@@ -14,12 +14,14 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from '@react-navigation/native';
 
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { useHabitStore } from '@/store/useHabitStore';
 import { setupNotifications, startNotificationSync } from '@/services/notifications';
+import { startWidgetSync } from '@/widget/sync';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 SplashScreen.setOptions({ duration: 350, fade: true });
@@ -50,6 +52,7 @@ function useDayRollover() {
 
 function Root() {
   const { theme, isDark } = useTheme();
+  const motionOff = useHabitStore((s) => s.settings.motionPreset === 'off');
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(theme.screenBase).catch(() => {});
@@ -64,6 +67,8 @@ function Root() {
 
   return (
     <NavigationContainer theme={navTheme}>
+      {/* "Off" animation style: Reanimated jumps every animation to its end state. */}
+      <ReducedMotionConfig mode={motionOff ? ReduceMotion.Always : ReduceMotion.System} />
       <RootNavigator />
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </NavigationContainer>
@@ -86,7 +91,12 @@ export default function App() {
   useEffect(() => {
     if (!hydrated) return;
     setupNotifications().catch(() => {});
-    return startNotificationSync();
+    const stopNotifications = startNotificationSync();
+    const stopWidget = startWidgetSync();
+    return () => {
+      stopNotifications();
+      stopWidget();
+    };
   }, [hydrated]);
 
   useEffect(() => {

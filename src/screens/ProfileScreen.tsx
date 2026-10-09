@@ -10,11 +10,15 @@ import { Button, PressableScale } from '@/components/ui/Glass';
 import { Field } from '@/components/ui/Field';
 import { overlay } from '@/components/ui/Overlay';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { ArchiveIcon, ChevronRight, DownloadIcon, EditIcon, MotionIcon, PlusIcon, RefreshIcon, ShareIcon, VibrateIcon, CalendarSmallIcon } from '@/components/ui/icons';
+import { ArchiveIcon, ChevronRight, DownloadIcon, EditIcon, MotionIcon, PlusIcon, RefreshIcon, ShareIcon, VibrateIcon, CalendarSmallIcon, SwipeIcon, WidgetIcon } from '@/components/ui/icons';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useTheme, type ThemeMode } from '@/theme/ThemeContext';
 import { levelFor, levelTitle, xpFor } from '@/logic/habits';
 import { exportBackup, pickBackup } from '@/services/backup';
+import { SwipeToggle } from '@/components/ui/SwipeToggle';
+import { MotionPicker } from '@/components/ui/MotionPicker';
+import { requestPinWidget } from 'react-native-android-widget';
+import { WIDGET_NAME } from '@/widget/TodayWidget';
 import { haptic } from '@/utils/haptics';
 import type { RootNav } from '@/navigation/types';
 
@@ -75,6 +79,16 @@ export function ProfileScreen() {
     } catch (e) {
       haptic.warning();
       Alert.alert('Couldn’t import', e instanceof Error ? e.message : 'Unknown error');
+    }
+  };
+
+  const addWidget = async () => {
+    const ok = await requestPinWidget({ widgetName: WIDGET_NAME }).catch(() => false);
+    if (!ok) {
+      Alert.alert(
+        'Add the widget',
+        'Long-press an empty spot on your home screen → Widgets → Habit Tracker, then drag “Today’s habits” onto your screen.',
+      );
     }
   };
 
@@ -144,6 +158,11 @@ export function ProfileScreen() {
         />
       </Card>
 
+      <SectionTitle>Animations</SectionTitle>
+      <Card>
+        <MotionPicker />
+      </Card>
+
       <SectionTitle>Experience</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
         <Row
@@ -161,21 +180,26 @@ export function ProfileScreen() {
           right={<Toggle value={settings.motion} onChange={(v) => updateSettings({ motion: v })} />}
         />
         <Row
+          icon={<SwipeIcon size={19} color="#34C7A0" />}
+          iconBg="#34C7A0"
+          title="Swipe between tabs"
+          subtitle="Swipe left or right on any screen"
+          right={<Toggle value={settings.swipeTabs} onChange={(v) => updateSettings({ swipeTabs: v })} />}
+        />
+        <Row
           last
           icon={<CalendarSmallIcon size={19} color="#FF986D" />}
           iconBg="#FF986D"
           title="Week starts on"
           right={
-            <View style={{ width: 130 }}>
-              <SegmentedControl<'1' | '0'>
-                options={[
-                  { key: '1', label: 'Mon' },
-                  { key: '0', label: 'Sun' },
-                ]}
-                value={`${settings.weekStart}` as '1' | '0'}
-                onChange={(v) => updateSettings({ weekStart: v === '1' ? 1 : 0 })}
-              />
-            </View>
+            <SwipeToggle<'1' | '0'>
+              options={[
+                { key: '1', label: 'Mon' },
+                { key: '0', label: 'Sun' },
+              ]}
+              value={`${settings.weekStart}` as '1' | '0'}
+              onChange={(v) => updateSettings({ weekStart: v === '1' ? 1 : 0 })}
+            />
           }
         />
       </Card>
@@ -187,6 +211,14 @@ export function ProfileScreen() {
           iconBg="#34C759"
           title="New habit"
           onPress={() => navigation.navigate('HabitEditor')}
+          right={<ChevronRight size={18} color={theme.textTertiary} />}
+        />
+        <Row
+          icon={<WidgetIcon size={19} color="#B280FF" />}
+          iconBg="#B280FF"
+          title="Add home-screen widget"
+          subtitle="Check off habits without opening the app"
+          onPress={addWidget}
           right={<ChevronRight size={18} color={theme.textTertiary} />}
         />
         <Row

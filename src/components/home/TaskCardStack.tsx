@@ -21,6 +21,7 @@ import { useHabitStore, useActiveHabit, useVisibleHabits } from '@/store/useHabi
 import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
 import type { RootNav } from '@/navigation/types';
+import { useMotion } from '@/theme/motion';
 
 /** Shares the carousel's live position with the background so the tint morphs mid-swipe. */
 export const CarouselContext = createContext<{ pos: SharedValue<number> } | null>(null);
@@ -34,7 +35,6 @@ export const CarouselContext = createContext<{ pos: SharedValue<number> } | null
  *  - Long-press → habit details.
  */
 
-const SPRING = { damping: 20, stiffness: 160, mass: 0.6 } as const;
 const TILT_DEG = 7;
 
 interface CarouselCardProps {
@@ -95,6 +95,8 @@ export function TaskCardStack({ focused }: { focused: boolean }) {
   const visible = useVisibleHabits();
   const setActive = useHabitStore((s) => s.setActive);
   const motion = useHabitStore((s) => s.settings.motion);
+  const m = useMotion();
+  const SPRING = m.card;
 
   const ids = visible.map((t) => t.id);
   const len = visible.length;
@@ -145,7 +147,7 @@ export function TaskCardStack({ focused }: { focused: boolean }) {
     .failOffsetY([-14, 14])
     .onBegin(() => {
       startPos.value = pos.value;
-      pressScale.value = withTiming(0.97, { duration: 120 });
+      pressScale.value = withTiming(m.pressScale, { duration: 120 });
     })
     .onUpdate((e) => {
       pos.value = startPos.value - e.translationX / step;
@@ -155,19 +157,19 @@ export function TaskCardStack({ focused }: { focused: boolean }) {
       snapTo(Math.round(projected));
     })
     .onFinalize(() => {
-      pressScale.value = withSpring(1, { damping: 12, stiffness: 220 });
+      pressScale.value = withSpring(1, m.release);
     });
 
   const longPress = Gesture.LongPress()
     .minDuration(380)
     .onBegin(() => {
-      pressScale.value = withTiming(0.95, { duration: 300 });
+      pressScale.value = withTiming(Math.min(1, m.pressScale - 0.02), { duration: 300 });
     })
     .onStart(() => {
       scheduleOnRN(openDetail);
     })
     .onFinalize(() => {
-      pressScale.value = withSpring(1, { damping: 12, stiffness: 220 });
+      pressScale.value = withSpring(1, m.release);
     });
 
   const tap = Gesture.Tap()

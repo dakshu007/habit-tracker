@@ -16,6 +16,7 @@ import { Txt } from '@/components/ui/Txt';
 import { CheckIcon, ChevronsRight } from '@/components/ui/icons';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, radius } from '@/theme/tokens';
+import { useMotion } from '@/theme/motion';
 
 const TRACK_H = 62;
 const KNOB = 50;
@@ -44,6 +45,7 @@ interface SlideToCompleteProps {
  */
 export function SlideToComplete({ done, onComplete, doneLabel = 'Done!', disabled = false, idleLabel = "Slide when you're done" }: SlideToCompleteProps) {
   const { theme } = useTheme();
+  const m = useMotion();
   const x = useSharedValue(0);
   const startX = useSharedValue(0);
   const maxX = useSharedValue(0);
@@ -58,10 +60,11 @@ export function SlideToComplete({ done, onComplete, doneLabel = 'Done!', disable
     haptic.success();
     ring.value = 0;
     ring.value = withTiming(1, { duration: 620 });
+    if (!m.pop) return;
     checkPop.value = withSequence(
-      withTiming(0.6, { duration: 80 }),
-      withTiming(1.35, { duration: 140 }),
-      withSpring(1, { damping: 8, stiffness: 240 }),
+      withTiming(0.75, { duration: 80 }),
+      withTiming(1.18, { duration: 140 }),
+      withSpring(1, m.release),
     );
   };
 
@@ -73,7 +76,7 @@ export function SlideToComplete({ done, onComplete, doneLabel = 'Done!', disable
       progress.value = withTiming(1, { duration: 160 });
       if (!prevDone.current) celebrate();
     } else {
-      x.value = withSpring(0, { damping: 18, stiffness: 200 });
+      x.value = withSpring(0, m.ui);
       progress.value = withTiming(0, { duration: 160 });
     }
     prevDone.current = done;
@@ -105,7 +108,7 @@ export function SlideToComplete({ done, onComplete, doneLabel = 'Done!', disable
         progress.value = withTiming(1, { duration: 140 });
         scheduleOnRN(onComplete);
       } else {
-        x.value = withSpring(0, { damping: 18, stiffness: 200 });
+        x.value = withSpring(0, m.ui);
       }
     });
 

@@ -64,3 +64,5 @@ export const CalendarSmallIcon = line('M4 9.5h16M8.5 3.5v3M15.5 3.5v3', ({ color
 ));
 export const BellSmallIcon = line('M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15zM10 19.5a2 2 0 0 0 4 0');
 export const UndoIcon = line('M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11');
+export const SwipeIcon = line('M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4');
+export const WidgetIcon = line('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z');

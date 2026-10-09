@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { Txt } from '@/components/ui/Txt';
 import { useTheme } from '@/theme/ThemeContext';
+import { useMotion } from '@/theme/motion';
 
 export interface Bar {
   label: string;
@@ -23,10 +24,11 @@ interface BarChartProps {
 
 function BarCol({ bar, i, height, from, to }: { bar: Bar; i: number; height: number; from: string; to: string }) {
   const { theme } = useTheme();
+  const m = useMotion();
   const h = useSharedValue(0);
   useEffect(() => {
-    h.value = withDelay(i * 40, withSpring(bar.value ?? 0, { damping: 16, stiffness: 120 }));
-  }, [bar.value, h, i]);
+    h.value = withDelay(i * 40 * m.speed, withSpring(bar.value ?? 0, m.ui));
+  }, [bar.value, h, i, m]);
   const style = useAnimatedStyle(() => ({ height: Math.max(bar.value ? 8 : 0, h.value * height) }));
 
   return (

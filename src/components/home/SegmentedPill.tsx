@@ -7,8 +7,8 @@ import { palette, radius, spacing } from '@/theme/tokens';
 import { useHabitStore } from '@/store/useHabitStore';
 import { dueOn, isDoneOn, weekSessions, weeklyHabits, weeklyTarget } from '@/logic/habits';
 import { haptic } from '@/utils/haptics';
+import { useMotion } from '@/theme/motion';
 
-const SPRING = { damping: 18, stiffness: 210, mass: 0.7 } as const;
 
 interface Seg {
   x: number;
@@ -22,6 +22,7 @@ interface Seg {
  * measured because their widths differ).
  */
 export function SegmentedPill() {
+  const SPRING = useMotion().ui;
   const filter = useHabitStore((s) => s.filter);
   const setFilterRaw = useHabitStore((s) => s.setFilter);
   const habits = useHabitStore((s) => s.habits);

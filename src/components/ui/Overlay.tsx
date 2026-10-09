@@ -7,6 +7,7 @@ import { create } from 'zustand';
 
 import { useTheme } from '@/theme/ThemeContext';
 import { useBlurTarget } from './Glass';
+import { useMotion } from '@/theme/motion';
 
 type Variant = 'sheet' | 'dialog';
 
@@ -41,6 +42,8 @@ export function OverlayHost() {
   const { theme, isDark } = useTheme();
   const target = useBlurTarget();
   const insets = useSafeAreaInsets();
+  const m = useMotion();
+  const anim = m.enter !== 'spring';
 
   useEffect(() => {
     if (!node) return;
@@ -55,7 +58,7 @@ export function OverlayHost() {
 
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50 }} pointerEvents="box-none">
-      <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(180)} style={abs}>
+      <Animated.View entering={m.enter === 'none' ? undefined : FadeIn.duration(220 * m.speed)} exiting={m.enter === 'none' ? undefined : FadeOut.duration(180 * m.speed)} style={abs}>
         {target ? (
           <BlurView blurTarget={target} blurMethod="dimezisBlurViewSdk31Plus" intensity={28} tint={isDark ? 'dark' : 'light'} style={abs} />
         ) : null}
@@ -65,8 +68,8 @@ export function OverlayHost() {
       {variant === 'sheet' ? (
         <Animated.View
           key={key}
-          entering={SlideInDown.springify().damping(20).stiffness(180)}
-          exiting={SlideOutDown.duration(200)}
+          entering={m.enter === 'none' ? undefined : anim ? FadeIn.duration(180) : SlideInDown.springify().damping(m.enterSpring.damping * 1.2).stiffness(m.enterSpring.stiffness * 1.4).mass(m.enterSpring.mass)}
+          exiting={m.enter === 'none' ? undefined : anim ? FadeOut.duration(150) : SlideOutDown.duration(200)}
           style={{
             position: 'absolute',
             left: 8,
@@ -90,8 +93,8 @@ export function OverlayHost() {
         <View style={{ position: 'absolute', left: 20, right: 20, top: insets.top + 90 }} pointerEvents="box-none">
           <Animated.View
             key={key}
-            entering={ZoomIn.springify().damping(18).stiffness(220)}
-            exiting={ZoomOut.duration(160)}
+            entering={m.enter === 'none' ? undefined : anim ? FadeIn.duration(180) : ZoomIn.springify().damping(m.ui.damping).stiffness(m.ui.stiffness).mass(m.ui.mass)}
+            exiting={m.enter === 'none' ? undefined : anim ? FadeOut.duration(150) : ZoomOut.duration(160)}
             style={{
               borderRadius: 30,
               backgroundColor: theme.cardElevated,

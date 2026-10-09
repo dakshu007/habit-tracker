@@ -14,7 +14,7 @@ import { hexToRgba } from '@/theme/color';
 import { useHabitStore } from '@/store/useHabitStore';
 import { lastUpdatedOn, valueOn } from '@/logic/habits';
 import { getTheme } from '@/data/themes';
-import { fmtNumber } from '@/utils/format';
+import { fmtNumber, qty, unitFor } from '@/utils/format';
 import { formatLastUpdated } from '@/utils/date';
 import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
@@ -87,15 +87,15 @@ export function ProgressCard({ habit }: { habit: Habit }) {
           <Txt variant="progressSubtitle" color="secondaryStrong">
             {done
               ? value > habit.goalValue
-                ? `Goal smashed · +${fmtNumber(value - habit.goalValue)} ${habit.unit}`
+                ? `Goal smashed · +${qty(value - habit.goalValue, habit.unit)}`
                 : 'Goal reached 🎉'
-              : `${fmtNumber(remaining)} ${habit.unit} to your goal`}
+              : `${qty(remaining, habit.unit)} to your goal`}
           </Txt>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6 }}>
           <Txt variant="bigValue">{fmtNumber(value)}</Txt>
           <Txt variant="bigValueUnit" color="secondaryStrong" style={{ marginBottom: 7 }}>
-            {habit.unit}
+            {unitFor(value, habit.unit)}
           </Txt>
         </View>
       </View>
@@ -104,7 +104,7 @@ export function ProgressCard({ habit }: { habit: Habit }) {
         <GradientProgressBar
           fraction={habit.goalValue > 0 ? value / habit.goalValue : 0}
           minLabel="0"
-          maxLabel={`${fmtNumber(habit.goalValue)} ${habit.unit.toUpperCase()}`}
+          maxLabel={qty(habit.goalValue, habit.unit).toUpperCase()}
         />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 16 }}>
           <Txt variant="lastUpdated" color="secondary">
@@ -168,7 +168,7 @@ export function ProgressCard({ habit }: { habit: Habit }) {
       {!future && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <PressableScale
-            accessibilityLabel={`Remove ${habit.step} ${habit.unit}`}
+            accessibilityLabel={`Remove ${qty(habit.step, habit.unit)}`}
             onPress={() => bump(-1)}
             disabled={value <= 0}
             style={[circle(50), { backgroundColor: ctrlBg }]}
@@ -176,7 +176,7 @@ export function ProgressCard({ habit }: { habit: Habit }) {
             <MinusIcon size={20} color={theme.textPrimary} />
           </PressableScale>
 
-          <PressableScale accessibilityLabel={`Add ${habit.step} ${habit.unit}`} onPress={() => bump(1)} style={{ flex: 1 }}>
+          <PressableScale accessibilityLabel={`Add ${qty(habit.step, habit.unit)}`} onPress={() => bump(1)} style={{ flex: 1 }}>
             <View
               style={{
                 height: 50,
@@ -191,7 +191,7 @@ export function ProgressCard({ habit }: { habit: Habit }) {
             >
               <PlusIcon size={18} color="#FFFFFF" strokeWidth={2.4} />
               <Txt variant="button" color="white">
-                {fmtNumber(habit.step)} {habit.unit}
+                {qty(habit.step, habit.unit)}
               </Txt>
             </View>
           </PressableScale>

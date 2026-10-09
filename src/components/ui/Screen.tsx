@@ -2,13 +2,14 @@ import { useEffect, type ReactNode } from 'react';
 import { Pressable, ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, interpolateColor, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { Txt } from './Txt';
 import { useTheme } from '@/theme/ThemeContext';
 import { hexToRgba } from '@/theme/color';
 import { spacing } from '@/theme/tokens';
 import { haptic } from '@/utils/haptics';
+import { useEnter, useMotion } from '@/theme/motion';
 
 /* ------------------------------------------------------------------ */
 /* Screen                                                              */
@@ -31,9 +32,10 @@ interface ScreenProps {
 export function Screen({ title, subtitle, accent = '#6FB7ED', right, left, children, tabBar = true, scroll = true }: ScreenProps) {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const enter = useEnter();
 
   const header = (
-    <Animated.View entering={FadeInDown.duration(380).springify().damping(16)} style={{ gap: 14 }}>
+    <Animated.View entering={enter(0)} style={{ gap: 14 }}>
       {left}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
         <View style={{ flex: 1, gap: 4 }}>
@@ -79,9 +81,10 @@ export function Screen({ title, subtitle, accent = '#6FB7ED', right, left, child
 
 export function Card({ children, style, delay = 0 }: { children: ReactNode; style?: StyleProp<ViewStyle>; delay?: number }) {
   const { theme, isDark } = useTheme();
+  const enter = useEnter();
   return (
     <Animated.View
-      entering={FadeInDown.delay(delay).duration(380).springify().damping(17)}
+      entering={enter(delay)}
       style={[
         {
           backgroundColor: isDark ? theme.cardElevated : '#FFFFFF',
@@ -116,10 +119,11 @@ export function SectionTitle({ children, right }: { children: string; right?: Re
 
 export function Toggle({ value, onChange, color = '#34C759' }: { value: boolean; onChange: (v: boolean) => void; color?: string }) {
   const { theme } = useTheme();
+  const m = useMotion();
   const t = useSharedValue(value ? 1 : 0);
   useEffect(() => {
-    t.value = withSpring(value ? 1 : 0, { damping: 16, stiffness: 220 });
-  }, [value, t]);
+    t.value = withSpring(value ? 1 : 0, m.ui);
+  }, [value, t, m.ui]);
   const track = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(t.value, [0, 1], [theme.progressTrack, color]) }));
   const knob = useAnimatedStyle(() => ({ transform: [{ translateX: 3 + t.value * 20 }] }));
 
@@ -191,14 +195,39 @@ export function Row({ icon, iconBg = '#6FB7ED', title, subtitle, right, onPress,
   );
   if (!onPress) return body;
   return (
+    <PressRow onPress={onPress} danger={danger}>
+      {body}
+    </PressRow>
+  );
+}
+
+/**
+ * Press feedback for rows: a soft rounded highlight that fades in inside the
+ * card (the stock Android ripple drew a hard-edged rectangle that looked broken).
+ */
+function PressRow({ onPress, danger, children }: { onPress: () => void; danger?: boolean; children: ReactNode }) {
+  const { theme, isDark } = useTheme();
+  const on = useSharedValue(0);
+  const hl = useAnimatedStyle(() => ({ opacity: on.value }));
+  const tint = danger ? hexToRgba(theme.danger, isDark ? 0.14 : 0.08) : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(28,27,34,0.045)';
+  return (
     <Pressable
+      onPressIn={() => {
+        on.value = withTiming(1, { duration: 90 });
+      }}
+      onPressOut={() => {
+        on.value = withTiming(0, { duration: 220 });
+      }}
       onPress={() => {
         haptic.light();
         onPress();
       }}
-      android_ripple={{ color: theme.hairline, borderless: false }}
     >
-      {body}
+      <Animated.View
+        pointerEvents="none"
+        style={[{ position: 'absolute', top: 4, bottom: 4, left: -10, right: -10, borderRadius: 16, backgroundColor: tint }, hl]}
+      />
+      {children}
     </Pressable>
   );
 }

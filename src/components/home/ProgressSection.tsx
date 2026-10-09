@@ -16,7 +16,7 @@ import { palette, radius, spacing } from '@/theme/tokens';
 import { dueOn, isDoneOn, streakFor, valueOn, weeklyHabits, weekSessions } from '@/logic/habits';
 import { getTheme } from '@/data/themes';
 import { DAY_LETTERS, fromKey, relativeDayLabel, weekKeys } from '@/utils/date';
-import { fmtNumber } from '@/utils/format';
+import { fmtNumber, qty, unitFor } from '@/utils/format';
 import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
 
@@ -114,7 +114,7 @@ function DaySummary() {
                   <Txt variant="small" color="secondary">
                     {isWeekly
                       ? `${weekSessions(h, logs, day, weekStart)}/${h.schedule.kind === 'weekly' ? h.schedule.timesPerWeek : 0} this week`
-                      : `${fmtNumber(v)} / ${fmtNumber(h.goalValue)} ${h.unit}`}
+                      : `${fmtNumber(v)} / ${qty(h.goalValue, h.unit)}`}
                   </Txt>
                 </View>
                 <View
@@ -182,7 +182,7 @@ function WeekCard({ habit }: { habit: Habit }) {
         <View style={{ alignItems: 'flex-end' }}>
           <Txt variant="stat">{fmtNumber(total)}</Txt>
           <Txt variant="small" color="secondary">
-            {habit.unit} total
+            {unitFor(total, habit.unit)} total
           </Txt>
         </View>
       </View>

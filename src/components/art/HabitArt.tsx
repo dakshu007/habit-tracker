@@ -8,6 +8,7 @@ import { Glyph } from '@/components/ui/glyphs';
 import { getArt } from '@/data/art';
 import { hexToRgba } from '@/theme/color';
 import type { HabitColors } from '@/data/types';
+import { useMotion } from '@/theme/motion';
 
 interface HabitArtProps {
   artId: string;
@@ -40,11 +41,13 @@ export const HabitArt = memo(function HabitArt({ artId, colors, compact }: Habit
 });
 
 function AuraCover({ glyph, colors, compact }: { glyph: Parameters<typeof Glyph>[0]['name']; colors: HabitColors; compact?: boolean }) {
+  const m = useMotion();
+  const still = compact || m.id === 'off' || m.id === 'minimal';
   const bob = useSharedValue(0);
   useEffect(() => {
-    if (compact) return;
+    if (still) return;
     bob.value = withRepeat(withTiming(1, { duration: 2600, easing: Easing.inOut(Easing.sin) }), -1, true);
-  }, [bob, compact]);
+  }, [bob, still]);
   const bobStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -6 + bob.value * 12 }] }));
 
   return (

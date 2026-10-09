@@ -15,6 +15,7 @@ import { Txt } from './Txt';
 import { GlassSurface } from './Glass';
 import { useHabitStore } from '@/store/useHabitStore';
 import { haptic } from '@/utils/haptics';
+import { useMotion } from '@/theme/motion';
 
 const COLORS = ['#FF986D', '#A3D9FF', '#34C759', '#B280FF', '#FFD36B', '#F59AB8', '#6FB7ED'];
 const COUNT = 46;
@@ -67,6 +68,8 @@ function Piece({ i, w, h }: { i: number; w: number; h: number }) {
 export function Confetti() {
   const { width, height } = useWindowDimensions();
   const celebrateAt = useHabitStore((s) => s.celebrateAt);
+  const m = useMotion();
+  const pieces = m.id === 'off' ? 0 : m.id === 'minimal' ? 18 : COUNT;
   const [burst, setBurst] = useState(0);
   const mountedAt = useRef(Date.now());
 
@@ -82,12 +85,12 @@ export function Confetti() {
 
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 60 }}>
-      {Array.from({ length: COUNT }, (_, i) => (
+      {Array.from({ length: pieces }, (_, i) => (
         <Piece key={`${burst}-${i}`} i={i} w={width} h={height} />
       ))}
       <Animated.View
-        entering={ZoomIn.springify().damping(12)}
-        exiting={FadeOut}
+        entering={m.enter === 'none' ? undefined : ZoomIn.springify().damping(m.ui.damping).stiffness(m.ui.stiffness).mass(m.ui.mass)}
+        exiting={m.enter === 'none' ? undefined : FadeOut}
         style={{ position: 'absolute', top: height * 0.38, alignSelf: 'center' }}
       >
         <GlassSurface radius={28} elevation={12} fill="rgba(255,255,255,0.9)">

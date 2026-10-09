@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Txt } from '@/components/ui/Txt';
 import { Field } from '@/components/ui/Field';
@@ -25,6 +25,7 @@ import { pickTime } from '@/utils/pickTime';
 import { haptic } from '@/utils/haptics';
 import type { Habit, Schedule, Weekday } from '@/data/types';
 import type { RootScreenProps } from '@/navigation/types';
+import { useEnter } from '@/theme/motion';
 
 type ScheduleKind = Schedule['kind'];
 
@@ -39,6 +40,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
   const setArchived = useHabitStore((s) => s.setArchived);
   const weekStart = useHabitStore((s) => s.settings.weekStart);
 
+  const enter = useEnter();
   const isNew = !existing;
   const [h, setH] = useState<Habit>(() => {
     if (existing) return existing;
@@ -132,7 +134,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
       >
         {/* Live preview */}
         <Animated.View
-          entering={FadeInDown.duration(380).springify().damping(16)}
+          entering={enter(0)}
           style={{ width: previewW, height: 250, borderRadius: 32, overflow: 'hidden', backgroundColor: colors.cardTint, boxShadow: '0px 14px 30px rgba(0,0,0,0.12)' }}
         >
           <Animated.View key={`${h.artId}${h.themeId}`} entering={FadeIn.duration(300)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>

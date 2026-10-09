@@ -1,20 +1,31 @@
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { TAB_ICONS } from './TabIcons';
 import { useBlurTarget } from '@/components/ui/Glass';
 import { useTheme } from '@/theme/ThemeContext';
+import { useMotion } from '@/theme/motion';
 import { radius, spacing } from '@/theme/tokens';
 import { haptic } from '@/utils/haptics';
 import type { TabName } from '@/navigation/types';
 
 const ROW_PAD = 5;
 const GAP = 8;
-const PILL_SPRING = { damping: 17, stiffness: 210, mass: 0.7 } as const;
+const MOVE_SLOP = 6;
+const HOLD_MS = 140;
 
 interface GlassTabBarProps {
   tabs: TabName[];
@@ -26,11 +37,14 @@ interface GlassTabBarProps {
  * Floating "liquid glass" tab bar for Android: a real-time blur of the app
  * content (expo-blur sampling the BlurTargetView) layered with a translucent
  * fill, top gloss, diagonal light streak, bright rim and an outer definition
- * edge — the same stack Apple's material uses, rebuilt by hand. A glossy lens
- * springs (with a little stretch) between tabs; the selected icon bounces.
+ * edge.
+ *
+ * One gesture drives it: tap a tab, or hold and sweep — the glass lens lifts,
+ * follows your finger with a tick per tab, and releasing picks the tab under it.
  */
 export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
   const { isDark } = useTheme();
+  const m = useMotion();
   const target = useBlurTarget();
   const insets = useSafeAreaInsets();
 
@@ -39,16 +53,82 @@ export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
   const slotW = rowW > 0 ? (rowW - ROW_PAD * 2 - GAP * (count - 1)) / count : 0;
   const index = tabs.indexOf(active);
 
-  const idx = useSharedValue(index);
+  const idx = useSharedValue(index); // lens position, in tab units
+  const lift = useSharedValue(0); // 0 resting → 1 picked up
   const stretch = useSharedValue(1);
-  useEffect(() => {
-    idx.value = withSpring(index, PILL_SPRING);
-    stretch.value = withSequence(withTiming(1.22, { duration: 110 }), withSpring(1, { damping: 10, stiffness: 200 }));
-  }, [index, idx, stretch]);
+  const startX = useSharedValue(0);
+  const dragging = useSharedValue(false);
+  const hovered = useSharedValue(index);
 
-  const lensStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: ROW_PAD + idx.value * (slotW + GAP) }, { scaleX: stretch.value }, { scaleY: 2 - stretch.value }],
-  }));
+  useEffect(() => {
+    if (dragging.value) return;
+    idx.value = withSpring(index, m.ui);
+    hovered.value = index;
+    if (m.pop) stretch.value = withSequence(withTiming(1.16, { duration: 110 }), withSpring(1, m.release));
+  }, [index, idx, stretch, hovered, dragging, m]);
+
+  const select = (i: number) => {
+    const t = tabs[i];
+    if (!t) return;
+    if (t !== active) {
+      haptic.tick();
+      onChange(t);
+    }
+  };
+  const tick = () => haptic.tick();
+  const pickUp = () => haptic.medium();
+
+  const toIndex = (x: number) => {
+    'worklet';
+    const raw = (x - ROW_PAD - slotW / 2) / (slotW + GAP);
+    return Math.max(0, Math.min(count - 1, raw));
+  };
+
+  const gesture = Gesture.Pan()
+    .minDistance(0)
+    .enabled(slotW > 0)
+    .onBegin((e) => {
+      startX.value = e.x;
+      dragging.value = false;
+      lift.value = withDelay(HOLD_MS, withTiming(1, { duration: 160 }));
+    })
+    .onUpdate((e) => {
+      if (!dragging.value && (Math.abs(e.x - startX.value) > MOVE_SLOP || lift.value > 0.5)) {
+        dragging.value = true;
+        lift.value = withTiming(1, { duration: 120 });
+        scheduleOnRN(pickUp);
+      }
+      if (!dragging.value) return;
+      const f = toIndex(e.x);
+      idx.value = f;
+      const h = Math.round(f);
+      if (h !== hovered.value) {
+        hovered.value = h;
+        scheduleOnRN(tick);
+      }
+    })
+    .onEnd((e) => {
+      const target = Math.round(toIndex(e.x));
+      idx.value = withSpring(target, m.ui);
+      hovered.value = target;
+      scheduleOnRN(select, target);
+    })
+    .onFinalize(() => {
+      dragging.value = false;
+      lift.value = withSpring(0, m.release);
+    });
+
+  const lensStyle = useAnimatedStyle(() => {
+    const s = 1 + lift.value * 0.16;
+    return {
+      transform: [
+        { translateX: ROW_PAD + idx.value * (slotW + GAP) },
+        { scaleX: s * stretch.value },
+        { scaleY: s * (2 - stretch.value) },
+      ],
+      opacity: 1,
+    };
+  });
 
   const g = isDark
     ? {
@@ -90,15 +170,7 @@ export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
         }}
       >
         <View style={{ borderRadius: radius.tabBar - 1, overflow: 'hidden', borderWidth: 1, borderColor: g.rim }}>
-          {target ? (
-            <BlurView
-              blurTarget={target}
-              blurMethod="dimezisBlurViewSdk31Plus"
-              tint={g.tint}
-              intensity={60}
-              style={abs}
-            />
-          ) : null}
+          {target ? <BlurView blurTarget={target} blurMethod="dimezisBlurViewSdk31Plus" tint={g.tint} intensity={60} style={abs} /> : null}
           <View style={[abs, { backgroundColor: g.fill }]} />
           <LinearGradient colors={g.gloss} locations={[0, 0.45, 1]} style={[abs, { bottom: '38%' }]} pointerEvents="none" />
           <LinearGradient
@@ -131,30 +203,22 @@ export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
             />
           )}
 
-          <View
-            onLayout={(e) => setRowW(e.nativeEvent.layout.width)}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: GAP, padding: ROW_PAD }}
-          >
-            {tabs.map((name) => {
-              const Icon = TAB_ICONS[name];
-              const focused = name === active;
-              return (
-                <TabButton
-                  key={name}
-                  focused={focused}
-                  label={name}
-                  onPress={() => {
-                    if (!focused) {
-                      haptic.tick();
-                      onChange(name);
-                    }
-                  }}
-                >
-                  <Icon color={focused ? g.on : g.off} size={24} filled={focused} />
-                </TabButton>
-              );
-            })}
-          </View>
+          <GestureDetector gesture={gesture}>
+            <View
+              onLayout={(e) => setRowW(e.nativeEvent.layout.width)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: GAP, padding: ROW_PAD }}
+            >
+              {tabs.map((name) => {
+                const Icon = TAB_ICONS[name];
+                const focused = name === active;
+                return (
+                  <TabSlot key={name} focused={focused} label={name} pop={m.pop} onActivate={() => onChange(name)}>
+                    <Icon color={focused ? g.on : g.off} size={24} filled={focused} />
+                  </TabSlot>
+                );
+              })}
+            </View>
+          </GestureDetector>
         </View>
       </View>
     </View>
@@ -163,28 +227,34 @@ export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
 
 const abs = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 } as const;
 
-function TabButton({ focused, onPress, label, children }: { focused: boolean; onPress: () => void; label: string; children: React.ReactNode }) {
+interface TabSlotProps {
+  focused: boolean;
+  label: string;
+  pop: boolean;
+  onActivate: () => void;
+  children: React.ReactNode;
+}
+
+/** One tab icon: bounces when it becomes active; screen readers can activate it directly. */
+function TabSlot({ focused, label, pop, onActivate, children }: TabSlotProps) {
+  const m = useMotion();
   const scale = useSharedValue(1);
   useEffect(() => {
-    if (focused) scale.value = withSequence(withTiming(1.18, { duration: 130 }), withSpring(1, { damping: 9, stiffness: 240 }));
-  }, [focused, scale]);
+    if (focused && pop) scale.value = withSequence(withTiming(1.16, { duration: 120 }), withSpring(1, m.release));
+  }, [focused, pop, scale, m.release]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Pressable
+    <View
+      accessible
       accessibilityRole="tab"
-      accessibilityState={{ selected: focused }}
       accessibilityLabel={label}
-      onPress={onPress}
-      onPressIn={() => {
-        scale.value = withTiming(0.86, { duration: 90 });
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 12, stiffness: 260 });
-      }}
+      accessibilityState={{ selected: focused }}
+      accessibilityActions={[{ name: 'activate' }]}
+      onAccessibilityAction={(e) => e.nativeEvent.actionName === 'activate' && onActivate()}
       style={{ flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' }}
     >
       <Animated.View style={style}>{children}</Animated.View>
-    </Pressable>
+    </View>
   );
 }

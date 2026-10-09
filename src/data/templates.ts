@@ -26,6 +26,7 @@ export const templates: HabitTemplate[] = [
   { key: 'stairs', title: 'Staircase Climbing', subtitle: 'Builds leg strength.', doneLabel: 'Done! Look how high you got.', goalValue: 10, unit: 'floors', step: 1, artId: 'staircase-climbing', themeId: 'lavender', schedule: daily },
 
   // Everyday habits with generated aura covers.
+  { key: 'run', title: 'Running', subtitle: 'Every stride counts.', doneLabel: 'Done! Runner’s high.', goalValue: 5, unit: 'km', step: 0.5, artId: 'aura-shoe', themeId: 'sunset', schedule: { kind: 'days', days: [1, 3, 5, 6] } },
   { key: 'read', title: 'Read', subtitle: 'A few pages a day adds up.', doneLabel: 'Done! Chapter closed.', goalValue: 10, unit: 'pages', step: 1, artId: 'aura-book', themeId: 'sunset', schedule: daily },
   { key: 'water', title: 'Drink Water', subtitle: 'Stay sharp and hydrated.', doneLabel: 'Done! Fully hydrated.', goalValue: 8, unit: 'glasses', step: 1, artId: 'aura-drop', themeId: 'lagoon', schedule: daily },
   { key: 'meditate', title: 'Meditate', subtitle: 'Quiet the noise.', doneLabel: 'Done! Calm achieved.', goalValue: 10, unit: 'min', step: 1, artId: 'aura-lotus', themeId: 'lavender', schedule: daily },
@@ -39,7 +40,7 @@ export const templates: HabitTemplate[] = [
 ];
 
 /** The habits a brand-new user gets if they skip picking. */
-export const DEFAULT_TEMPLATE_KEYS = ['cycling', 'water', 'read', 'meditate'];
+export const DEFAULT_TEMPLATE_KEYS = ['run', 'water', 'read', 'meditate'];
 
 export function newHabitId(): string {
   return `h_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;

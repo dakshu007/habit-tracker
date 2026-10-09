@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown, FadeOut, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useSharedValue } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 
 import { GradientBackground } from '@/components/ui/GradientBackground';
@@ -18,6 +18,7 @@ import { useTabFocused } from '@/navigation/MainTabs';
 import { bestCurrentStreak, dueOn, isDoneOn } from '@/logic/habits';
 import { getTheme } from '@/data/themes';
 import { spacing } from '@/theme/tokens';
+import { useEnter } from '@/theme/motion';
 import { greeting, relativeDayLabel } from '@/utils/date';
 import type { RootNav } from '@/navigation/types';
 
@@ -62,6 +63,7 @@ export function HomeScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<RootNav>();
   const focused = useTabFocused('Home');
+  const enter = useEnter();
 
   const active = useActiveHabit();
   const visible = useVisibleHabits();
@@ -95,7 +97,7 @@ export function HomeScreen() {
         >
           {/* Header */}
           <Animated.View
-            entering={FadeInDown.duration(420).springify().damping(16)}
+            entering={enter(0)}
             style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.screenX, gap: 10 }}
           >
             <View style={{ flex: 1 }}>
@@ -122,11 +124,11 @@ export function HomeScreen() {
             </GlassButton>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(60).duration(420).springify().damping(16)}>
+          <Animated.View entering={enter(60)}>
             <DateWheel />
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(120).duration(420).springify().damping(16)} style={{ gap: 12 }}>
+          <Animated.View entering={enter(120)} style={{ gap: 12 }}>
             <SegmentedPill />
             {day !== today && (
               <Animated.View entering={FadeIn} exiting={FadeOut} style={{ alignSelf: 'center' }}>
@@ -153,7 +155,7 @@ export function HomeScreen() {
           </Animated.View>
 
           <Animated.View
-            entering={FadeInDown.delay(180).duration(420).springify().damping(16)}
+            entering={enter(180)}
             style={{ gap: 12, paddingHorizontal: spacing.screenX }}
           >
             {visible.length ? (
@@ -170,7 +172,7 @@ export function HomeScreen() {
             )}
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(240).duration(420).springify().damping(16)}>
+          <Animated.View entering={enter(240)}>
             <ProgressSection />
           </Animated.View>
         </ScrollView>

@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Animated, { useAnimatedProps, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useMotion } from '@/theme/motion';
 
 const ACircle = Animated.createAnimatedComponent(Circle);
 
@@ -20,10 +21,11 @@ interface ProgressRingProps {
 export function ProgressRing({ value, size, stroke = 10, track, from, to, children }: ProgressRingProps) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
+  const m = useMotion();
   const p = useSharedValue(0);
   useEffect(() => {
-    p.value = withSpring(Math.max(0, Math.min(1, value)), { damping: 18, stiffness: 90 });
-  }, [value, p]);
+    p.value = withSpring(Math.max(0, Math.min(1, value)), m.ui);
+  }, [value, p, m.ui]);
   const props = useAnimatedProps(() => ({ strokeDashoffset: c * (1 - p.value) }));
   const id = `rg${size}${stroke}`;
 

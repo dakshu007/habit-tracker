@@ -15,6 +15,7 @@ import { useHabitStore } from '@/store/useHabitStore';
 import { dayCompletion } from '@/logic/habits';
 import { stripDays, type StripDay } from '@/utils/date';
 import { haptic } from '@/utils/haptics';
+import { ScrollView as GHScrollView } from 'react-native-gesture-handler';
 
 /**
  * Date wheel. A horizontal snap-scroller over a rolling window of days: spin
@@ -22,6 +23,9 @@ import { haptic } from '@/utils/haptics';
  * the whole Home screen. The Figma "valley" arc is driven by live scroll
  * position; each day carries a completion dot (filled = all done).
  */
+// Gesture-handler ScrollView so the wheel claims horizontal drags before the tab-swipe gesture.
+const WheelScroll = Animated.createAnimatedComponent(GHScrollView);
+
 const ITEM_WIDTH = 52;
 const STEP = 15;
 const HEIGHT = STEP * 2 + 58;
@@ -87,7 +91,7 @@ export function DateWheel() {
   const sidePad = (width - ITEM_WIDTH) / 2;
   const scrollX = useSharedValue(selIndex * ITEM_WIDTH);
   const centerIndex = useSharedValue(selIndex);
-  const ref = useRef<Animated.ScrollView>(null);
+  const ref = useRef<GHScrollView>(null);
   const lastSettled = useRef(selIndex);
 
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -131,7 +135,7 @@ export function DateWheel() {
           borderTopColor: '#FFFFFF',
         }}
       />
-      <Animated.ScrollView
+      <WheelScroll
         ref={ref}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -150,7 +154,7 @@ export function DateWheel() {
         {days.map((day, i) => (
           <DayCell key={day.key} index={i} day={day} scrollX={scrollX} completion={completions[i]} />
         ))}
-      </Animated.ScrollView>
+      </WheelScroll>
     </View>
   );
 }

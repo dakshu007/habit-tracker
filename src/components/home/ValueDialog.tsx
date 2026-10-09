@@ -8,7 +8,7 @@ import { overlay } from '@/components/ui/Overlay';
 import { useHabitStore } from '@/store/useHabitStore';
 import { getTheme } from '@/data/themes';
 import { relativeDayLabel } from '@/utils/date';
-import { fmtNumber } from '@/utils/format';
+import { fmtNumber, qty } from '@/utils/format';
 import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
 
@@ -32,7 +32,7 @@ export function ValueDialog({ habit, day, initial }: { habit: Habit; day: string
       <View style={{ gap: 4 }}>
         <Txt variant="h2">{habit.title}</Txt>
         <Txt variant="small" color="secondary">
-          {relativeDayLabel(day)} · goal {fmtNumber(habit.goalValue)} {habit.unit}
+          {relativeDayLabel(day)} · goal {qty(habit.goalValue, habit.unit)}
         </Txt>
       </View>
       <Field

@@ -4,7 +4,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
  * Line glyphs on a 24×24 grid, drawn with round caps/joins so they read well
  * both tiny (pickers) and huge (aura covers). Stroke-only by design.
  */
-const PATHS = {
+export const GLYPH_PATHS = {
   book: 'M5 4.5A1.5 1.5 0 0 1 6.5 3H19v14H6.5A1.5 1.5 0 0 0 5 18.5zM5 18.5A1.5 1.5 0 0 0 6.5 20H19M9 7h6',
   drop: 'M12 3c3.5 4.2 6 7.6 6 10.6a6 6 0 0 1-12 0C6 10.6 8.5 7.2 12 3zM9.5 14a2.5 2.5 0 0 0 2.5 2.5',
   lotus:
@@ -21,11 +21,12 @@ const PATHS = {
   bulb: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z',
   code: 'M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14',
   phoneOff: 'M7.5 3h9a1.5 1.5 0 0 1 1.5 1.5v15a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19.5v-15A1.5 1.5 0 0 1 7.5 3zM3 3l18 18',
+  shoe: 'M4 15V9.6l3.2-.6 2.3-3.4h3.2l2.6 3.7 4.5 1.3A2.6 2.6 0 0 1 21.7 13v2zM3.2 15h18.6v1.3a1.9 1.9 0 0 1-1.9 1.9H5.1a1.9 1.9 0 0 1-1.9-1.9zM10.2 9.4l1.7 1.1M12.1 8.1l1.7 1.1',
   flame: 'M12 21a6.5 6.5 0 0 1-6.5-6.5c0-4 3.5-6 4-10.5 2.5 1.5 4 4 4.5 6 .8-.7 1.3-1.8 1.4-3 1.9 1.7 3.1 4.4 3.1 7.5A6.5 6.5 0 0 1 12 21z',
 } as const;
 
-export type GlyphName = keyof typeof PATHS;
-export const glyphNames = Object.keys(PATHS) as GlyphName[];
+export type GlyphName = keyof typeof GLYPH_PATHS;
+export const glyphNames = Object.keys(GLYPH_PATHS) as GlyphName[];
 
 interface GlyphProps {
   name: GlyphName;
@@ -38,7 +39,7 @@ export function Glyph({ name, size = 24, color = '#1C1B22', strokeWidth = 1.8 }:
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {name === 'sun' && <Circle cx={12} cy={12} r={4.2} stroke={color} strokeWidth={strokeWidth} />}
-      <Path d={PATHS[name]} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d={GLYPH_PATHS[name]} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }

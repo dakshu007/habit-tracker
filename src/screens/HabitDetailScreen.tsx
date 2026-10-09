@@ -16,7 +16,7 @@ import { spacing } from '@/theme/tokens';
 import { completionRate, isScheduledOn, streakFor, valueOn } from '@/logic/habits';
 import { getTheme } from '@/data/themes';
 import { DAY_LABELS, DAY_LETTERS, addDays, dayKey, formatTime, fromKey, relativeDayLabel, startOfWeek, weekdayOrder } from '@/utils/date';
-import { fmtNumber, pct } from '@/utils/format';
+import { fmtNumber, pct, qty, unitFor } from '@/utils/format';
 import type { RootScreenProps } from '@/navigation/types';
 
 const WEEKS = 16;
@@ -83,7 +83,7 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
           <View style={{ gap: 6 }}>
             <View style={{ alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: c.accent }}>
               <Txt variant="micro" color="white">
-                {scheduleText} · {fmtNumber(habit.goalValue)} {habit.unit}
+                {scheduleText} · {qty(habit.goalValue, habit.unit)}
               </Txt>
             </View>
             <Txt variant="display">{habit.title}</Txt>
@@ -105,7 +105,7 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <Stat icon={<CheckIcon size={20} color="#34C759" strokeWidth={2.8} />} value={pct(data.rate)} label="Last 30 days" />
-            <Stat icon={<SparkleIcon size={20} color={c.accent} />} value={fmtNumber(data.total)} label={`${habit.unit} all time`} />
+            <Stat icon={<SparkleIcon size={20} color={c.accent} />} value={fmtNumber(data.total)} label={`${unitFor(data.total, habit.unit)} all time`} />
           </View>
 
           <SectionTitle>{`Last ${WEEKS} weeks`}</SectionTitle>
@@ -169,7 +169,7 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
                       {relativeDayLabel(e.key)}
                     </Txt>
                     <Txt variant="label" color={done ? 'primary' : 'secondary'}>
-                      {fmtNumber(e.value)} / {fmtNumber(habit.goalValue)} {habit.unit}
+                      {fmtNumber(e.value)} / {qty(habit.goalValue, habit.unit)}
                     </Txt>
                   </View>
                 );

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Screen, Card } from '@/components/ui/Screen';
@@ -16,7 +17,7 @@ import { palette, spacing } from '@/theme/tokens';
 import { dayCompletion, dueOn, isScheduledOn, valueOn, weeklyHabits } from '@/logic/habits';
 import { getTheme } from '@/data/themes';
 import { DAY_LETTERS, MONTH_LABELS, fromKey, monthGrid, relativeDayLabel, weekdayOrder } from '@/utils/date';
-import { fmtNumber, pct } from '@/utils/format';
+import { fmtNumber, pct, qty } from '@/utils/format';
 import { haptic } from '@/utils/haptics';
 
 const BRAND = '#4C8DF6';
@@ -87,12 +88,12 @@ export function CalendarScreen() {
       }
     >
       {/* Habit filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.screenX }} contentContainerStyle={{ gap: 8, paddingHorizontal: spacing.screenX }}>
+      <GHScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.screenX }} contentContainerStyle={{ gap: 8, paddingHorizontal: spacing.screenX }}>
         <Chip label="All habits" color={BRAND} active={!habit} onPress={() => setHabitId(null)} />
         {live.map((h) => (
           <Chip key={h.id} label={h.title} color={getTheme(h.themeId).accent} active={habit?.id === h.id} onPress={() => setHabitId(h.id)} />
         ))}
-      </ScrollView>
+      </GHScrollView>
 
       <Card style={{ gap: 14 }}>
         <Animated.View key={`${ym.y}-${ym.m}`} entering={FadeIn.duration(250)} style={{ gap: 14 }}>
@@ -251,7 +252,7 @@ function DaySheet({ day }: { day: string }) {
                   {h.title}
                 </Txt>
                 <Txt variant="small" color="secondary">
-                  {fmtNumber(v)} / {fmtNumber(h.goalValue)} {h.unit}
+                  {fmtNumber(v)} / {qty(h.goalValue, h.unit)}
                 </Txt>
               </View>
               <PressableScale

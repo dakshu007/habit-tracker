@@ -17,7 +17,9 @@ import { MotionPicker } from '@/components/ui/MotionPicker';
 import { requestPinWidget } from 'react-native-android-widget';
 import { CARD_WIDGET, LIST_WIDGET } from '@/widget/TodayWidget';
 import { getProfileStyle } from '@/data/profileStyles';
-import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Gem, HeartHandshake, Languages, ShieldCheck } from '@/components/ui/lucide';
+import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck } from '@/components/ui/lucide';
+import { useRunStore } from '@/store/useRunStore';
+import { fmtKm } from '@/logic/run';
 import { BuddySheet } from '@/components/profile/BuddySheet';
 import { LANGUAGES, t } from '@/i18n';
 import { haptic } from '@/utils/haptics';
@@ -39,6 +41,9 @@ export function ProfileScreen() {
 
   const activeCount = habits.filter((h) => !h.archived).length;
   const archivedCount = habits.length - activeCount;
+  const runs = useRunStore((s) => s.runs);
+  const runCount = runs.length;
+  const runKm = runs.reduce((m, r) => m + r.distance, 0);
 
   const doImport = async () => {
     try {
@@ -51,6 +56,7 @@ export function ProfileScreen() {
           style: 'destructive',
           onPress: () => {
             importSnapshot(snap);
+            if (snap.runs) useRunStore.getState().replaceRuns(snap.runs);
             haptic.success();
             toast(t('Backup restored'));
           },
@@ -182,6 +188,14 @@ export function ProfileScreen() {
           iconBg="#34C759"
           title={t('New habit')}
           onPress={() => navigation.navigate('HabitEditor')}
+          right={<ChevronRight size={18} color={theme.textTertiary} />}
+        />
+        <Row
+          icon={<Footprints size={19} color="#4C8DF6" strokeWidth={2} />}
+          iconBg="#4C8DF6"
+          title={t('Runs')}
+          subtitle={runCount ? t('{n} runs · {km} km in total', { n: runCount, km: fmtKm(runKm) }) : t('Track runs with GPS and a live map')}
+          onPress={() => navigation.navigate('Runs')}
           right={<ChevronRight size={18} color={theme.textTertiary} />}
         />
         <Row

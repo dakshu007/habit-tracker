@@ -21,6 +21,7 @@ import { spacing } from '@/theme/tokens';
 import { overlay } from '@/components/ui/Overlay';
 import { Play, Snowflake } from '@/components/ui/lucide';
 import { StreakInfo } from '@/components/home/StreakInfo';
+import { LiveRunPill } from '@/screens/RunsScreen';
 import { t } from '@/i18n';
 import { useEnter } from '@/theme/motion';
 import { greeting, relativeDayLabel } from '@/utils/date';
@@ -147,6 +148,10 @@ export function HomeScreen() {
               <PlusIcon color="#FFFFFF" size={22} strokeWidth={2.4} />
             </GlassButton>
           </Animated.View>
+
+          <View style={{ alignSelf: 'center' }}>
+            <LiveRunPill onPress={() => navigation.navigate('Run')} />
+          </View>
 
           <Animated.View entering={enter(60)}>
             <DateWheel />

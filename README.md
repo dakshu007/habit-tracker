@@ -7,6 +7,7 @@ An illustrated, gesture-driven habit tracker for Android, built with Expo (SDK 5
 - **Flexible habits:** any goal and unit, daily / chosen weekdays / N times a week, quick-log step, exact value entry
 - **Quit mode:** days clean, money saved, slips
 - **Health Connect auto-tracking:** steps, distance, running, walking, cycling, swimming, yoga, dance, workouts, floors, sleep
+- **GPS runs:** live map (free OpenFreeMap tiles), distance, pace, km splits, pace-coloured route; records with the screen off (foreground service, no background-location permission); logs to your running habit; stored on device and included in backups
 - **Streaks:** streak freezes (earned every 7 days, applied automatically) and rest days
 - **Challenges:** 7/21/30 days, milestones, trophies
 - **Routines:** play habits one card at a time

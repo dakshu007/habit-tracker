@@ -49,6 +49,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       QuickComplete: 'complete/:id',
       Review: 'review',
       QuickLog: 'quick-log',
+      Run: 'run',
     },
   },
 };

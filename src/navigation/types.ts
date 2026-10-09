@@ -16,6 +16,9 @@ export type RootStackParamList = {
   Share: { habitId?: string; kind?: 'streak' | 'today' | 'week' } | undefined;
   QuickLog: undefined;
   Privacy: undefined;
+  Run: { habitId?: string } | undefined;
+  Runs: undefined;
+  RunDetail: { id: string; fresh?: boolean };
 };
 
 export type RootNav = NativeStackNavigationProp<RootStackParamList>;

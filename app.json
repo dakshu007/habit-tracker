@@ -27,7 +27,8 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_BACKGROUND_LOCATION"
       ],
       "allowBackup": true,
       "permissions": [
@@ -93,7 +94,7 @@
             {
               "name": "HabitCard",
               "label": "Habit card",
-              "description": "Your habit card \u2014 slide to complete from the home screen",
+              "description": "Your habit card — slide to complete from the home screen",
               "minWidth": "250dp",
               "minHeight": "250dp",
               "targetCellWidth": 3,
@@ -122,7 +123,17 @@
         }
       ],
       "react-native-health-connect",
-      "./plugins/with-quick-tile"
+      "./plugins/with-quick-tile",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to map your runs.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": true,
+          "androidForegroundServiceIcon": "./assets/notification-icon.png"
+        }
+      ],
+      "@maplibre/maplibre-react-native"
     ]
   }
 }

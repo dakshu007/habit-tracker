@@ -120,3 +120,27 @@ export interface HabitColors {
   bgTop: string;
   cardTint: string;
 }
+
+/** One GPS fix on a run: [longitude, latitude, seconds since the run started]. */
+export type RunPoint = [number, number, number];
+
+/** A finished GPS run, stored only on the phone. */
+export interface Run {
+  id: string;
+  /** Habit the run was logged to, if any. */
+  habitId?: string;
+  /** Amount added to that habit (in the habit's unit). */
+  logged?: number;
+  /** Epoch ms. */
+  startedAt: number;
+  endedAt: number;
+  /** Moving time (pauses excluded), ms. */
+  movingMs: number;
+  /** Metres. */
+  distance: number;
+  points: RunPoint[];
+  /** Indices into `points` where a new stretch starts (after a pause). */
+  gaps: number[];
+  /** Cumulative moving time (ms) when each whole kilometre was reached. */
+  splits: number[];
+}

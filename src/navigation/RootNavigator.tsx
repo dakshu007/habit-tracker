@@ -14,6 +14,8 @@ import { ReviewScreen } from '@/screens/ReviewScreen';
 import { ShareScreen } from '@/screens/ShareScreen';
 import { PrivacyScreen } from '@/screens/PrivacyScreen';
 import { QuickLogScreen } from '@/screens/QuickLogScreen';
+import { RunScreen } from '@/screens/RunScreen';
+import { RunDetailScreen, RunsScreen } from '@/screens/RunsScreen';
 import { useHabitStore } from '@/store/useHabitStore';
 import type { RootStackParamList } from './types';
 
@@ -40,6 +42,9 @@ export function RootNavigator() {
           <Stack.Screen name="Review" component={ReviewScreen} options={{ animation: 'fade' }} />
           <Stack.Screen name="Share" component={ShareScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="Privacy" component={PrivacyScreen} />
+          <Stack.Screen name="Run" component={RunScreen} options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="Runs" component={RunsScreen} />
+          <Stack.Screen name="RunDetail" component={RunDetailScreen} />
           <Stack.Screen
             name="QuickLog"
             component={QuickLogScreen}

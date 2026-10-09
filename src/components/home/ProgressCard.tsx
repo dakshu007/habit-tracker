@@ -14,6 +14,8 @@ import { palette, radius, spacing } from '@/theme/tokens';
 import { hexToRgba } from '@/theme/color';
 import { useHabitStore } from '@/store/useHabitStore';
 import { lastUpdatedOn, valueOn } from '@/logic/habits';
+import { canLogRun } from '@/logic/run';
+import { Route } from '@/components/ui/lucide';
 import { getTheme } from '@/data/themes';
 import { fmtNumber, qty, unitFor } from '@/utils/format';
 import { formatLastUpdated } from '@/utils/date';
@@ -47,6 +49,7 @@ function BuildProgressCard({ habit }: { habit: Habit }) {
   const done = value >= habit.goalValue;
   const future = day > today;
   const timed = TIMED_UNITS.includes(habit.unit.toLowerCase());
+  const runnable = canLogRun(habit);
 
   const bump = (dir: 1 | -1) => {
     if (dir === -1 && value <= 0) return;
@@ -167,7 +170,20 @@ function BuildProgressCard({ habit }: { habit: Habit }) {
             </View>
           </PressableScale>
 
-          {timed && day === today && (
+          {runnable && day === today && (
+            <PressableScale
+              accessibilityLabel={t('Track a run with GPS')}
+              onPress={() => {
+                haptic.medium();
+                navigation.navigate('Run', { habitId: habit.id });
+              }}
+              style={[circle(50), { backgroundColor: ctrlBg }]}
+            >
+              <Route size={20} color={theme.textPrimary} strokeWidth={2} />
+            </PressableScale>
+          )}
+
+          {timed && !runnable && day === today && (
             <PressableScale
               accessibilityLabel={t('Start focus timer')}
               onPress={() => {

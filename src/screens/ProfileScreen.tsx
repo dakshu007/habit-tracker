@@ -21,7 +21,8 @@ import { getProfileStyle } from '@/data/profileStyles';
 import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Users } from '@/components/ui/lucide';
 import { ReportSheet } from '@/components/profile/ReportSheet';
 import { inviteFriends } from '@/services/invite';
-import { trialDaysLeft, useLicense, usePrice } from '@/store/useLicense';
+import { trialDaysLeft, useLicense, usePrices } from '@/store/useLicense';
+import { manageSubscription } from '@/services/billing';
 import { useRunStore } from '@/store/useRunStore';
 import { fmtKm } from '@/logic/run';
 import { BuddySheet } from '@/components/profile/BuddySheet';
@@ -46,9 +47,11 @@ export function ProfileScreen() {
   const activeCount = habits.filter((h) => !h.archived).length;
   const archivedCount = habits.length - activeCount;
   const runs = useRunStore((s) => s.runs);
-  const owned = useLicense((s) => s.owned);
+  const lifetime = useLicense((s) => s.lifetime);
+  const subscription = useLicense((s) => s.subscription);
+  const owned = lifetime || subscription != null;
   const trialLeft = trialDaysLeft(useLicense((s) => s.trialStart));
-  const price = usePrice();
+  const price = usePrices().yearly;
   const runCount = runs.length;
   const runKm = runs.reduce((m, r) => m + r.distance, 0);
 
@@ -99,15 +102,17 @@ export function ProfileScreen() {
           last
           icon={<Gem size={19} color="#056EBE" strokeWidth={2} />}
           iconBg="#056EBE"
-          title={owned ? t('Lifetime unlocked') : t('Habit Tracker Lifetime')}
+          title={lifetime ? t('Pro · Lifetime') : subscription === 'yearly' ? t('Pro · Yearly') : subscription === 'monthly' ? t('Pro · Monthly') : t('Habit Tracker Pro')}
           subtitle={
-            owned
+            lifetime
               ? t('Every feature, forever. Thank you!')
-              : trialLeft > 0
-                ? t('{n} days left in your free week · {price} once', { n: trialLeft, price })
-                : t('Free week over · unlock for {price}, once', { price })
+              : subscription
+                ? t('Tap to manage or cancel in Google Play')
+                : trialLeft > 0
+                  ? t('{n} days left in your free week · from {price}/year', { n: trialLeft, price })
+                  : t('Free week over · get Pro from {price}/year', { price })
           }
-          onPress={() => navigation.navigate('Paywall')}
+          onPress={() => (subscription && !lifetime ? manageSubscription() : navigation.navigate('Paywall'))}
           right={owned ? <CheckIcon size={18} color="#34C759" strokeWidth={3} /> : <ChevronRight size={18} color={theme.textTertiary} />}
         />
       </Card>

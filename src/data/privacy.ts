@@ -38,7 +38,7 @@ export const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Purchases',
-    body: 'The lifetime unlock is bought through Google Play. Google handles the payment; the app only learns whether the unlock is owned, and never sees your card or UPI details.',
+    body: 'Pro subscriptions and the lifetime unlock are bought through Google Play. Google handles the payment; the app only learns which plan you have, and never sees your card or UPI details.',
   },
   {
     title: 'Notifications',

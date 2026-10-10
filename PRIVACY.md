@@ -32,7 +32,7 @@ Monthly reports (PDF or CSV) are created on your phone and only leave it when yo
 
 ## Purchases
 
-The lifetime unlock is bought through Google Play. Google handles the payment; the app only learns whether the unlock is owned, and never sees your card or UPI details.
+Pro subscriptions and the lifetime unlock are bought through Google Play. Google handles the payment; the app only learns which plan you have, and never sees your card or UPI details.
 
 ## Notifications
 

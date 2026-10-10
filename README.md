@@ -26,7 +26,7 @@ An illustrated, gesture-driven habit tracker for Android, built with Expo (SDK 5
 - **Your data:** backup export/restore, Android Auto Backup, privacy policy in-app
 
 ## Pricing
-Free download, 7-day full trial, then a one-time **₹199 lifetime unlock** via Google Play Billing. Setup: `docs/play-store/monetization.md`. CI sets `src/buildFlags.ts` per output: the Google Play `.aab` is `live` (locks after the trial), the GitHub test `.apk` is `preview` (never locks).
+Free download, 7-day full trial, then **Habit Tracker Pro**: ₹59/month, ₹399/year or ₹999 lifetime via Google Play Billing. Setup: `docs/play-store/monetization.md`. CI sets `src/buildFlags.ts` per output: the Google Play `.aab` is `live` (locks after the trial), the GitHub test `.apk` is `preview` (never locks).
 
 ## Native code
 `modules/device-signals` is a local Expo module (Kotlin): screen on/off events via `UsageStatsManager` for sleep, and `RecognizerIntent` for voice. It's auto-linked from `./modules`.

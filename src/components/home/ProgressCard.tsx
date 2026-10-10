@@ -154,18 +154,18 @@ function BuildProgressCard({ habit }: { habit: Habit }) {
       )}
 
       {!unlocked && !past && !future && !done && (
-        <PressableScale onPress={() => navigation.navigate('Paywall')} accessibilityLabel={t('Unlock lifetime')}>
+        <PressableScale onPress={() => navigation.navigate('Paywall')} accessibilityLabel={t('Get Pro')}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 22, backgroundColor: hexToRgba('#056EBE', isDark ? 0.22 : 0.1) }}>
             <LockIcon size={18} color="#3F95DA" strokeWidth={2.2} />
             <View style={{ flex: 1 }}>
               <Txt variant="label">{t('Your free week is over')}</Txt>
               <Txt variant="small" color="secondary">
-                {t('Unlock lifetime to keep logging. Your history is safe.')}
+                {t('Get Pro to keep logging. Your history is safe.')}
               </Txt>
             </View>
             <View style={{ paddingHorizontal: 14, height: 34, borderRadius: 17, justifyContent: 'center', backgroundColor: '#056EBE' }}>
               <Txt variant="label" color="white">
-                {t('Unlock')}
+                {t('Get Pro')}
               </Txt>
             </View>
           </View>

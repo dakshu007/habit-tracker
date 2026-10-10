@@ -140,8 +140,16 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.screenBase }}>
-      <LinearGradient colors={[...SKY]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }} />
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: insets.bottom + 30, paddingHorizontal: 20, gap: 18 }}>
+        {/* Scrolls with the content and fades into the page, so text below the
+            plans never ends up on top of the blue. */}
+        <LinearGradient
+          colors={[SKY[0], SKY[1], SKY[2], theme.screenBase]}
+          locations={[0, 0.4, 0.72, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.3, y: 1 }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + art + 380 }}
+        />
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
           <GlassButton accessibilityLabel={t('Close')} fill="rgba(255,255,255,0.22)" onPress={() => navigation.goBack()}>
             <CloseIcon size={20} color="#FFFFFF" />

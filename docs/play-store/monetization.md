@@ -1,4 +1,4 @@
-# Habit Tracker Pro — pricing & Play Console setup
+# Habit Tracker Pro: pricing & Play Console setup
 
 Free download · **7-day free trial** of everything (in the app, no card needed) · then **Pro**:
 
@@ -13,7 +13,7 @@ People who bought `lifetime_unlock` during testing (at ₹199) keep lifetime.
 
 ## One-time setup
 1. **Payments profile**: Play Console → Settings → Payments profile.
-2. **Upload the first `.aab`** (from the GitHub release) to Internal testing — Play only allows products after a build with the `BILLING` permission is uploaded.
+2. **Upload the first `.aab`** (from the GitHub release) to Internal testing: Play only allows products after a build with the `BILLING` permission is uploaded.
 3. **Subscriptions** (Monetize → Products → Subscriptions):
    - Create `pro_monthly` → add base plan `monthly` → Auto-renewing, billing period 1 month, price ₹59 → Activate.
    - Create `pro_yearly` → add base plan `yearly` → Auto-renewing, billing period 1 year, price ₹399 → Activate.

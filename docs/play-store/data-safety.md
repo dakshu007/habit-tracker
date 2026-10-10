@@ -1,33 +1,71 @@
-# Play Console — Data safety answers
+# Play Console: App content answers
 
-| Question | Answer |
+Everything below matches build 21 and later. Copy the answers as written.
+
+## Privacy policy
+`https://habbit-track-daily.netlify.app/privacy`
+
+## Ads
+**No**, my app does not contain ads.
+
+## App access
+**All functionality is available without special access.** (No login. During testing the paywall never blocks reviewers in the first 7 days.)
+
+## Content rating (IARC questionnaire)
+- Category: **Utility, Productivity, Communication or Other** (pick "All other app types" if asked)
+- Violence, sexuality, language, drugs, gambling: **No** to all
+- Does the app let users interact or exchange content? **No** (friend challenges are codes shared through the phone's share sheet; there is no chat or user content inside the app)
+- Shares the user's location with others? **No**
+- Digital purchases? **Yes** (Habit Tracker Pro)
+- Expected result: **Everyone / 3+**
+
+## Target audience and content
+- Target age: **18 and over** (you may also tick 13 to 15 and 16 to 17). Do not tick anything under 13.
+- Appeals to children? **No**
+
+## News app
+**No**
+
+## Data safety
+**Does your app collect or share any of the required user data types?** → **No**
+
+Why this is correct (Google counts data as "collected" only when it leaves the device):
+| Data | What the app does |
 |---|---|
-| Does your app collect or share any of the required user data types? | **No data collected** if Sentry DSN is *not* configured. With Sentry: **Yes — App info and performance → Crash logs, Diagnostics** (collected, not shared, not linked to identity, used for analytics/app functionality, optional? no — but processed ephemerally for crash fixing). |
-| Is all of the user data collected by your app encrypted in transit? | Yes (Sentry uses HTTPS). |
-| Do you provide a way for users to request that their data is deleted? | Yes — Profile → Erase all data (all data is on device). |
-| Health data (Health Connect) | Read on device only, never transmitted → not "collected" per Play's definition (data processed only on device is not collected). |
-| Photos | Profile photo is copied into app storage on device only → not collected. |
-| Location (precise) | Used only during a run the user starts; route stored on device only, never transmitted → not "collected". Map tiles are fetched from OpenFreeMap (area + IP visible to their server, no user data sent). |
-| App activity → usage (Usage access) | Only screen on/off times inside the user's bedtime window, read on device for sleep estimates; never transmitted → not "collected". App usage itself is never read. |
-| Audio | Not accessed — voice logging uses the system speech recognizer (RecognizerIntent); the app receives text only. `RECORD_AUDIO` is removed. |
-| Contacts, messages, financial info | Not accessed. Friend invites go through the share sheet. |
+| Habits, notes, mood | Stored on the phone only |
+| Location | Only during a run you start; the route is saved on the phone only. Map tiles come from OpenFreeMap (no user data is sent) |
+| Health Connect (steps, distance, exercise, floors, sleep) | Read on the phone only, never sent anywhere |
+| Usage access | Only screen on and off times in your bedtime window, read on the phone for sleep |
+| Photos | Profile photo picked from the gallery, kept on the phone |
+| Voice | The phone's own speech recognizer turns speech into text; the app never records audio |
+| Purchases | Handled by Google Play Billing; the app stores only "Pro is active" |
+| Crash report | Only if the user taps "Send" in an email they can read first |
 
-## Health Connect declaration (required)
-- Permissions: READ_STEPS, READ_DISTANCE, READ_EXERCISE, READ_FLOORS_CLIMBED, READ_SLEEP
-- Use: fill habit progress automatically, shown only to the user, never shared or used for ads.
-- Privacy policy URL must describe this (see PRIVACY.md) and be publicly reachable.
+Then:
+- Is all data encrypted in transit? **Yes**
+- Can users ask for their data to be deleted? **Yes** (Profile → Erase all data, or uninstall)
 
-## Foreground service declaration (required, Android 14+)
-- Type: **location** (`FOREGROUND_SERVICE_LOCATION`)
-- Use: records a GPS run the user starts with "Start run", so tracking continues with the screen off. An ongoing "Run in progress" notification is shown; it stops when the user finishes the run.
-- Play asks for a short video: open a running habit → tap the route button → Start run → lock screen → show the notification → finish.
-- No background location permission (`ACCESS_BACKGROUND_LOCATION` is explicitly removed).
+## Health apps declaration
+- Is your app a health app? **Yes** → features: **Activity and fitness**, **Sleep management**, **Habit tracking / wellness**
+- **Health Connect permissions** form (one line per permission):
+  - READ_STEPS: "Fills walking habits with the user's step count automatically."
+  - READ_DISTANCE: "Fills running, walking and cycling habits with distance."
+  - READ_EXERCISE: "Marks workout, swim and ride habits done from recorded sessions."
+  - READ_FLOORS_CLIMBED: "Fills stair climbing habits with floors climbed."
+  - READ_SLEEP: "Fills sleep habits with hours slept."
+  - Shared with third parties? **No**. Used for ads? **No**. Stored off device? **No**.
 
-## Usage access (`PACKAGE_USAGE_STATS`)
-- Not a restricted-permission declaration form, but explain it in the listing/privacy policy: used only for "Sleep from phone use" (screen on/off times during bedtime), opt-in per habit, granted by the user in Settings.
+## Foreground service permissions
+- Type: **Location** (`FOREGROUND_SERVICE_LOCATION`)
+- Task: **User-initiated location sharing / fitness tracking**: "Records a GPS run the user starts with Start run, so distance keeps counting with the screen off. A Run in progress notification is shown until the user taps Finish."
+- Video link (YouTube, unlisted is fine). Record your screen for about 30 seconds:
+  1. Home → **Start a run** → **Start**
+  2. Lock the phone, unlock it, pull down the notification shade to show **Run in progress**
+  3. Back in the app tap **Finish**
 
-## Other declarations
-- Ads: **No**
-- Target audience: 13+ (not designed for children)
-- App access: no login required
-- Notifications permission: used for habit reminders and focus timers
+## Government apps / Financial features / Health research
+**No** to all.
+
+## Notes
+- No `ACCESS_BACKGROUND_LOCATION`, `CAMERA`, `RECORD_AUDIO` or `ACTIVITY_RECOGNITION` in the app (blocked in `app.json`).
+- Usage access (`PACKAGE_USAGE_STATS`) has no declaration form. It is explained in the privacy policy and asked for only when a user turns on "Sleep from phone use".

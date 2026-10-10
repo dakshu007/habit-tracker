@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { DeviceMotion } from 'expo-sensors';
 
@@ -42,11 +43,14 @@ export function useDeviceTilt(enabled = true): DeviceTilt {
       try {
         const available = await DeviceMotion.isAvailableAsync();
         if (!available || !mounted) return;
-        // Permission only matters on mobile web; guard so native never throws.
-        try {
-          await DeviceMotion.requestPermissionsAsync();
-        } catch {
-          /* not required on native */
+        // Permission only matters on mobile web. On Android it would ask for
+        // "Physical activity", which motion sensors don't need.
+        if (Platform.OS === 'web') {
+          try {
+            await DeviceMotion.requestPermissionsAsync();
+          } catch {
+            /* ignore */
+          }
         }
         DeviceMotion.setUpdateInterval(UPDATE_MS);
         sub = DeviceMotion.addListener((data) => {

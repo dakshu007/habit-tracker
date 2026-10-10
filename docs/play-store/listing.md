@@ -1,56 +1,84 @@
-# Google Play listing — draft
+# Google Play store listing (copy and paste)
 
-**App name (30):** Habit Tracker: Daily Routine
-> Pick the final brand name before publishing — the package id `app.mykavo.habittracker` is permanent.
+## App name (max 30)
+```
+Habit Tracker: Daily Routine
+```
 
-**Short description (80):** Beautiful illustrated habits. Swipe, slide to complete, keep your streak alive.
+## Short description (max 80)
+```
+Illustrated habit cards. Slide to complete, track runs and sleep, keep streaks.
+```
 
-## Full description (≤ 4000)
-
+## Full description (max 4000)
+```
 Build habits that feel like a reward.
 
-Habit Tracker turns every habit into a hand-illustrated card. Swipe through your day, slide to complete, and watch your streaks grow — all private, all on your phone.
+Habit Tracker turns every habit into a hand-illustrated card. Swipe through your day, slide to complete, and watch your streaks grow. Everything stays private, on your phone.
 
-**Made to feel good**
-• 22 hand-drawn illustrations and 12+ color themes
-• Slide-to-complete with haptics and a little celebration
-• Smooth, premium glass design with light and dark mode
-• Choose how the app moves: Smooth, Snappy, Gentle, Bouncy, Elastic, Minimal or Off
+MADE TO FEEL GOOD
+• 22 hand-drawn illustrations and 16 colour themes
+• Slide to complete, with haptics and a little celebration
+• Smooth glass design in light and dark mode
+• Choose your app icon: Sage, Ink, Midnight or Sand
 
-**Track anything, your way**
-• Any goal and unit: km, pages, glasses, minutes, steps…
-• Every day, specific weekdays, or a few times a week
-• Quick +1 logging, exact values, and a focus timer with rain, ocean and deep-noise sounds
-• Auto-track steps, runs, rides, walks, swims, floors and sleep with Health Connect
+TRACK ANYTHING, YOUR WAY
+• Any goal and any unit: km, pages, glasses, minutes, steps
+• Every day, chosen weekdays, or a few times a week
+• Quick +1 logging, exact values, and a focus timer with calming sounds
+• Voice logging: say "drank 2 glasses of water" and it's logged
 
-**Stay consistent**
-• Streaks, streak freezes and rest days — one bad day won't erase your progress
-• Smart reminders and a gentle evening nudge only when habits are still open
-• 7, 21 and 30-day challenges with trophies
+TRACKED FOR YOU
+• Live run tracking with a GPS map, distance and pace
+• Steps, distance, workouts and floors from Health Connect
+• Sleep from phone use: inside your bedtime window, screen-off time counts as sleep. No watch needed.
+
+STAY CONSISTENT
+• Streaks, streak freezes and rest days, so one bad day won't erase your progress
+• Smart reminders and a gentle evening nudge when habits are still open
+• 7, 21 and 30 day challenges with trophies. Challenge a friend with a code.
 • Routines: play your morning routine one card at a time
 • Quit bad habits: days clean and money saved
+• Past days are view only, so your streaks stay honest
 
-**Understand yourself**
+UNDERSTAND YOURSELF
 • Stats, calendar heatmap and completion trends
-• Mood check-ins and insights ("you feel best on days you meditate")
-• A story-style weekly review every Sunday
-• Levels, 12 achievements and unlockable themes
+• Insights about your best days and patterns
+• A story-style weekly review every Sunday and a Year in Review
+• Monthly PDF and CSV reports
+• Levels, achievements and unlockable themes
 
-**Right on your home screen**
-• Habit card and today-list widgets
-• Quick Settings tile to log in a second
+ON YOUR HOME SCREEN
+• 5 widgets: habit card, today's list, mini habit, streak and sleep
+• Quick Settings tile and app shortcuts to log in a second
 
-**Private by design**
-• Works fully offline — no account needed
-• Your data stays on your phone; automatic Google backup via Android
-• Export and restore anytime
+PRIVATE BY DESIGN
+• Works offline. No account, no ads.
+• Your habits, runs and sleep stay on your phone
+• Export and restore your data any time
+
+FREE TO TRY
+Every feature is free for 7 days, no card needed. Then choose Habit Tracker Pro: monthly, yearly or a one-time lifetime unlock. Your history always stays viewable.
 
 Available in English and हिन्दी.
 
-## Category / tags
-Health & Fitness (or Productivity) · Habit tracker, routine, streak, self-care
+Questions or ideas? Write to support@mykavo.app
+```
 
-## Assets
-- Icon: `assets/icon.png` (export 512×512)
-- Feature graphic: `docs/play-store/feature-graphic.png` (1024×500)
-- Screenshots: 4–8 phone screenshots (1080×2340 recommended) — Home card, Day view, Stats, Calendar, Focus, Challenges, Widget, Profile
+## Store settings
+| Field | Value |
+|---|---|
+| App category | Health & Fitness |
+| Tags | Habit tracker, Self-improvement, Productivity, Fitness tracking |
+| Contact email | support@mykavo.app |
+| Website | https://habbit-track-daily.netlify.app |
+| Privacy policy | https://habbit-track-daily.netlify.app/privacy |
+
+## Graphics (all in this folder)
+| Asset | File | Size |
+|---|---|---|
+| App icon | `play-store-icon-512.png` | 512 × 512 PNG |
+| Feature graphic | `feature-graphic.png` | 1024 × 500 PNG |
+| Phone screenshots (2 to 8) | `screenshots/*.png` | 1080 × 1920 PNG |
+
+Screenshots are made by `kit/render.mjs` from raw phone screenshots in `kit/raw/` (see `PUBLISHING.md`, step 5).

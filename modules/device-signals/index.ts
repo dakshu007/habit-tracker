@@ -13,7 +13,11 @@ interface DeviceSignalsModule {
   getScreenEvents(from: number, to: number): Promise<ScreenEvent[]>;
   canRecognizeSpeech(): boolean;
   recognizeSpeech(prompt: string, language: string | null): Promise<string[]>;
+  getAppIcon(): AppIconId;
+  setAppIcon(id: AppIconId): boolean;
 }
+
+export type AppIconId = 'sage' | 'ink' | 'midnight' | 'sand';
 
 /** Android-only native helpers (see android/…/DeviceSignalsModule.kt). Null where unavailable. */
 export const DeviceSignals = requireOptionalNativeModule<DeviceSignalsModule>('DeviceSignals');

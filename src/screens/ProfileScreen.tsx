@@ -20,6 +20,7 @@ import { MINI_WIDGET, SLEEP_WIDGET, STREAK_WIDGET } from '@/widget/MoreWidgets';
 import { getProfileStyle } from '@/data/profileStyles';
 import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Users } from '@/components/ui/lucide';
 import { ReportSheet } from '@/components/profile/ReportSheet';
+import { AppIconPicker } from '@/components/profile/AppIconPicker';
 import { inviteFriends } from '@/services/invite';
 import { trialDaysLeft, useLicense, usePrices } from '@/store/useLicense';
 import { manageSubscription } from '@/services/billing';
@@ -136,6 +137,7 @@ export function ProfileScreen() {
             setMode(m);
           }}
         />
+        <AppIconPicker />
       </Card>
 
       <SectionTitle>{t('Animations')}</SectionTitle>

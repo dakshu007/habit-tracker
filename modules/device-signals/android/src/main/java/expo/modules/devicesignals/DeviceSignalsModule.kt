@@ -4,7 +4,9 @@ import android.app.Activity
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
+import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -86,6 +88,32 @@ class DeviceSignalsModule : Module() {
       }
     }
 
+    // Launcher icon variants (activity-aliases from plugins/with-alternate-icons).
+    Function("getAppIcon") {
+      val ctx = appContext.reactContext ?: return@Function DEFAULT_ICON
+      val pm = ctx.packageManager
+      ICONS.firstOrNull { id ->
+        when (pm.getComponentEnabledSetting(iconComponent(ctx, id))) {
+          PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+          PackageManager.COMPONENT_ENABLED_STATE_DEFAULT -> id == DEFAULT_ICON
+          else -> false
+        }
+      } ?: DEFAULT_ICON
+    }
+
+    Function("setAppIcon") { id: String ->
+      val ctx = appContext.reactContext ?: return@Function false
+      if (id !in ICONS) return@Function false
+      val pm = ctx.packageManager
+      // Turn the new one on first so there's always a launcher entry.
+      pm.setComponentEnabledSetting(iconComponent(ctx, id), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
+      for (other in ICONS) {
+        if (other == id) continue
+        pm.setComponentEnabledSetting(iconComponent(ctx, other), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+      }
+      true
+    }
+
     OnActivityResult { _, payload ->
       if (payload.requestCode != SPEECH_REQUEST) return@OnActivityResult
       val p = speechPromise ?: return@OnActivityResult
@@ -111,7 +139,12 @@ class DeviceSignalsModule : Module() {
     return mode == AppOpsManager.MODE_ALLOWED
   }
 
+  private fun iconComponent(ctx: Context, id: String) =
+    ComponentName(ctx.packageName, "${ctx.packageName}.Icon${id.replaceFirstChar { it.uppercase() }}")
+
   companion object {
     private const val SPEECH_REQUEST = 7311
+    private const val DEFAULT_ICON = "sage"
+    private val ICONS = listOf("sage", "ink", "midnight", "sand")
   }
 }

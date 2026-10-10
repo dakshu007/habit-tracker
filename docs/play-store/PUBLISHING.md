@@ -73,7 +73,7 @@ Put them in `docs/play-store/kit/raw/` (or send them to Claude in chat). Claude 
 Follow `monetization.md`:
 1. Payments profile (already done if your other app sells anything)
 2. Subscriptions: `pro_monthly` ₹59 (base plan `monthly`), `pro_yearly` ₹399 (base plan `yearly`) → Activate
-3. One-time product: `lifetime_unlock` ₹999 → Activate
+3. One-time product: `pro_lifetime` ₹999 → Activate
 4. All apps → Settings → **License testing** → add every tester Gmail → License response: RESPOND_NORMALLY. Their purchases are free.
 
 ## Step 7. Closed testing (12 testers × 14 days)

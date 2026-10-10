@@ -9,9 +9,9 @@ import { PAYWALL } from '@/buildFlags';
  * see docs/play-store/monetization.md):
  *  - pro_monthly      subscription, ₹59 / month
  *  - pro_yearly       subscription, ₹399 / year
- *  - lifetime_unlock  one-time in-app product, ₹999
+ *  - pro_lifetime     one-time in-app product, ₹999 (`lifetime_unlock` is taken by a deleted subscription)
  */
-export const SKU = { monthly: 'pro_monthly', yearly: 'pro_yearly', lifetime: 'lifetime_unlock' } as const;
+export const SKU = { monthly: 'pro_monthly', yearly: 'pro_yearly', lifetime: 'pro_lifetime' } as const;
 export type Plan = keyof typeof SKU;
 export const SUB_SKUS: string[] = [SKU.monthly, SKU.yearly];
 

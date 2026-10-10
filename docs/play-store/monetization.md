@@ -6,10 +6,10 @@ Free download · **7-day free trial** of everything (in the app, no card needed)
 |---|---|---|---|
 | Monthly | `pro_monthly` | Subscription, base plan `monthly`, auto-renews every 1 month | ₹59 |
 | **Yearly** (pre-selected, "Save 44%") | `pro_yearly` | Subscription, base plan `yearly`, auto-renews every 1 year | ₹399 |
-| Lifetime | `lifetime_unlock` | In-app product (one-time, non-consumable) | ₹999 |
+| Lifetime | `pro_lifetime` | In-app product (one-time, non-consumable) | ₹999 |
 
 IDs must match `SKU` in `src/store/useLicense.ts`. After the trial, history stays viewable; logging needs Pro.
-People who bought `lifetime_unlock` during testing (at ₹199) keep lifetime.
+Don't use `lifetime_unlock`: that ID was used by mistake for a subscription and Google never frees product IDs.
 
 ## One-time setup
 1. **Payments profile**: Play Console → Settings → Payments profile.
@@ -18,7 +18,7 @@ People who bought `lifetime_unlock` during testing (at ₹199) keep lifetime.
    - Create `pro_monthly` → add base plan `monthly` → Auto-renewing, billing period 1 month, price ₹59 → Activate.
    - Create `pro_yearly` → add base plan `yearly` → Auto-renewing, billing period 1 year, price ₹399 → Activate.
    - Don't add a Play free-trial offer: the app already gives everyone 7 days free.
-4. **One-time product** (Monetize → Products → In-app products): `lifetime_unlock`, name "Lifetime", ₹999 → Activate.
+4. **One-time product** (Monetize → Products → In-app products): `pro_lifetime`, name "Habit Tracker Pro (Lifetime)", ₹999 → Activate.
 5. Let Play convert prices for other countries, or set them yourself.
 
 ## Testing without paying

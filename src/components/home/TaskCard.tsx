@@ -160,7 +160,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
           <SlideToComplete
             done={done}
             disabled={future || past || !unlocked || (rest && !done)}
-            idleLabel={future ? t('Opens on the day') : past ? t('Past days are locked') : !unlocked ? t('Unlock to keep logging') : rest ? t('Rest day — enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
+            idleLabel={future ? t('Opens on the day') : past ? t('Past days are locked') : !unlocked ? t('Unlock to keep logging') : rest ? t('Rest day, enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
             doneLabel={quit ? t('Clean day logged. Proud of you.') : habit.doneLabel}
             onComplete={() => {
               complete(habit.id, day);
@@ -172,7 +172,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
             <Pressable
               accessibilityRole="button"
               onPress={() =>
-                Alert.alert(t('Log a slip?'), t('Your clean-day counter for {habit} restarts. That’s okay — every restart is still progress.', { habit: habit.title }), [
+                Alert.alert(t('Log a slip?'), t('Your clean-day counter for {habit} restarts. That’s okay: every restart is still progress.', { habit: habit.title }), [
                   { text: t('Cancel'), style: 'cancel' },
                   { text: t('I slipped'), style: 'destructive', onPress: () => slip(habit.id, day) },
                 ])
@@ -187,7 +187,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
             !unlocked && !done && !future && !past ? (
               <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Paywall')} style={{ alignSelf: 'center', marginTop: -6, paddingHorizontal: 10, paddingVertical: 2 }}>
                 <Txt variant="small" color={colors.accent} style={{ fontSize: 11.5, fontWeight: '700' }}>
-                  {t('Your free week is over — tap to unlock')}
+                  {t('Your free week is over. Tap to unlock')}
                 </Txt>
               </Pressable>
             ) : (
@@ -220,7 +220,7 @@ function FinalNote({ done, future }: { done: boolean; future: boolean }) {
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: -6 }}>
       <LockIcon size={12} color={done ? palette.success : palette.inkMuted} strokeWidth={2.2} />
       <Txt variant="small" color={done ? 'success' : 'secondary'} style={{ fontSize: 11.5 }} numberOfLines={1}>
-        {done ? t('Locked in for today — no take-backs') : t('No take-backs — slide only when it’s truly done')}
+        {done ? t('Locked in for today. No take-backs') : t('No take-backs: slide only when it’s truly done')}
       </Txt>
     </View>
   );

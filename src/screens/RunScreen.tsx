@@ -152,7 +152,7 @@ export function RunScreen({ navigation, route }: RootScreenProps<'Run'>) {
     const run = useRunStore.getState().finish();
     setBusy(false);
     if (!run) {
-      ToastAndroid.show(t('Too short to save — run a little further next time.'), ToastAndroid.SHORT);
+      ToastAndroid.show(t('Too short to save. Run a little further next time.'), ToastAndroid.SHORT);
       navigation.goBack();
       return;
     }

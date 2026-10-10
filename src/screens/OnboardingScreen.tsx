@@ -91,7 +91,7 @@ export function OnboardingScreen() {
           {step === 1 && (
             <View style={{ flex: 1, paddingHorizontal: spacing.screenX + 4, gap: 22, justifyContent: 'center' }}>
               <Txt variant="display" color="white">
-                {t('First things first —\nwhat should we call you?')}
+                {t('First things first:\nwhat should we call you?')}
               </Txt>
               <GlassSurface radius={24} fill="rgba(255,255,255,0.85)">
                 <View style={{ padding: 6 }}>
@@ -112,7 +112,7 @@ export function OnboardingScreen() {
                 {t('Want a gentle nudge?')}
               </Txt>
               <Txt variant="body" color="rgba(255,255,255,0.9)" style={{ textAlign: 'center' }}>
-                {t('One quiet reminder in the evening — only on days you still have habits open. You can set per-habit reminders later.')}
+                {t('One quiet reminder in the evening, only on days you still have habits open. You can set per-habit reminders later.')}
               </Txt>
               <View style={{ flex: 1 }} />
               <Button label={t('Turn on reminders')} onPress={() => complete(true)} />
@@ -145,7 +145,7 @@ function Welcome({ onNext }: { onNext: () => void }) {
           {t('Habits that feel\nlike a reward.')}
         </Txt>
         <Txt variant="body" color="rgba(255,255,255,0.92)">
-          {t('Swipe through beautiful cards, slide to complete, and watch your streaks grow — all private, all on your phone.')}
+          {t('Swipe through beautiful cards, slide to complete, and watch your streaks grow. All private, all on your phone.')}
         </Txt>
         <Button label={t('Get started')} onPress={onNext} style={{ marginTop: 10 }} />
       </Animated.View>
@@ -192,7 +192,7 @@ function PickHabits({ picked, setPicked, onNext }: { picked: string[]; setPicked
           {t('Pick a few to start')}
         </Txt>
         <Txt variant="body" color="rgba(255,255,255,0.9)">
-          {t('Start small — you can add, edit or remove any time.')}
+          {t('Start small. You can add, edit or remove any time.')}
         </Txt>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.screenX + 4, flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingBottom: 20 }}>

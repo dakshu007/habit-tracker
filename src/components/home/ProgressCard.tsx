@@ -135,7 +135,7 @@ function BuildProgressCard({ habit }: { habit: Habit }) {
               {day === today ? t('Locked in for today') : t('Locked in for this day')}
             </Txt>
             <Txt variant="small" color="secondary">
-              {t('Completed habits can’t be undone — that’s what makes them count.')}
+              {t('Completed habits can’t be undone. That’s what makes them count.')}
             </Txt>
           </View>
         </View>

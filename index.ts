@@ -4,6 +4,10 @@ import { registerRootComponent } from 'expo';
 import { registerWidgetTaskHandler } from 'react-native-android-widget';
 
 import App from './App';
+import { installCrashLog } from './src/services/crashLog';
+
+// Catch fatal JS errors as early as possible (see services/crashLog).
+installCrashLog();
 import { widgetTaskHandler } from './src/widget/widgetTaskHandler';
 // Defines the GPS run task at module scope (it can run headless with the app closed).
 import './src/services/runTracker';

@@ -302,7 +302,7 @@ function DaySheet({ day }: { day: string }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: rest ? hexToRgba('#9B6BF2', 0.16) : theme.inputBg }}>
           <Bed size={18} color="#9B6BF2" strokeWidth={2} />
           <Txt variant="label" style={{ flex: 1 }}>
-            {rest ? t('Rest day — tap to undo') : t('Mark as a rest day')}
+            {rest ? t('Rest day (tap to undo)') : t('Mark as a rest day')}
           </Txt>
         </View>
       </PressableScale>

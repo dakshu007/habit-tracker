@@ -297,7 +297,7 @@ export function ProfileScreen() {
           icon={<CloudUpload size={19} color="#3BA4E6" strokeWidth={2} />}
           iconBg="#3BA4E6"
           title={t('Google backup')}
-          subtitle={t('Automatic — Android backs up to your Google account')}
+          subtitle={t('Automatic: Android backs up to your Google account')}
           onPress={() =>
             Alert.alert(
               t('Automatic Google backup'),

@@ -123,7 +123,7 @@ export function RunsScreen({ navigation }: RootScreenProps<'Runs'>) {
           </View>
           <Txt variant="h3">{t('No runs yet')}</Txt>
           <Txt variant="small" color="secondary" style={{ textAlign: 'center' }}>
-            {t('Start a run and we’ll map your route, distance and pace — even with the screen off.')}
+            {t('Start a run and we’ll map your route, distance and pace, even with the screen off.')}
           </Txt>
         </Card>
       )}

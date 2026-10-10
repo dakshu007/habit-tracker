@@ -50,7 +50,7 @@ function ChallengeResult({ title, passed, done, total }: { title: string; passed
       <Txt variant="bodyRegular" color="secondary" style={{ textAlign: 'center' }}>
         {passed
           ? t('{title}: {done} of {total} days done. The trophy is yours.', { title: t(title), done, total })
-          : t('{title}: {done} of {total} days. Not a trophy this time — but you built momentum. Try again?', { title: t(title), done, total })}
+          : t('{title}: {done} of {total} days. Not a trophy this time, but you built momentum. Try again?', { title: t(title), done, total })}
       </Txt>
       <Button label={t('Nice')} onPress={overlay.close} style={{ alignSelf: 'stretch', marginTop: 8 }} />
     </View>

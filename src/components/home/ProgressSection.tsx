@@ -97,7 +97,7 @@ function DaySummary() {
             {due.length === 0
               ? t('Nothing scheduled')
               : doneCount === due.length
-                ? t('Perfect day — everything done')
+                ? t('Perfect day, everything done')
                 : t('{done} of {total} habits done', { done: doneCount, total: due.length })}
           </Txt>
         </View>
@@ -188,7 +188,7 @@ function DayActions({ day }: { day: string }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: hexToRgba('#9B6BF2', 0.12) }}>
           <Bed size={18} color="#9B6BF2" strokeWidth={2} />
           <Txt variant="small" color="secondaryStrong" style={{ flex: 1 }}>
-            {t('Rest day — streaks are paused, nothing is due. Enjoy it.')}
+            {t('Rest day: streaks are paused, nothing is due. Enjoy it.')}
           </Txt>
         </View>
       )}

@@ -28,6 +28,7 @@ import { startHealthSync } from '@/services/health';
 import { useLiveRun } from '@/store/useRunStore';
 import { startPhoneSleepSync } from '@/services/phoneSleep';
 import { startBilling } from '@/services/billing';
+import { offerCrashReport } from '@/services/crashLog';
 import { useLicense } from '@/store/useLicense';
 import { setLang, useLang } from '@/i18n';
 
@@ -137,6 +138,7 @@ function App() {
     if (useHabitStore.getState().profile.onboarded) useLicense.getState().startTrial();
     useHabitStore.getState().applyFreezes();
     useLiveRun.getState().load(); // a run left recording shows on Home
+    setTimeout(offerCrashReport, 1200);
     return () => {
       stopNotifications();
       stopWidget();

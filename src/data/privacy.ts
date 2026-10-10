@@ -18,11 +18,11 @@ export const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Health Connect',
-    body: 'If you turn on auto-tracking for a habit, the app reads steps, distance, exercise sessions, floors climbed and sleep from Health Connect — only the types you allow, only to fill in your habit progress on this device. Health data is never sent anywhere, never used for advertising, and never shared. You can revoke access at any time in Health Connect settings.',
+    body: 'If you turn on auto-tracking for a habit, the app reads steps, distance, exercise sessions, floors climbed and sleep from Health Connect: only the types you allow, only to fill in your habit progress on this device. Health data is never sent anywhere, never used for advertising, and never shared. You can revoke access at any time in Health Connect settings.',
   },
   {
     title: 'Location and runs',
-    body: 'When you start a run, the app uses your precise location (only while the run is recording — never "all the time") to draw your route and measure distance and pace. Routes are stored only on this phone. Map images are loaded from OpenFreeMap (openfreemap.org, OpenStreetMap data); like any website, their server sees which map area is being loaded and your IP address, but no account, name or route is sent. You can delete any run, and turn location off in Android settings at any time.',
+    body: 'When you start a run, the app uses your precise location (only while the run is recording, never "all the time") to draw your route and measure distance and pace. Routes are stored only on this phone. Map images are loaded from OpenFreeMap (openfreemap.org, OpenStreetMap data); like any website, their server sees which map area is being loaded and your IP address, but no account, name or route is sent. You can delete any run, and turn location off in Android settings at any time.',
   },
   {
     title: 'Sleep from phone use',

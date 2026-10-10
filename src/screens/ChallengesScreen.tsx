@@ -51,7 +51,7 @@ export function ChallengesScreen({ navigation, route }: RootScreenProps<'Challen
   const toast = (msg: string) => ToastAndroid.show(msg, ToastAndroid.SHORT);
   const joinCode = (input: string) => {
     const parsed = parseChallengeCode(input);
-    if (!parsed) return toast(t('That code doesn’t look right — check it with your friend.'));
+    if (!parsed) return toast(t('That code doesn’t look right. Check it with your friend.'));
     const { challenge: c, startDay } = parsed;
     if (activeIds.has(c.id)) return toast(t('You’re already in this challenge.'));
     if (shiftKey(startDay, c.days - 1) < today) return toast(t('That challenge has already ended.'));

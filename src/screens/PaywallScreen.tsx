@@ -21,9 +21,9 @@ const GOLD = '#F5A623';
 
 const PERKS: { Icon: LucideIcon; title: string; body: string }[] = [
   { Icon: Sparkles, title: 'Every habit, every illustration', body: 'Unlimited habits, themes, widgets and streak freezes.' },
-  { Icon: Footprints, title: 'GPS runs with a live map', body: 'Distance, pace and splits — logged to your habit.' },
+  { Icon: Footprints, title: 'GPS runs with a live map', body: 'Distance, pace and splits, logged to your habit.' },
   { Icon: MoonStar, title: 'Sleep from phone use', body: 'No watch needed.' },
-  { Icon: Mic, title: 'Voice logging', body: '“2 glasses of water” — done.' },
+  { Icon: Mic, title: 'Voice logging', body: '“2 glasses of water”. Done.' },
   { Icon: Trophy, title: 'Challenges with friends', body: 'Share a code, do it together.' },
   { Icon: FileText, title: 'Insights and reports', body: 'Patterns, Year in Review, PDF and spreadsheet exports.' },
   { Icon: Gift, title: 'All future features', body: 'Every update included. Your data stays on your phone.' },
@@ -89,10 +89,10 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
     const r = await buy(plan);
     setBusy(null);
     if (r === 'purchased') haptic.success();
-    else if (r === 'pending') setNote(t('Payment pending — the app unlocks by itself as soon as Google Play confirms it.'));
+    else if (r === 'pending') setNote(t('Payment pending. The app unlocks by itself as soon as Google Play confirms it.'));
     else if (r === 'unavailable')
       setNote(PAYWALL_MODE === 'live' ? t('Google Play isn’t available right now. Check your connection and try again.') : t('Purchases work in the Play Store version. This test build never locks.'));
-    else if (r === 'error') setNote(t('Something went wrong with Google Play. You weren’t charged — please try again.'));
+    else if (r === 'error') setNote(t('Something went wrong with Google Play. You weren’t charged, so please try again.'));
   };
 
   const restore = async () => {
@@ -106,11 +106,11 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
   };
 
   const status = lifetime
-    ? t('Lifetime unlocked — thank you!')
+    ? t('Lifetime unlocked. Thank you!')
     : subscription
       ? subscription === 'yearly'
-        ? t('You’re on Pro yearly — thank you!')
-        : t('You’re on Pro monthly — thank you!')
+        ? t('You’re on Pro yearly. Thank you!')
+        : t('You’re on Pro monthly. Thank you!')
       : left > 0
         ? t('{n} days left in your free week', { n: left })
         : t('Your free week has ended');
@@ -156,7 +156,7 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
             {pro ? t('You’re all set') : t('Habit Tracker Pro')}
           </Txt>
           <Txt variant="body" color="rgba(255,255,255,0.9)" style={{ textAlign: 'center' }}>
-            {pro ? t('Every feature is unlocked.') : t('Keep every habit going — try it free for {n} days.', { n: TRIAL_DAYS })}
+            {pro ? t('Every feature is unlocked.') : t('Keep every habit going. Try it free for {n} days.', { n: TRIAL_DAYS })}
           </Txt>
         </View>
 

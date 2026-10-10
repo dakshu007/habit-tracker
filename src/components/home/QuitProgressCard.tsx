@@ -51,7 +51,7 @@ export function QuitProgressCard({ habit }: { habit: Habit }) {
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Tile label={t('Saved')} value={q.costPerDay > 0 ? `${currency}${fmtNumber(saved)}` : '—'} accent={c.accent} bg={isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF'} />
+        <Tile label={t('Saved')} value={q.costPerDay > 0 ? `${currency}${fmtNumber(saved)}` : '-'} accent={c.accent} bg={isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF'} />
         <Tile label={t('Best run')} value={`${best}`} accent={c.accent} bg={isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF'} />
         <Tile label={t('Slips')} value={`${q.slips.length}`} accent={c.accent} bg={isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF'} />
       </View>
@@ -69,7 +69,7 @@ export function QuitProgressCard({ habit }: { habit: Habit }) {
         variant="ghost"
         color={theme.textSecondary}
         onPress={() =>
-          Alert.alert(t('Log a slip?'), t('Your clean-day counter for {habit} restarts. That’s okay — every restart is still progress.', { habit: habit.title }), [
+          Alert.alert(t('Log a slip?'), t('Your clean-day counter for {habit} restarts. That’s okay: every restart is still progress.', { habit: habit.title }), [
             { text: t('Cancel'), style: 'cancel' },
             { text: t('I slipped'), style: 'destructive', onPress: () => slip(habit.id, day) },
           ])

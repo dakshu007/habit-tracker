@@ -60,7 +60,7 @@ function CaptionLine({ done, remaining, day }: { done: number; remaining: number
   return (
     <Txt variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
       {remaining === 0 && done > 0
-        ? t('All {n} done {when} — beautiful work', { n: done, when })
+        ? t('All {n} done {when}. Beautiful work!', { n: done, when })
         : remaining === 1
           ? t('{done} done {when}, 1 habit to go', { done: doneShown, when })
           : t('{done} done {when}, {n} habits to go', { done: doneShown, when, n: remaining })}
@@ -241,7 +241,7 @@ function EmptyStack({ weekly, hasHabits, onCreate }: { weekly: boolean; hasHabit
         </Txt>
         <Txt variant="bodyRegular" color="secondary" style={{ textAlign: 'center' }}>
           {weekly
-            ? t('Weekly goals let you do something a few times a week — on any days you like.')
+            ? t('Weekly goals let you do something a few times a week, on any days you like.')
             : hasHabits
               ? t('Nothing is scheduled for this day. Enjoy it, or add something new.')
               : t('Pick something small. Consistency beats intensity.')}

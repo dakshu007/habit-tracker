@@ -118,7 +118,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
     const st = await healthStatus();
     if (st === 'ready') return setH((cur) => ({ ...cur, sync: src }));
     if (st !== 'needs-permission') return;
-    Alert.alert(t('Track this automatically?'), t('Health Connect can fill this habit from your phone’s step counter, watch or fitness apps — no typing needed.'), [
+    Alert.alert(t('Track this automatically?'), t('Health Connect can fill this habit from your phone’s step counter, watch or fitness apps. No typing needed.'), [
       { text: t('Not now'), style: 'cancel' },
       {
         text: t('Turn on'),
@@ -193,7 +193,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
                 {h.subtitle.trim() || t('Why it matters to you')}
               </Txt>
             </View>
-            <GoalBadge colors={colors} goal={goal > 0 ? goal : 0} unit={h.unit || '—'} />
+            <GoalBadge colors={colors} goal={goal > 0 ? goal : 0} unit={h.unit || '-'} />
           </View>
         </Animated.View>
 
@@ -436,7 +436,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
               <View style={{ flex: 1 }}>
                 <Txt variant="h3">{t('Times per week')}</Txt>
                 <Txt variant="small" color="secondary">
-                  {t('Any days you like — shows under “Weekly tasks”')}
+                  {t('Any days you like. Shows under “Weekly tasks”')}
                 </Txt>
               </View>
               <Stepper value={`${perWeek}×`} onMinus={() => bumpPerWeek(-1)} onPlus={() => bumpPerWeek(1)} />

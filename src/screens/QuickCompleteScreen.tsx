@@ -67,7 +67,7 @@ export function QuickCompleteScreen({ navigation, route }: RootScreenProps<'Quic
           <TaskCard habit={habit} width={cardW} day={today} askMoodOnComplete={false} />
         </Animated.View>
         <Txt variant="small" color="rgba(255,255,255,0.75)" style={{ textAlign: 'center' }}>
-          {done ? t('Nice — heading back to your home screen…') : t('Tap outside to close')}
+          {done ? t('Nice! Heading back to your home screen…') : t('Tap outside to close')}
         </Txt>
       </View>
     </View>

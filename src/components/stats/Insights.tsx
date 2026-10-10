@@ -68,7 +68,7 @@ export function Insights() {
               <Clock size={19} color={theme.textSecondary} strokeWidth={2} />
             </View>
             <Txt variant="small" color="secondary" style={{ flex: 1 }}>
-              {t('Keep logging for a couple of weeks — patterns like “you sleep better on workout days” show up here.')}
+              {t('Keep logging for a couple of weeks. Patterns like “you sleep better on workout days” show up here.')}
             </Txt>
           </View>
         ) : (

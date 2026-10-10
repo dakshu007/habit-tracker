@@ -121,7 +121,7 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
                 <Txt variant="small" color="secondary">
                   {habit.challenge!.closed
                     ? habit.challenge!.passed
-                      ? t('Completed — trophy earned')
+                      ? t('Completed, trophy earned')
                       : t('Finished')
                     : t('{done} days done so far', { done: challenge.doneDays })}
                 </Txt>
@@ -168,7 +168,7 @@ export function HabitDetailScreen({ navigation, route }: RootScreenProps<'HabitD
           <Card style={{ paddingVertical: 6 }}>
             {data.history.length === 0 ? (
               <Txt variant="bodyRegular" color="secondary" style={{ paddingVertical: 14, textAlign: 'center' }}>
-                {t('Nothing logged yet — your first check-in will show here.')}
+                {t('Nothing logged yet. Your first check-in will show here.')}
               </Txt>
             ) : (
               data.history.map((e, i) => {

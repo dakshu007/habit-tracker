@@ -43,7 +43,7 @@ export function VoiceLogScreen({ navigation }: RootScreenProps<'VoiceLog'>) {
     if (!DeviceSignals?.canRecognizeSpeech()) return setState({ kind: 'unavailable' });
     setState({ kind: 'listening' });
     try {
-      const results = await DeviceSignals.recognizeSpeech(t('Say what you did — e.g. “2 glasses of water”'), getLang() === 'hi' ? 'hi-IN' : null);
+      const results = await DeviceSignals.recognizeSpeech(t('Say what you did, e.g. “2 glasses of water”'), getLang() === 'hi' ? 'hi-IN' : null);
       if (!results.length) return close();
       const active = useHabitStore.getState().habits.filter((h) => !h.archived && !h.quit);
       // Prefer the first alternative that names a habit.

@@ -41,7 +41,7 @@ export function RoutinesScreen({ navigation }: RootScreenProps<'Routines'>) {
           <Route size={40} color={ACCENT} strokeWidth={1.6} />
           <Txt variant="h3">{t('No routines yet')}</Txt>
           <Txt variant="small" color="secondary" style={{ textAlign: 'center' }}>
-            {t('Try a "Morning routine": water, stretch, journal — then play it each morning.')}
+            {t('Try a "Morning routine": water, stretch, journal. Then play it each morning.')}
           </Txt>
         </Card>
       )}
@@ -200,7 +200,7 @@ export function RoutineEditScreen({ navigation, route }: RootScreenProps<'Routin
           color={theme.danger}
           icon={<TrashIcon size={17} color={theme.danger} />}
           onPress={() =>
-            Alert.alert(t('Delete this routine?'), t('Your habits stay — only the routine is removed.'), [
+            Alert.alert(t('Delete this routine?'), t('Your habits stay. Only the routine is removed.'), [
               { text: t('Cancel'), style: 'cancel' },
               {
                 text: t('Delete'),

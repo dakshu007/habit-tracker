@@ -17,7 +17,7 @@ export const PASS_RATE = 0.8;
 export const challenges: Challenge[] = [
   { id: 'hydrate-7', title: '7-Day Hydration Reset', blurb: 'Eight glasses a day for a week. Feel the difference by day three.', days: 7, templateKey: 'water' },
   { id: 'detox-7', title: '7-Day Screen Detox', blurb: 'One screen-free hour every day. Reclaim your evenings.', days: 7, templateKey: 'detox' },
-  { id: 'read-21', title: '21 Days of Reading', blurb: 'Ten pages a day — about two books by the end.', days: 21, templateKey: 'read' },
+  { id: 'read-21', title: '21 Days of Reading', blurb: 'Ten pages a day: about two books by the end.', days: 21, templateKey: 'read' },
   { id: 'calm-21', title: '21 Days of Calm', blurb: 'Ten quiet minutes a day to build a lasting meditation habit.', days: 21, templateKey: 'meditate' },
   { id: 'run-21', title: '21-Day Running Start', blurb: 'Build the running habit, one easy run at a time.', days: 21, templateKey: 'run' },
   { id: 'walk-30', title: '30-Day Walking Streak', blurb: '8,000 steps a day for a month. Simple, powerful.', days: 30, templateKey: 'walk' },

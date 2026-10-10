@@ -73,7 +73,7 @@ export async function syncNotifications() {
     if (h.archived || !h.reminder.enabled) continue;
     const content: Notifications.NotificationContentInput = {
       title: h.title,
-      body: `Time for ${h.title.toLowerCase()} — goal ${h.goalValue} ${h.unit}. ${h.subtitle}`.trim(),
+      body: `Time for ${h.title.toLowerCase()}: goal ${h.goalValue} ${h.unit}. ${h.subtitle}`.trim(),
       data: { kind: 'reminder', habitId: h.id, url: `habittracker://complete/${h.id}` },
     };
     const { hour, minute } = h.reminder;
@@ -107,7 +107,7 @@ export async function syncNotifications() {
       await Notifications.scheduleNotificationAsync({
         content: {
           title: open.length === 1 ? t('{habit} is still open', { habit: open[0].title }) : t('{n} habits left today', { n: open.length }),
-          body: `${t('Check them off before bed —')} ${t(line)}`,
+          body: `${t('Check them off before bed:')} ${t(line)}`,
           data: { kind: 'nudge' },
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNEL },

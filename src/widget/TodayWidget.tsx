@@ -289,7 +289,7 @@ function ListBody({ data, width, height, p }: { data: TodayWidgetData; width: nu
         <FlexWidget style={{ flex: 1, flexDirection: 'column' }}>
           <TextWidget text={relativeDayLabel(data.day)} style={{ fontSize: 19, fontFamily: fonts.extrabold, color: p.title }} />
           <TextWidget
-            text={due.length === 0 ? t('Nothing scheduled') : left === 0 ? t('Perfect day — all done') : `${left === 1 ? t('1 habit to go') : t('{n} habits to go', { n: left })}${data.name ? `, ${data.name}` : ''}`}
+            text={due.length === 0 ? t('Nothing scheduled') : left === 0 ? t('Perfect day, all done') : `${left === 1 ? t('1 habit to go') : t('{n} habits to go', { n: left })}${data.name ? `, ${data.name}` : ''}`}
             maxLines={1}
             truncate="END"
             style={{ fontSize: 12.5, fontFamily: fonts.medium, color: p.sub }}

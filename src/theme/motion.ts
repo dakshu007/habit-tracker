@@ -51,7 +51,7 @@ export const MOTION_PRESETS: Record<MotionPreset, Motion> = {
   smooth: {
     id: 'smooth',
     label: 'Smooth',
-    description: 'Clean and fluid — no wobble',
+    description: 'Clean and fluid, no wobble',
     ui: crit(320, 1, 0.92),
     card: crit(230, 0.9, 0.95),
     release: crit(420, 1, 0.9),

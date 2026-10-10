@@ -112,7 +112,7 @@ export function PhoneSleep({ h, onChange }: { h: Habit; onChange: (v: Habit['pho
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <ShieldCheck size={18} color={accent} strokeWidth={2} />
                   <Txt variant="small" style={{ flex: 1 }}>
-                    {t('Turn on “Usage access” for Habit Tracker so it can see when your screen was on or off. Only those times are read — never which apps you used — and nothing leaves your phone.')}
+                    {t('Turn on “Usage access” for Habit Tracker so it can see when your screen was on or off. Only those times are read (never which apps you used), and nothing leaves your phone.')}
                   </Txt>
                 </View>
                 <PressableScale onPress={() => openUsageAccess()}>

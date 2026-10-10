@@ -48,7 +48,7 @@ export function StreakInfo() {
       {row(
         <Bed size={22} color="#9B6BF2" strokeWidth={2} />,
         t('Rest days'),
-        t('Planned a break? Mark a day as a rest day from the Day view — streaks pause instead of breaking.'),
+        t('Planned a break? Mark a day as a rest day from the Day view. Streaks pause instead of breaking.'),
       )}
       <Button label={t('Got it')} onPress={overlay.close} />
     </View>

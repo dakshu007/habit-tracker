@@ -145,7 +145,7 @@ export function StatsScreen() {
           <View style={{ flex: 1 }}>
             <Txt variant="h3">{t('Year in review')}</Txt>
             <Txt variant="small" color="secondary">
-              {t('Your {year} so far — heatmap, top habit, best month', { year: today.slice(0, 4) })}
+              {t('Your {year} so far: heatmap, top habit, best month', { year: today.slice(0, 4) })}
             </Txt>
           </View>
         </Card>
@@ -185,7 +185,7 @@ export function StatsScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: theme.inputBg }}>
             <SparkleIcon size={18} color="#B280FF" />
             <Txt variant="small" color="secondaryStrong" style={{ flex: 1 }}>
-              {t('You’re most consistent on {day} — {pct} on average.', { day: t(DAY_NAMES[stats.bestDow.d]), pct: pct(stats.bestDow.avg) })}
+              {t('You’re most consistent on {day}: {pct} on average.', { day: t(DAY_NAMES[stats.bestDow.d]), pct: pct(stats.bestDow.avg) })}
             </Txt>
           </View>
         )}

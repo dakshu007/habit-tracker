@@ -125,7 +125,7 @@ export function FocusScreen({ navigation, route }: RootScreenProps<'Focus'>) {
   const scheduleNotifications = async (endTime: number) => {
     clearNotifications();
     const end = await Notifications.scheduleNotificationAsync({
-      content: { title: t('Focus complete'), body: t('{habit} — nicely done. Your minutes are logged.', { habit: title }), data: { kind: 'focus' } },
+      content: { title: t('Focus complete'), body: t('{habit}: nicely done. Your minutes are logged.', { habit: title }), data: { kind: 'focus' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(endTime), channelId: CHANNEL },
     }).catch(() => undefined);
     const ongoing = await Notifications.scheduleNotificationAsync({

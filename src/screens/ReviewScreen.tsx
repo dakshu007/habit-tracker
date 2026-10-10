@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Txt } from '@/components/ui/Txt';
 import { Button, GlassButton } from '@/components/ui/Glass';
@@ -43,7 +43,27 @@ export function ReviewScreen({ navigation }: RootScreenProps<'Review'>) {
   // On Sunday (or the last day of the user's week) review the week in progress.
   const current = fromKey(today).getDay() === (weekStart + 6) % 7;
   const r = useMemo(() => buildReview(habits, logs, today, weekStart, current), [habits, logs, today, weekStart, current]);
-  useEffect(() => markReviewSeen(r.start), [r.start, markReviewSeen]);
+  useEffect(() => {
+    markReviewSeen(r.start);
+  }, [r.start, markReviewSeen]);
+
+  const leaving = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** Stop the auto-advance first, then leave (Home if there's nothing to go back to). */
+  const leave = useCallback(
+    (then?: () => void) => {
+      if (timer.current) clearTimeout(timer.current);
+      if (then) then();
+      else {
+        leaving.current = true;
+        if (navigation.canGoBack()) navigation.goBack();
+        else navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+        return;
+      }
+    },
+    [navigation],
+  );
 
   const pages = useMemo(() => {
     const list: { key: string; render: () => React.ReactNode }[] = [];
@@ -133,7 +153,7 @@ export function ReviewScreen({ navigation }: RootScreenProps<'Review'>) {
             {Math.round(Math.abs(diff) * 100)}%
           </Txt>
           <Txt variant="h2" color="white" style={{ textAlign: 'center' }}>
-            {diff > 0.02 ? t('You’re trending up. Keep it going.') : diff < -0.02 ? t('A softer week — that’s okay. Reset on Monday.') : t('Steady and consistent.')}
+            {diff > 0.02 ? t('You’re trending up. Keep it going.') : diff < -0.02 ? t('A softer week, and that’s okay. Reset on Monday.') : t('Steady and consistent.')}
           </Txt>
         </View>
       ),
@@ -168,7 +188,7 @@ export function ReviewScreen({ navigation }: RootScreenProps<'Review'>) {
           <Txt variant="title" color="white" style={{ textAlign: 'center' }}>
             {r.needsLove
               ? r.needsLove.reminder.enabled
-                ? t('Make {habit} smaller — even 2 minutes counts.', { habit: r.needsLove.title })
+                ? t('Make {habit} smaller. Even 2 minutes counts.', { habit: r.needsLove.title })
                 : t('Add a reminder for {habit} at the time you’re most free.', { habit: r.needsLove.title })
               : t('Everything’s on track. Maybe it’s time for a new challenge?')}
           </Txt>
@@ -176,21 +196,34 @@ export function ReviewScreen({ navigation }: RootScreenProps<'Review'>) {
             label={t('Share my week')}
             color="#FFFFFF"
             icon={<Share2 size={18} color="#1C1B22" />}
-            onPress={() => navigation.navigate('Share', { kind: 'week' })}
+            onPress={() => leave(() => navigation.navigate('Share', { kind: 'week' }))}
             style={{ alignSelf: 'stretch', marginTop: 12 }}
           />
         </View>
       ),
     });
     return list;
-  }, [r, navigation]);
+  }, [r, leave, navigation]);
 
   const [page, setPage] = useState(0);
   useEffect(() => {
-    if (m.id === 'off') return;
-    const id = setTimeout(() => setPage((p) => Math.min(pages.length - 1, p + 1)), PAGE_MS);
-    return () => clearTimeout(id);
+    if (m.id === 'off' || leaving.current) return;
+    timer.current = setTimeout(() => setPage((p) => Math.min(pages.length - 1, p + 1)), PAGE_MS);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
   }, [page, pages.length, m.id]);
+
+  // Fade each page in. A plain shared value (not a layout animation), so leaving
+  // the screen mid-fade can't upset the native screen transition.
+  const fade = useSharedValue(1);
+  useEffect(() => {
+    if (m.enter === 'none') return;
+    fade.value = 0;
+    fade.value = withTiming(1, { duration: 260 });
+  }, [page, fade, m.enter]);
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
+
 
   const go = (d: 1 | -1) => {
     haptic.tick();
@@ -206,13 +239,13 @@ export function ReviewScreen({ navigation }: RootScreenProps<'Review'>) {
         ))}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-        <GlassButton accessibilityLabel={t('Close')} fill="rgba(255,255,255,0.18)" onPress={() => navigation.goBack()}>
+        <GlassButton accessibilityLabel={t('Close')} fill="rgba(255,255,255,0.18)" onPress={() => leave()}>
           <CloseIcon size={20} color="#FFFFFF" />
         </GlassButton>
       </View>
       <View style={{ flex: 1 }}>
-        <Animated.View key={pages[page].key} entering={m.enter === 'none' ? undefined : FadeIn.duration(260)} style={{ flex: 1, justifyContent: 'center' }}>
-          {pages[page].render()}
+        <Animated.View collapsable={false} style={[{ flex: 1, justifyContent: 'center' }, fadeStyle]}>
+          {pages[Math.min(page, pages.length - 1)].render()}
         </Animated.View>
         {/* Tap zones (hidden on the last page so its buttons stay tappable) */}
         {page < pages.length - 1 && (

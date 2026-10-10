@@ -42,12 +42,12 @@ export function RootNavigator() {
           <Stack.Screen name="Routines" component={RoutinesScreen} />
           <Stack.Screen name="RoutineEdit" component={RoutineEditScreen} />
           <Stack.Screen name="RoutinePlay" component={RoutinePlayScreen} options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="Review" component={ReviewScreen} options={{ animation: 'fade' }} />
+          <Stack.Screen name="Review" component={ReviewScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="Share" component={ShareScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="Privacy" component={PrivacyScreen} />
           <Stack.Screen name="Run" component={RunScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="Runs" component={RunsScreen} />
-          <Stack.Screen name="YearReview" component={YearReviewScreen} options={{ animation: 'fade' }} />
+          <Stack.Screen name="YearReview" component={YearReviewScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="Paywall" component={PaywallScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="RunDetail" component={RunDetailScreen} />
           <Stack.Screen

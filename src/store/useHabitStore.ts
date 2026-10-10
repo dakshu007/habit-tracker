@@ -8,6 +8,7 @@ import { dayKey } from '@/utils/date';
 import { dueOn, isDoneOn, isScheduledOn, REST_KEY, streakFor, weeklyHabits } from '@/logic/habits';
 import { shiftKey } from '@/utils/date';
 import type { MotionPreset } from '@/theme/motion';
+import { isUnlocked, useLicense } from './useLicense';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type TaskFilter = 'today' | 'weekly';
@@ -156,6 +157,8 @@ export const useHabitStore = create<HabitState>()(
     (set, get) => {
       /** Write a value and fire the "perfect day" celebration if this completed the set. */
       const write = (id: string, day: string, value: number) => {
+        // After the free week, logging needs the lifetime unlock (screens show the paywall).
+        if (!isUnlocked()) return;
         const before = get();
         // Completion is final: once a habit hits its goal for a day it can't drop back below it.
         const habit = before.habits.find((h) => h.id === id);
@@ -341,12 +344,14 @@ export const useHabitStore = create<HabitState>()(
 
         updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
         setProfile: (patch) => set((s) => ({ profile: { ...s.profile, ...patch } })),
-        finishOnboarding: (name, habits) =>
+        finishOnboarding: (name, habits) => {
+          useLicense.getState().startTrial();
           set({
             profile: { ...get().profile, name: name.trim(), onboarded: true, joinedAt: new Date().toISOString() },
             habits,
             activeHabitId: habits[0]?.id ?? null,
-          }),
+          });
+        },
         importSnapshot: (snap) =>
           set({
             habits: snap.habits,

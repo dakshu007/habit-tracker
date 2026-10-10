@@ -20,6 +20,8 @@ jobs:
       BUILD_NUMBER: ${{ github.run_number }}
       # Optional secrets — the build works without them.
       EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      # Play-signed builds lock after the 7-day trial; unsigned test APKs never lock (preview).
+      EXPO_PUBLIC_PAYWALL: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && 'live' || 'preview' }}
       KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}

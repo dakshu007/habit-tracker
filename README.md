@@ -25,6 +25,9 @@ An illustrated, gesture-driven habit tracker for Android, built with Expo (SDK 5
 - **Customisation:** 7 animation styles, light/dark, haptics, English + हिन्दी
 - **Your data:** backup export/restore, Android Auto Backup, privacy policy in-app
 
+## Pricing
+Free download, 7-day full trial, then a one-time **₹199 lifetime unlock** via Google Play Billing. Setup: `docs/play-store/monetization.md`. Test APKs from GitHub never lock (`EXPO_PUBLIC_PAYWALL=preview`); signed Play builds do (`live`).
+
 ## Native code
 `modules/device-signals` is a local Expo module (Kotlin): screen on/off events via `UsageStatsManager` for sleep, and `RecognizerIntent` for voice. It's auto-linked from `./modules`.
 

@@ -18,6 +18,9 @@ import { askMood } from '@/components/mood/Mood';
 import { t } from '@/i18n';
 import { fmtNumber, qty } from '@/utils/format';
 import type { Habit } from '@/data/types';
+import { useNavigation } from '@react-navigation/native';
+import type { RootNav } from '@/navigation/types';
+import { useUnlocked } from '@/store/useLicense';
 
 /** Front card aspect ratio from Figma: 358 × 503. */
 export const CARD_ASPECT = 503 / 358;
@@ -55,6 +58,9 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
   const future = day > today;
   /** Past days can be viewed but never logged. */
   const past = day < today;
+  /** After the free week without the lifetime unlock, cards are view-only. */
+  const unlocked = useUnlocked();
+  const navigation = useNavigation<RootNav>();
 
   const quit = habit.quit;
   const clean = quit ? daysClean(habit, day > today ? today : day) : 0;
@@ -153,8 +159,8 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
 
           <SlideToComplete
             done={done}
-            disabled={future || past || (rest && !done)}
-            idleLabel={future ? t('Opens on the day') : past ? t('Past days are locked') : rest ? t('Rest day — enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
+            disabled={future || past || !unlocked || (rest && !done)}
+            idleLabel={future ? t('Opens on the day') : past ? t('Past days are locked') : !unlocked ? t('Unlock to keep logging') : rest ? t('Rest day — enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
             doneLabel={quit ? t('Clean day logged. Proud of you.') : habit.doneLabel}
             onComplete={() => {
               complete(habit.id, day);
@@ -178,7 +184,15 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
               </Txt>
             </Pressable>
           ) : (
-            <FinalNote done={done} future={future || past || (rest && !done)} />
+            !unlocked && !done && !future && !past ? (
+              <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Paywall')} style={{ alignSelf: 'center', marginTop: -6, paddingHorizontal: 10, paddingVertical: 2 }}>
+                <Txt variant="small" color={colors.accent} style={{ fontSize: 11.5, fontWeight: '700' }}>
+                  {t('Your free week is over — tap to unlock')}
+                </Txt>
+              </Pressable>
+            ) : (
+              <FinalNote done={done} future={future || past || (rest && !done)} />
+            )
           )}
         </Animated.View>
 

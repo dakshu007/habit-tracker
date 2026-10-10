@@ -20,6 +20,7 @@ import { getProfileStyle } from '@/data/profileStyles';
 import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Users } from '@/components/ui/lucide';
 import { ReportSheet } from '@/components/profile/ReportSheet';
 import { inviteFriends } from '@/services/invite';
+import { trialDaysLeft, useLicense, usePrice } from '@/store/useLicense';
 import { useRunStore } from '@/store/useRunStore';
 import { fmtKm } from '@/logic/run';
 import { BuddySheet } from '@/components/profile/BuddySheet';
@@ -44,6 +45,9 @@ export function ProfileScreen() {
   const activeCount = habits.filter((h) => !h.archived).length;
   const archivedCount = habits.length - activeCount;
   const runs = useRunStore((s) => s.runs);
+  const owned = useLicense((s) => s.owned);
+  const trialLeft = trialDaysLeft(useLicense((s) => s.trialStart));
+  const price = usePrice();
   const runCount = runs.length;
   const runKm = runs.reduce((m, r) => m + r.distance, 0);
 
@@ -88,6 +92,24 @@ export function ProfileScreen() {
   return (
     <Screen title={t('Profile')} accent={getProfileStyle(profile.cardStyle).colors[1]}>
       <IdentityCard />
+
+      <Card style={{ paddingVertical: 4 }}>
+        <Row
+          last
+          icon={<Gem size={19} color="#056EBE" strokeWidth={2} />}
+          iconBg="#056EBE"
+          title={owned ? t('Lifetime unlocked') : t('Habit Tracker Lifetime')}
+          subtitle={
+            owned
+              ? t('Every feature, forever. Thank you!')
+              : trialLeft > 0
+                ? t('{n} days left in your free week · {price} once', { n: trialLeft, price })
+                : t('Free week over · unlock for {price}, once', { price })
+          }
+          onPress={() => navigation.navigate('Paywall')}
+          right={owned ? <CheckIcon size={18} color="#34C759" strokeWidth={3} /> : <ChevronRight size={18} color={theme.textTertiary} />}
+        />
+      </Card>
 
       <SectionTitle>{t('Achievements')}</SectionTitle>
       <Card>

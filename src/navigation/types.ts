@@ -19,6 +19,7 @@ export type RootStackParamList = {
   Run: { habitId?: string } | undefined;
   Runs: undefined;
   VoiceLog: undefined;
+  Paywall: undefined;
   RunDetail: { id: string; fresh?: boolean };
 };
 

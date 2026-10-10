@@ -30,6 +30,7 @@ import { t } from '@/i18n';
 import { AutoTrack } from '@/components/editor/AutoTrack';
 import { PhoneSleep } from '@/components/editor/PhoneSleep';
 import { connectHealth, healthStatus } from '@/services/health';
+import { isUnlocked as canLog } from '@/store/useLicense';
 import { isUnlocked, useUnlockedAchievements } from '@/logic/unlocks';
 import { showLocked } from '@/components/profile/ProfileParts';
 
@@ -89,6 +90,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
       haptic.warning();
       return;
     }
+    if (isNew && !canLog()) return navigation.navigate('Paywall');
     const final: Habit = { ...h, title: h.title.trim(), subtitle: h.subtitle.trim(), unit: h.unit.trim(), goalValue: goal };
     if (final.reminder.enabled) await ensurePermission();
     if (isNew) addHabit(final);

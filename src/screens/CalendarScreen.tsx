@@ -12,6 +12,9 @@ import { HabitArt } from '@/components/art/HabitArt';
 import { heatColor } from '@/components/charts/HeatCell';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useTabs } from '@/navigation/MainTabs';
+import { useNavigation } from '@react-navigation/native';
+import type { RootNav } from '@/navigation/types';
+import { isUnlocked } from '@/store/useLicense';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, spacing } from '@/theme/tokens';
 import { dayCompletion, dueOn, isRestDay, isScheduledOn, valueOn, weeklyHabits } from '@/logic/habits';
@@ -214,6 +217,7 @@ function Chip({ label, color, active, onPress }: { label: string; color: string;
 function DaySheet({ day }: { day: string }) {
   const { theme } = useTheme();
   const { go } = useTabs();
+  const navigation = useNavigation<RootNav>();
   const habits = useHabitStore((s) => s.habits);
   const logs = useHabitStore((s) => s.logs);
   const today = useHabitStore((s) => s.today);
@@ -265,6 +269,10 @@ function DaySheet({ day }: { day: string }) {
                 accessibilityLabel={done ? t('{habit} done', { habit: h.title }) : t('Complete {habit}', { habit: h.title })}
                 onPress={() => {
                   if (done) return; // completions are final
+                  if (!isUnlocked()) {
+                    overlay.close();
+                    return navigation.navigate('Paywall');
+                  }
                   complete(h.id, day);
                   haptic.success();
                 }}

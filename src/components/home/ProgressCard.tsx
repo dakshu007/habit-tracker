@@ -15,6 +15,7 @@ import { hexToRgba } from '@/theme/color';
 import { useHabitStore } from '@/store/useHabitStore';
 import { lastUpdatedOn, valueOn } from '@/logic/habits';
 import { canLogRun } from '@/logic/run';
+import { useUnlocked } from '@/store/useLicense';
 import { Route } from '@/components/ui/lucide';
 import { getTheme } from '@/data/themes';
 import { fmtNumber, qty, unitFor } from '@/utils/format';
@@ -49,6 +50,7 @@ function BuildProgressCard({ habit }: { habit: Habit }) {
   const done = value >= habit.goalValue;
   const future = day > today;
   const past = day < today;
+  const unlocked = useUnlocked();
   const timed = TIMED_UNITS.includes(habit.unit.toLowerCase());
   const runnable = canLogRun(habit);
 
@@ -151,8 +153,27 @@ function BuildProgressCard({ habit }: { habit: Habit }) {
         </View>
       )}
 
+      {!unlocked && !past && !future && !done && (
+        <PressableScale onPress={() => navigation.navigate('Paywall')} accessibilityLabel={t('Unlock lifetime')}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 22, backgroundColor: hexToRgba('#056EBE', isDark ? 0.22 : 0.1) }}>
+            <LockIcon size={18} color="#3F95DA" strokeWidth={2.2} />
+            <View style={{ flex: 1 }}>
+              <Txt variant="label">{t('Your free week is over')}</Txt>
+              <Txt variant="small" color="secondary">
+                {t('Unlock lifetime to keep logging. Your history is safe.')}
+              </Txt>
+            </View>
+            <View style={{ paddingHorizontal: 14, height: 34, borderRadius: 17, justifyContent: 'center', backgroundColor: '#056EBE' }}>
+              <Txt variant="label" color="white">
+                {t('Unlock')}
+              </Txt>
+            </View>
+          </View>
+        </PressableScale>
+      )}
+
       {/* Logging controls */}
-      {!future && !past && !done && (
+      {!future && !past && unlocked && !done && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <PressableScale
             accessibilityLabel={t('Remove {amount}', { amount: qty(habit.step, habit.unit) })}

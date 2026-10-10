@@ -12,6 +12,7 @@ import { Navigation, Pause, Play, Square } from '@/components/ui/lucide';
 import { RUN_BLUE, RunMap } from '@/components/run/RunMap';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useLiveRun, useRunStore } from '@/store/useRunStore';
+import { isUnlocked } from '@/store/useLicense';
 import { canLogRun, currentPace, defaultRunHabit, fmtDuration, fmtKm, fmtPace, movingTime, paceSecPerKm, runAmountFor } from '@/logic/run';
 import { ensureGps, hasGpsPermission, isRecording, openAppSettings, startRunUpdates, stopRunUpdates, type GpsAccess } from '@/services/runTracker';
 import { ensurePermission as ensureNotificationPermission } from '@/services/notifications';
@@ -108,6 +109,7 @@ export function RunScreen({ navigation, route }: RootScreenProps<'Run'>) {
 
   const start = async () => {
     if (busy) return;
+    if (!isUnlocked()) return navigation.navigate('Paywall');
     setBusy(true);
     setProblem(null);
     const access = await ensureGps();

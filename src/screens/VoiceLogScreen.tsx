@@ -18,6 +18,8 @@ import { qty } from '@/utils/format';
 import { haptic } from '@/utils/haptics';
 import { getLang, t } from '@/i18n';
 import type { RootScreenProps } from '@/navigation/types';
+import { useRequireUnlock } from '@/navigation/useRequireUnlock';
+import { isUnlocked } from '@/store/useLicense';
 
 type State = { kind: 'listening' } | { kind: 'heard'; text: string; log: VoiceLog | null } | { kind: 'unavailable' } | { kind: 'logged'; text: string };
 
@@ -28,6 +30,7 @@ type State = { kind: 'listening' } | { kind: 'heard'; text: string; log: VoiceLo
  * app-icon shortcut, or habittracker://voice.
  */
 export function VoiceLogScreen({ navigation }: RootScreenProps<'VoiceLog'>) {
+  useRequireUnlock();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const m = useMotion();
@@ -36,6 +39,7 @@ export function VoiceLogScreen({ navigation }: RootScreenProps<'VoiceLog'>) {
   const [state, setState] = useState<State>({ kind: 'listening' });
 
   const listen = async () => {
+    if (!isUnlocked()) return; // the paywall is taking over
     if (!DeviceSignals?.canRecognizeSpeech()) return setState({ kind: 'unavailable' });
     setState({ kind: 'listening' });
     try {

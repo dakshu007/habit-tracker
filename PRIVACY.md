@@ -30,6 +30,10 @@ Voice logging opens your phone's own speech recognizer (usually Google voice typ
 
 Monthly reports (PDF or CSV) are created on your phone and only leave it when you choose where to share them.
 
+## Purchases
+
+The lifetime unlock is bought through Google Play. Google handles the payment; the app only learns whether the unlock is owned, and never sees your card or UPI details.
+
 ## Notifications
 
 Reminders, the evening nudge, focus timers and the weekly review are scheduled locally on your phone. No push server is involved.

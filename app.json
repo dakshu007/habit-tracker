@@ -134,7 +134,8 @@
         }
       ],
       "@maplibre/maplibre-react-native",
-      "./plugins/with-app-shortcuts"
+      "./plugins/with-app-shortcuts",
+      "expo-iap"
     ]
   }
 }

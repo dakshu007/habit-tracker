@@ -10,6 +10,7 @@ import { isDoneOn } from '@/logic/habits';
 import { useMotion } from '@/theme/motion';
 import { spacing } from '@/theme/tokens';
 import type { RootScreenProps } from '@/navigation/types';
+import { useRequireUnlock } from '@/navigation/useRequireUnlock';
 import { t } from '@/i18n';
 
 /**
@@ -19,6 +20,7 @@ import { t } from '@/i18n';
  * Once completed it celebrates briefly and sends you back to the home screen.
  */
 export function QuickCompleteScreen({ navigation, route }: RootScreenProps<'QuickComplete'>) {
+  useRequireUnlock();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const m = useMotion();

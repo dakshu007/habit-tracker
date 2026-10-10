@@ -17,12 +17,14 @@ import { fmtNumber, qty } from '@/utils/format';
 import { haptic } from '@/utils/haptics';
 import { t } from '@/i18n';
 import type { RootScreenProps } from '@/navigation/types';
+import { useRequireUnlock } from '@/navigation/useRequireUnlock';
 
 /**
  * Quick log sheet — opened from the Quick Settings tile (habittracker://quick-log).
  * + adds one step; tapping the check opens the real slide-to-complete.
  */
 export function QuickLogScreen({ navigation }: RootScreenProps<'QuickLog'>) {
+  useRequireUnlock();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const m = useMotion();

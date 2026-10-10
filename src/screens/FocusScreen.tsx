@@ -21,6 +21,7 @@ import { formatTime } from '@/utils/date';
 import { haptic } from '@/utils/haptics';
 import { t } from '@/i18n';
 import type { RootScreenProps } from '@/navigation/types';
+import { useRequireUnlock } from '@/navigation/useRequireUnlock';
 
 type Sound = 'off' | 'rain' | 'ocean' | 'brown' | 'white';
 
@@ -49,6 +50,7 @@ function mmss(ms: number) {
  * notification mark the end, and the minutes are logged to the habit.
  */
 export function FocusScreen({ navigation, route }: RootScreenProps<'Focus'>) {
+  useRequireUnlock();
   useKeepAwake();
   const insets = useSafeAreaInsets();
   const habit = useHabit(route.params.habitId);

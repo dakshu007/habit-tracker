@@ -22,6 +22,8 @@ import { overlay } from '@/components/ui/Overlay';
 import { Play, Snowflake } from '@/components/ui/lucide';
 import { StreakInfo } from '@/components/home/StreakInfo';
 import { LiveRunPill } from '@/screens/RunsScreen';
+import { TrialPill, useTrialNudge } from '@/components/home/TrialPill';
+import { useLiveRun } from '@/store/useRunStore';
 import { t } from '@/i18n';
 import { useEnter } from '@/theme/motion';
 import { greeting, relativeDayLabel } from '@/utils/date';
@@ -83,6 +85,8 @@ export function HomeScreen() {
   const weekStart = useHabitStore((s) => s.settings.weekStart);
   const setSelectedDay = useHabitStore((s) => s.setSelectedDay);
   const freezes = useHabitStore((s) => s.extras.freezes);
+  const liveRun = useLiveRun((s) => !!s.live);
+  const trialNudge = useTrialNudge();
 
   const due = useMemo(() => dueOn(habits, day), [habits, day]);
   const done = due.filter((h) => isDoneOn(h, logs, day)).length;
@@ -149,9 +153,12 @@ export function HomeScreen() {
             </GlassButton>
           </Animated.View>
 
-          <View style={{ alignSelf: 'center' }}>
-            <LiveRunPill onPress={() => navigation.navigate('Run')} />
-          </View>
+          {(liveRun || trialNudge != null) && (
+            <View style={{ alignItems: 'center', gap: 8 }}>
+              <LiveRunPill onPress={() => navigation.navigate('Run')} />
+              <TrialPill onPress={() => navigation.navigate('Paywall')} />
+            </View>
+          )}
 
           <Animated.View entering={enter(60)}>
             <DateWheel />

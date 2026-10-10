@@ -1,6 +1,6 @@
 # Privacy Policy — Habit Tracker
 
-_Last updated: 9 October 2026_
+_Last updated: 10 October 2026_
 
 ## The short version
 
@@ -56,4 +56,4 @@ The app isn’t directed at children under 13.
 
 ## Contact
 
-Questions about privacy? Email support@example.com (replace before publishing).
+Questions about privacy? Email support@mykavo.app.

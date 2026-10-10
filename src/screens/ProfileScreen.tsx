@@ -1,4 +1,4 @@
-import { Alert, Image, ToastAndroid, View } from 'react-native';
+import { Alert, Image, ScrollView, ToastAndroid, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useNavigation } from '@react-navigation/native';
 
@@ -16,6 +16,7 @@ import { SwipeToggle } from '@/components/ui/SwipeToggle';
 import { MotionPicker } from '@/components/ui/MotionPicker';
 import { requestPinWidget } from 'react-native-android-widget';
 import { CARD_WIDGET, LIST_WIDGET } from '@/widget/TodayWidget';
+import { MINI_WIDGET, SLEEP_WIDGET, STREAK_WIDGET } from '@/widget/MoreWidgets';
 import { getProfileStyle } from '@/data/profileStyles';
 import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Users } from '@/components/ui/lucide';
 import { ReportSheet } from '@/components/profile/ReportSheet';
@@ -347,11 +348,14 @@ function WidgetPicker() {
     </PressableScale>
   );
   return (
-    <View style={{ padding: 20, gap: 12 }}>
+    <ScrollView style={{ maxHeight: 560 }} contentContainerStyle={{ padding: 20, gap: 12 }}>
       <Txt variant="h2">{t('Add a widget')}</Txt>
       {option(CARD_WIDGET, t('Habit card'), t('Your habit card with the slider. Use ‹ › to switch habits.'), require('../../assets/widget-card-preview.png'))}
       {option(LIST_WIDGET, t('Today’s habits'), t('Every habit for today, with +1 and slide-to-complete.'), require('../../assets/widget-preview.png'))}
-    </View>
+      {option(MINI_WIDGET, t('Mini habit'), t('Small 2×2 card: +1, tap to complete, › for the next habit.'), require('../../assets/widget-mini-preview.png'))}
+      {option(STREAK_WIDGET, t('Streak'), t('Your best streak and this week’s days.'), require('../../assets/widget-streak-preview.png'))}
+      {option(SLEEP_WIDGET, t('Sleep'), t('Last night’s sleep and the past week.'), require('../../assets/widget-sleep-preview.png'))}
+    </ScrollView>
   );
 }
 

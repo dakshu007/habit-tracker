@@ -207,7 +207,8 @@ interface ButtonProps {
 export function Button({ label, onPress, color, variant = 'solid', disabled, icon, style }: ButtonProps) {
   const { theme, isDark } = useTheme();
   const bg = color ?? (isDark ? '#FFFFFF' : '#1C1B22');
-  const fg = variant === 'solid' ? (color ? '#FFFFFF' : isDark ? '#1C1B22' : '#FFFFFF') : (color ?? theme.textPrimary);
+  // Text stays readable on light buttons (e.g. white "Share" on a dark story).
+  const fg = variant === 'solid' ? (isLight(bg) ? '#1C1B22' : '#FFFFFF') : (color ?? theme.textPrimary);
 
   const inner = (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 54, paddingHorizontal: 22 }}>
@@ -236,4 +237,15 @@ export function Button({ label, onPress, color, variant = 'solid', disabled, ico
       )}
     </PressableScale>
   );
+}
+
+/** Perceived brightness of a #RRGGBB colour (0–1), for picking readable text. */
+function isLight(hex: string): boolean {
+  const m = /^#?([0-9a-f]{6})/i.exec(hex);
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.7;
 }

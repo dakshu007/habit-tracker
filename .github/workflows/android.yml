@@ -20,8 +20,6 @@ jobs:
       BUILD_NUMBER: ${{ github.run_number }}
       # Optional secrets — the build works without them.
       EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-      # Play-signed builds lock after the 7-day trial; unsigned test APKs never lock (preview).
-      EXPO_PUBLIC_PAYWALL: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && 'live' || 'preview' }}
       KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -55,15 +53,20 @@ jobs:
         run: |
           # gradle.properties has no trailing newline — start on a fresh line.
           printf '\norg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g\n' >> gradle.properties
+          FLAGS=../src/buildFlags.ts
           SIGNING=""
-          TASKS="assembleRelease"
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
             SIGNING="-Pandroid.injected.signing.store.file=$RUNNER_TEMP/upload.jks -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD -Pandroid.injected.signing.key.alias=$KEY_ALIAS -Pandroid.injected.signing.key.password=$KEY_PASSWORD"
-            TASKS="assembleRelease bundleRelease"
-            echo "Signing with the release upload key; building AAB for Google Play."
+            # Google Play bundle: 7-day trial, then the lifetime unlock.
+            sed -i "s/= 'preview'/= 'live'/" $FLAGS
+            echo "Building the Google Play AAB (paywall live)…"
+            ./gradlew bundleRelease $SIGNING --no-daemon --stacktrace
+            sed -i "s/= 'live'/= 'preview'/" $FLAGS
           fi
-          ./gradlew $TASKS $SIGNING --no-daemon --stacktrace
+          # GitHub test APK: never locks (it can't use Play Billing anyway).
+          grep -q "= 'preview'" $FLAGS
+          ./gradlew assembleRelease $SIGNING --no-daemon --stacktrace
 
       - name: Upload Gradle reports on failure
         if: failure()

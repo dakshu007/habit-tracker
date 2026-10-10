@@ -17,6 +17,7 @@ import { QuickLogScreen } from '@/screens/QuickLogScreen';
 import { RunScreen } from '@/screens/RunScreen';
 import { VoiceLogScreen } from '@/screens/VoiceLogScreen';
 import { PaywallScreen } from '@/screens/PaywallScreen';
+import { YearReviewScreen } from '@/screens/YearReviewScreen';
 import { RunDetailScreen, RunsScreen } from '@/screens/RunsScreen';
 import { useHabitStore } from '@/store/useHabitStore';
 import type { RootStackParamList } from './types';
@@ -46,6 +47,7 @@ export function RootNavigator() {
           <Stack.Screen name="Privacy" component={PrivacyScreen} />
           <Stack.Screen name="Run" component={RunScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="Runs" component={RunsScreen} />
+          <Stack.Screen name="YearReview" component={YearReviewScreen} options={{ animation: 'fade' }} />
           <Stack.Screen name="Paywall" component={PaywallScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="RunDetail" component={RunDetailScreen} />
           <Stack.Screen

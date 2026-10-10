@@ -2,7 +2,7 @@
   "expo": {
     "name": "Habit Tracker",
     "slug": "habit-tracker",
-    "version": "1.0.0",
+    "version": "1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "habittracker",
@@ -118,6 +118,48 @@
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000,
               "previewImage": "./assets/widget-preview.png"
+            },
+            {
+              "name": "MiniHabit",
+              "label": "Mini habit",
+              "description": "One habit, small: +1 and tap to complete",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "320dp",
+              "maxResizeHeight": "320dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-mini-preview.png"
+            },
+            {
+              "name": "StreakWidget",
+              "label": "Streak",
+              "description": "Your best streak and this week at a glance",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "320dp",
+              "maxResizeHeight": "320dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-streak-preview.png"
+            },
+            {
+              "name": "SleepWidget",
+              "label": "Sleep",
+              "description": "Last night’s sleep and the week",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "320dp",
+              "maxResizeHeight": "320dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-sleep-preview.png"
             }
           ]
         }

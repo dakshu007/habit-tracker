@@ -6,11 +6,15 @@ import { dueOn, isDoneOn } from '@/logic/habits';
 import { dayKey } from '@/utils/date';
 import { CARD_WIDGET, LIST_WIDGET, renderCardWidget, renderTodayWidget } from './TodayWidget';
 import { resolveLang, setLang } from '@/i18n/core';
+import { MINI_WIDGET, renderMiniWidget, renderSleepWidget, renderStreakWidget, SLEEP_WIDGET, STREAK_WIDGET } from './MoreWidgets';
+import { syncPhoneSleep } from '@/services/phoneSleep';
+
+const ALL_WIDGETS = [LIST_WIDGET, CARD_WIDGET, STREAK_WIDGET, SLEEP_WIDGET, MINI_WIDGET];
 
 /** Current store state shaped for widgets (always "today", not the app's selected day). */
 export function widgetData() {
   const s = useHabitStore.getState();
-  return { habits: s.habits, logs: s.logs, day: dayKey(), name: s.profile.name };
+  return { habits: s.habits, logs: s.logs, day: dayKey(), name: s.profile.name, weekStart: s.settings.weekStart };
 }
 
 const cardKey = (widgetId: number) => `widget-card:${widgetId}`;
@@ -41,7 +45,7 @@ async function stepCard(widgetId: number, currentId: string, dir: 1 | -1) {
  */
 export async function widgetTaskHandler({ widgetInfo, widgetAction, clickAction, clickActionData, renderWidget }: WidgetTaskHandlerProps) {
   const { widgetName, widgetId, width, height } = widgetInfo;
-  if (widgetName !== LIST_WIDGET && widgetName !== CARD_WIDGET) return;
+  if (!ALL_WIDGETS.includes(widgetName)) return;
   if (widgetAction === 'WIDGET_DELETED') {
     await AsyncStorage.removeItem(cardKey(widgetId)).catch(() => {});
     return;
@@ -63,6 +67,14 @@ export async function widgetTaskHandler({ widgetInfo, widgetAction, clickAction,
 
   if (widgetName === CARD_WIDGET) {
     renderWidget(renderCardWidget(widgetData(), await cardHabitFor(widgetId), width, height));
+  } else if (widgetName === MINI_WIDGET) {
+    renderWidget(renderMiniWidget(widgetData(), await cardHabitFor(widgetId), width, height));
+  } else if (widgetName === STREAK_WIDGET) {
+    renderWidget(renderStreakWidget(widgetData()));
+  } else if (widgetName === SLEEP_WIDGET) {
+    // Periodic updates pick up last night's phone sleep without opening the app.
+    await syncPhoneSleep().catch(() => 0);
+    renderWidget(renderSleepWidget(widgetData(), width));
   } else {
     renderWidget(renderTodayWidget(widgetData(), width, height));
   }

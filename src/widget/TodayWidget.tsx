@@ -22,13 +22,14 @@ export interface TodayWidgetData {
   logs: Logs;
   day: string;
   name: string;
+  weekStart: 0 | 1;
 }
 
 /* ------------------------------------------------------------------ */
 /* Look: calm, warm neutrals with one accent — clean like system widgets */
 /* ------------------------------------------------------------------ */
 
-interface Palette {
+export interface Palette {
   bg: ColorProp;
   surface: ColorProp;
   chip: ColorProp;
@@ -39,7 +40,7 @@ interface Palette {
   knobTick: string;
 }
 
-const LIGHT: Palette = {
+export const LIGHT: Palette = {
   bg: '#F3F1EC',
   surface: '#FFFFFF',
   chip: '#E8E5DF',
@@ -50,7 +51,7 @@ const LIGHT: Palette = {
   knobTick: '#9A9AA4',
 };
 
-const DARK: Palette = {
+export const DARK: Palette = {
   bg: '#1F1F23',
   surface: '#2B2B30',
   chip: '#36363C',
@@ -62,10 +63,10 @@ const DARK: Palette = {
 };
 
 const SUCCESS = '#34C759';
-const rgba = (hex: string, a: number) => hexToRgba(hex, a) as ColorProp;
-const completeUri = (id: string) => `habittracker://complete/${id}`;
+export const rgba = (hex: string, a: number) => hexToRgba(hex, a) as ColorProp;
+export const completeUri = (id: string) => `habittracker://complete/${id}`;
 
-function knobSvg(size: number, done: boolean, p: Palette): string {
+export function knobSvg(size: number, done: boolean, p: Palette): string {
   const r = size / 2;
   const s = size / 40;
   return done

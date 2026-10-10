@@ -2,10 +2,10 @@
  * Privacy policy text, shown in-app (Profile → Privacy policy) and mirrored in
  * PRIVACY.md for the Play Store listing. Keep the two in sync.
  */
-export const PRIVACY_UPDATED = '9 October 2026';
+export const PRIVACY_UPDATED = '10 October 2026';
 
-/** TODO before publishing: set the public support address shown in the policy. */
-export const SUPPORT_EMAIL = 'support@example.com';
+/** Public support address shown in the policy and Profile. */
+export const SUPPORT_EMAIL = 'support@mykavo.app';
 
 export const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   {

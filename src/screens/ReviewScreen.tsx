@@ -176,7 +176,7 @@ export function ReviewScreen({ navigation }: RootScreenProps<'Review'>) {
             label={t('Share my week')}
             color="#FFFFFF"
             icon={<Share2 size={18} color="#1C1B22" />}
-            onPress={() => navigation.replace('Share', { kind: 'week' })}
+            onPress={() => navigation.navigate('Share', { kind: 'week' })}
             style={{ alignSelf: 'stretch', marginTop: 12 }}
           />
         </View>

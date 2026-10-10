@@ -26,7 +26,7 @@ An illustrated, gesture-driven habit tracker for Android, built with Expo (SDK 5
 - **Your data:** backup export/restore, Android Auto Backup, privacy policy in-app
 
 ## Pricing
-Free download, 7-day full trial, then a one-time **₹199 lifetime unlock** via Google Play Billing. Setup: `docs/play-store/monetization.md`. Test APKs from GitHub never lock (`EXPO_PUBLIC_PAYWALL=preview`); signed Play builds do (`live`).
+Free download, 7-day full trial, then a one-time **₹199 lifetime unlock** via Google Play Billing. Setup: `docs/play-store/monetization.md`. CI sets `src/buildFlags.ts` per output: the Google Play `.aab` is `live` (locks after the trial), the GitHub test `.apk` is `preview` (never locks).
 
 ## Native code
 `modules/device-signals` is a local Expo module (Kotlin): screen on/off events via `UsageStatsManager` for sleep, and `RecognizerIntent` for voice. It's auto-linked from `./modules`.
@@ -50,5 +50,5 @@ Without them, builds are signed with the shared debug key, which is fine for tes
 
 ## Before publishing
 - Choose the brand name (the package id `app.mykavo.habittracker` is permanent once live)
-- Set `SUPPORT_EMAIL` in `src/data/privacy.ts` and host `PRIVACY.md` at a public URL
+- Host `PRIVACY.md` at a public URL (support email: support@mykavo.app)
 - Fill in Play Console using `docs/play-store/listing.md` and `docs/play-store/data-safety.md` (includes the Health Connect declaration)

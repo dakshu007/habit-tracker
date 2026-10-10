@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { PAYWALL } from '@/buildFlags';
+
 /** Google Play in-app product id for the one-time lifetime unlock (create it in Play Console). */
 export const LIFETIME_SKU = 'lifetime_unlock';
 export const TRIAL_DAYS = 7;
@@ -12,9 +14,9 @@ export const FALLBACK_PRICE = '₹199';
  * 'live'    — Play Store builds: 7-day trial, then logging needs the lifetime unlock.
  * 'preview' — test APKs from GitHub (not signed for Play Billing): the paywall
  *             can be opened and tried, but nothing ever locks.
- * Set by CI through EXPO_PUBLIC_PAYWALL.
+ * Set per build by CI (src/buildFlags.ts).
  */
-export const PAYWALL_MODE: 'live' | 'preview' = process.env.EXPO_PUBLIC_PAYWALL === 'live' ? 'live' : 'preview';
+export const PAYWALL_MODE: 'live' | 'preview' = PAYWALL;
 
 const DAY = 86_400_000;
 

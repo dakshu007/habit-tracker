@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Image, View, useWindowDimensions } from 'react-native';
+import { Image, ToastAndroid, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
@@ -43,11 +43,18 @@ export function ShareScreen({ navigation, route }: RootScreenProps<'Share'>) {
   const cardH = (cardW * 16) / 9;
 
   const share = async () => {
+    if (busy) return;
     setBusy(true);
     try {
+      // Let the button's pressed state settle so the card isn't captured mid-animation.
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
       const uri = await captureRef(card, { format: 'png', quality: 1, result: 'tmpfile', width: 1080, height: 1920 });
       haptic.success();
+      if (!(await Sharing.isAvailableAsync())) throw new Error('sharing unavailable');
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('Share your progress') });
+    } catch {
+      haptic.warning();
+      ToastAndroid.show(t('Couldn’t create the image. Please try again.'), ToastAndroid.SHORT);
     } finally {
       setBusy(false);
     }

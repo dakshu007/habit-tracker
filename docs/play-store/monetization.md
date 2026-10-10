@@ -11,7 +11,7 @@ The app is **free to download**. Everyone gets a **7-day full trial** (from onbo
 
 ## One-time setup
 1. **Payments profile**: Play Console → Settings → Payments profile (needed to sell anything).
-2. **Signing secrets** in GitHub (see README). With them, CI builds an `.aab` with `EXPO_PUBLIC_PAYWALL=live`.
+2. **Signing secrets** in GitHub (see README). With them, CI also builds the Google Play `.aab` with the paywall live (`src/buildFlags.ts`); the GitHub `.apk` stays in preview and never locks.
 3. **Upload the first `.aab`** to Internal testing. Play only lets you create products after a build with the `BILLING` permission is uploaded.
 4. **Create the product**: Monetize → Products → In-app products → Create → ID `lifetime_unlock`, name "Lifetime unlock", price ₹199 → Activate.
 

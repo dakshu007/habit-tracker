@@ -28,12 +28,13 @@ import {
 import { getTheme } from '@/data/themes';
 import { DAY_NAMES, DAY_LETTERS, fromKey, shiftKey } from '@/utils/date';
 import { pct } from '@/utils/format';
-import { CalendarCheck, Snowflake, Trophy, type LucideIcon } from '@/components/ui/lucide';
+import { CalendarCheck, Snowflake, Sparkles, Trophy, type LucideIcon } from '@/components/ui/lucide';
 import { MOODS } from '@/components/mood/Mood';
 import { hexToRgba } from '@/theme/color';
 import { t } from '@/i18n';
 import type { RootNav } from '@/navigation/types';
 import { getProfileStyle } from '@/data/profileStyles';
+import { Insights } from '@/components/stats/Insights';
 
 export function StatsScreen() {
   const { theme } = useTheme();
@@ -136,6 +137,21 @@ export function StatsScreen() {
         <EntryCard Icon={CalendarCheck} color="#7E6CF0" title={t('Weekly review')} sub={t('Your week, story-style')} onPress={() => navigation.navigate('Review')} />
       </View>
 
+      <PressableScale onPress={() => navigation.navigate('YearReview')} scaleTo={0.98}>
+        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: hexToRgba('#056EBE', 0.15), alignItems: 'center', justifyContent: 'center' }}>
+            <Sparkles size={21} color="#3F95DA" strokeWidth={2} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Txt variant="h3">{t('Year in review')}</Txt>
+            <Txt variant="small" color="secondary">
+              {t('Your {year} so far — heatmap, top habit, best month', { year: today.slice(0, 4) })}
+            </Txt>
+          </View>
+        </Card>
+      </PressableScale>
+
+      <Insights />
       <MoodInsights />
       <FreezeCard />
 

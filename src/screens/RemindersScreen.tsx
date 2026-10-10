@@ -11,8 +11,11 @@ import { useHabitStore } from '@/store/useHabitStore';
 import { useTheme } from '@/theme/ThemeContext';
 import { ensurePermission, hasPermission } from '@/services/notifications';
 import { getTheme } from '@/data/themes';
-import { DAY_LABELS, formatTime } from '@/utils/date';
+import { DAY_LABELS } from '@/utils/date';
 import { pickTime } from '@/utils/pickTime';
+import { DailyNudges, TimeChip } from '@/components/reminders/DailyNudges';
+import { Alarms, alarmsSupported, habitAlarmDays, setPhoneAlarm } from '@/components/reminders/Alarms';
+import { AlarmClockPlus } from '@/components/ui/lucide';
 import { haptic } from '@/utils/haptics';
 import type { Habit } from '@/data/types';
 import { t } from '@/i18n';
@@ -21,17 +24,6 @@ function scheduleText(h: Habit) {
   if (h.schedule.kind === 'daily') return t('Every day');
   if (h.schedule.kind === 'weekly') return t('{n}× a week', { n: h.schedule.timesPerWeek });
   return h.schedule.days.map((d) => t(DAY_LABELS[d])).join(' · ');
-}
-
-function TimeChip({ hour, minute, onPress, disabled }: { hour: number; minute: number; onPress: () => void; disabled?: boolean }) {
-  const { theme } = useTheme();
-  return (
-    <PressableScale onPress={onPress} disabled={disabled} accessibilityLabel={t('Change time')}>
-      <View style={{ paddingHorizontal: 12, height: 34, borderRadius: 17, backgroundColor: theme.inputBg, justifyContent: 'center' }}>
-        <Txt variant="label">{formatTime(hour, minute)}</Txt>
-      </View>
-    </PressableScale>
-  );
 }
 
 export function RemindersScreen() {
@@ -52,6 +44,7 @@ export function RemindersScreen() {
   }, [refresh]);
 
   const live = useMemo(() => habits.filter((h) => !h.archived), [habits]);
+  const canAlarm = useMemo(alarmsSupported, []);
   const activeCount = live.filter((h) => h.reminder.enabled).length;
 
   const enable = async () => {
@@ -130,6 +123,10 @@ export function RemindersScreen() {
         />
       </Card>
 
+      <DailyNudges ensureOn={async () => granted || enable()} />
+
+      <Alarms />
+
       <SectionTitle>{t('Habit reminders')}</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
         {live.length === 0 && (
@@ -161,6 +158,16 @@ export function RemindersScreen() {
               </Txt>
             </View>
             {h.reminder.enabled && <TimeChip hour={h.reminder.hour} minute={h.reminder.minute} onPress={() => setHabitTime(h)} />}
+            {h.reminder.enabled && canAlarm && (
+              <PressableScale
+                onPress={() => setPhoneAlarm(h.reminder.hour, h.reminder.minute, h.title, habitAlarmDays(h))}
+                accessibilityLabel={t('Also set an alarm for {habit}', { habit: h.title })}
+              >
+                <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: theme.inputBg, alignItems: 'center', justifyContent: 'center' }}>
+                  <AlarmClockPlus size={17} color="#FF7A2F" strokeWidth={2.2} />
+                </View>
+              </PressableScale>
+            )}
             <Toggle value={h.reminder.enabled} onChange={(v) => toggleHabit(h, v)} color={getTheme(h.themeId).accent} />
           </View>
         ))}

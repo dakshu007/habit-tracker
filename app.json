@@ -99,7 +99,7 @@
             {
               "name": "HabitCard",
               "label": "Habit card",
-              "description": "Your habit card — slide to complete from the home screen",
+              "description": "Your habit card, with tap to complete",
               "minWidth": "250dp",
               "minHeight": "250dp",
               "targetCellWidth": 3,
@@ -113,7 +113,7 @@
             {
               "name": "TodayHabits",
               "label": "Today's habits",
-              "description": "All of today's habits at a glance",
+              "description": "All of today's habits, with +1 and tap to complete",
               "minWidth": "250dp",
               "minHeight": "180dp",
               "targetCellWidth": 4,

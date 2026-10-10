@@ -1,7 +1,8 @@
 import { AppState, Linking, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
-import { useHabitStore } from '@/store/useHabitStore';
+import { useHabitStore, type SmartNudges } from '@/store/useHabitStore';
+import type { Habit, Logs } from '@/data/types';
 import { dueOn, isDoneOn } from '@/logic/habits';
 import { dayKey, shiftKey, fromKey } from '@/utils/date';
 import { t } from '@/i18n';
@@ -59,7 +60,7 @@ const NUDGE_LINES = [
  */
 export async function syncNotifications() {
   if (!(await hasPermission())) return;
-  const { habits, logs, settings } = useHabitStore.getState();
+  const { habits, logs, settings, profile } = useHabitStore.getState();
 
   // Only replace the notifications this function owns (focus sessions schedule their own).
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
@@ -115,6 +116,8 @@ export async function syncNotifications() {
     }
   }
 
+  await scheduleSmart(habits, logs, settings.smart, profile.name);
+
   if (settings.weeklyReview && habits.some((h) => !h.archived)) {
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -129,7 +132,71 @@ export async function syncNotifications() {
 }
 
 /** Notification kinds owned (and rebuilt) by syncNotifications. */
-const OWNED = ['reminder', 'nudge', 'review'];
+const OWNED = ['reminder', 'nudge', 'review', 'smart'];
+
+const SMART_DAYS = 3;
+const isWater = (h: Habit) => h.artId === 'aura-drop' || /water|पानी/i.test(h.title) || /glass/i.test(h.unit);
+
+/** Bedtime, good-morning plan and water breaks (Reminders → Daily nudges). */
+async function scheduleSmart(habits: Habit[], logs: Logs, smart: SmartNudges, name: string) {
+  const at = (key: string, hour: number, minute: number) => {
+    const d = fromKey(key);
+    d.setHours(hour, minute, 0, 0);
+    return d;
+  };
+  const later = (d: Date) => d.getTime() > Date.now() + 30_000;
+  const today = dayKey();
+  const hi = name ? `, ${name}` : '';
+
+  if (smart.bedtime.enabled) {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: t('Time to sleep{name} 🌙', { name: hi }),
+        body: t('Phone down, lights low. Good sleep makes tomorrow’s habits easy.'),
+        data: { kind: 'smart' },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: smart.bedtime.hour, minute: smart.bedtime.minute, channelId: CHANNEL },
+    });
+  }
+
+  for (let i = 0; i < SMART_DAYS; i++) {
+    const key = shiftKey(today, i);
+
+    if (smart.morning.enabled) {
+      const when = at(key, smart.morning.hour, smart.morning.minute);
+      const due = dueOn(habits, key);
+      if (later(when) && due.length) {
+        const names = due.slice(0, 3).map((h) => h.title).join(', ');
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: t('Good morning{name} ☀️', { name: hi }),
+            body: due.length === 1 ? t('1 habit today: {list}.', { list: names }) : t('{n} habits today: {list}{more}.', { n: due.length, list: names, more: due.length > 3 ? '…' : '' }),
+            data: { kind: 'smart', url: 'habittracker://' },
+          },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: CHANNEL },
+        });
+      }
+    }
+
+    if (smart.water.enabled) {
+      // Skip the rest of a day once the water habit is done.
+      const water = habits.find((h) => !h.archived && isWater(h));
+      if (water && isDoneOn(water, logs, key)) continue;
+      for (let hour = smart.water.from; hour <= smart.water.to; hour += Math.max(1, smart.water.every)) {
+        const when = at(key, hour, 0);
+        if (!later(when)) continue;
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: t('Water break 💧'),
+            body: t('A glass now keeps you sharp. Tap to log it.'),
+            data: { kind: 'smart', url: water ? `habittracker://complete/${water.id}` : 'habittracker://' },
+          },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: CHANNEL },
+        });
+      }
+    }
+  }
+}
 
 /** Open the deep link carried by a tapped notification. */
 export function startNotificationTaps() {

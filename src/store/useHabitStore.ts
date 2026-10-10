@@ -33,7 +33,30 @@ export interface Settings {
   language: 'system' | 'en' | 'hi';
   /** Currency symbol for "quit" savings. */
   currency: string;
+  /** Daily nudges that aren't tied to one habit. */
+  smart: SmartNudges;
 }
+
+export interface TimeToggle {
+  enabled: boolean;
+  hour: number;
+  minute: number;
+}
+
+export interface SmartNudges {
+  /** "Time to sleep" at bedtime. */
+  bedtime: TimeToggle;
+  /** "Good morning, N habits today". */
+  morning: TimeToggle;
+  /** Drink-water reminders every `every` hours from `from` to `to` (24h clock). */
+  water: { enabled: boolean; every: number; from: number; to: number };
+}
+
+export const defaultSmart: SmartNudges = {
+  bedtime: { enabled: false, hour: 22, minute: 30 },
+  morning: { enabled: false, hour: 7, minute: 30 },
+  water: { enabled: false, every: 2, from: 9, to: 21 },
+};
 
 /** Everything that isn't habits/logs/settings/profile but should persist and back up. */
 export interface Extras {
@@ -141,6 +164,7 @@ const defaultSettings: Settings = {
   weeklyReview: true,
   language: 'system',
   currency: '₹',
+  smart: defaultSmart,
 };
 
 const defaultExtras: Extras = { freezes: 0, freezeMilestones: {}, routines: [], trophies: [], rating: {} };
@@ -356,7 +380,7 @@ export const useHabitStore = create<HabitState>()(
           set({
             habits: snap.habits,
             logs: snap.logs,
-            settings: { ...defaultSettings, ...snap.settings },
+            settings: { ...defaultSettings, ...snap.settings, smart: { ...defaultSmart, ...snap.settings?.smart } },
             profile: { ...defaultProfile, ...snap.profile, onboarded: true },
             extras: { ...defaultExtras, ...snap.extras },
             activeHabitId: snap.habits[0]?.id ?? null,
@@ -401,7 +425,7 @@ export const useHabitStore = create<HabitState>()(
         return {
           ...current,
           ...p,
-          settings: { ...defaultSettings, ...p.settings },
+          settings: { ...defaultSettings, ...p.settings, smart: { ...defaultSmart, ...p.settings?.smart } },
           profile: { ...defaultProfile, ...p.profile },
           extras: { ...defaultExtras, ...p.extras },
         };

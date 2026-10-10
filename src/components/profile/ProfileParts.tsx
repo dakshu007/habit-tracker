@@ -100,13 +100,22 @@ export function IdentityCard() {
   return (
     <View style={{ borderRadius: 32, overflow: 'hidden', boxShadow: `0px 16px 36px ${style.colors[1]}55` }}>
       <LinearGradient colors={style.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 18 }}>
-        {/* soft light blobs for depth */}
-        <View pointerEvents="none" style={{ position: 'absolute', top: -60, right: -40, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.16)' }} />
-        <View pointerEvents="none" style={{ position: 'absolute', bottom: -80, left: -50, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+        {/* Glass: a soft sheen from the top-left and a fine light rim. */}
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(255,255,255,0.34)', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0)']}
+          locations={[0, 0.45, 0.8]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+        />
+        <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 32, borderWidth: 1, borderColor: 'rgba(255,255,255,0.38)' }} />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <PressableScale accessibilityLabel={t('Change profile photo')} onPress={() => overlay.open(<EditProfileSheet />)}>
-            <Avatar size={76} />
+            <View style={{ padding: 3, borderRadius: 44, backgroundColor: 'rgba(255,255,255,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' }}>
+              <Avatar size={72} />
+            </View>
             <View
               style={{
                 position: 'absolute',
@@ -129,7 +138,7 @@ export function IdentityCard() {
               {profile.name || t('Add your name')}
             </Txt>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.22)' }}>
+              <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' }}>
                 <Txt variant="micro" color="white">
                   {t('Lv {n}', { n: stats.lvl.level })} · {t(levelTitle(stats.lvl.level))}
                 </Txt>
@@ -142,7 +151,7 @@ export function IdentityCard() {
             </View>
           </View>
           <PressableScale accessibilityLabel={t('Edit profile')} onPress={() => overlay.open(<EditProfileSheet />)}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', alignItems: 'center', justifyContent: 'center' }}>
               <EditIcon size={18} color="#FFFFFF" />
             </View>
           </PressableScale>
@@ -165,7 +174,7 @@ export function IdentityCard() {
         </View>
 
         {/* Stat strip */}
-        <View style={{ flexDirection: 'row', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)', paddingVertical: 12 }}>
+        <View style={{ flexDirection: 'row', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', paddingVertical: 12 }}>
           <Stat icon={<FlameIcon size={16} />} value={stats.streak} label={t('Streak')} />
           <Divider />
           <Stat icon={<CheckIcon size={15} color="#FFFFFF" strokeWidth={3} />} value={stats.checkins} label={t('Check-ins')} />

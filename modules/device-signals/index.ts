@@ -15,6 +15,10 @@ interface DeviceSignalsModule {
   recognizeSpeech(prompt: string, language: string | null): Promise<string[]>;
   getAppIcon(): AppIconId;
   setAppIcon(id: AppIconId): boolean;
+  canSetAlarm(): boolean;
+  /** days: 0 = Sunday … 6 = Saturday; empty = one-time. */
+  setAlarm(hour: number, minute: number, message: string, days: number[], skipUi: boolean): boolean;
+  showAlarms(): boolean;
 }
 
 export type AppIconId = 'sage' | 'ink' | 'midnight' | 'sand';

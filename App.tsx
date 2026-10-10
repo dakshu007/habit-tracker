@@ -57,6 +57,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       Run: 'run',
       VoiceLog: 'voice',
       Challenges: 'join/:code',
+      Paywall: 'paywall',
     },
   },
 };

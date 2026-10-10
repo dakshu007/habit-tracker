@@ -4,17 +4,48 @@ import type { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { useHabitStore } from '@/store/useHabitStore';
 import { dueOn, isDoneOn } from '@/logic/habits';
 import { dayKey } from '@/utils/date';
-import { CARD_WIDGET, LIST_WIDGET, renderCardWidget, renderTodayWidget } from './TodayWidget';
+import { CARD_WIDGET, LIST_WIDGET, renderCardWidget, renderTodayWidget, type TodayWidgetData } from './TodayWidget';
+import { isUnlocked, useLicense } from '@/store/useLicense';
 import { resolveLang, setLang } from '@/i18n/core';
 import { MINI_WIDGET, renderMiniWidget, renderSleepWidget, renderStreakWidget, SLEEP_WIDGET, STREAK_WIDGET } from './MoreWidgets';
 import { syncPhoneSleep } from '@/services/phoneSleep';
 
 const ALL_WIDGETS = [LIST_WIDGET, CARD_WIDGET, STREAK_WIDGET, SLEEP_WIDGET, MINI_WIDGET];
 
+const CONFIRM_KEY = 'widget-confirm';
+/** How long the first "complete" tap waits for the second one. */
+const CONFIRM_MS = 20_000;
+
 /** Current store state shaped for widgets (always "today", not the app's selected day). */
-export function widgetData() {
+export function widgetData(): TodayWidgetData {
   const s = useHabitStore.getState();
-  return { habits: s.habits, logs: s.logs, day: dayKey(), name: s.profile.name, weekStart: s.settings.weekStart };
+  return { habits: s.habits, logs: s.logs, day: dayKey(), name: s.profile.name, weekStart: s.settings.weekStart, locked: !isUnlocked() };
+}
+
+/** widgetData plus the habit waiting for its confirming tap, if any. */
+export async function widgetState(): Promise<TodayWidgetData> {
+  const raw = await AsyncStorage.getItem(CONFIRM_KEY).catch(() => null);
+  let confirmId: string | null = null;
+  if (raw) {
+    try {
+      const c = JSON.parse(raw) as { id: string; at: number };
+      if (Date.now() - c.at < CONFIRM_MS) confirmId = c.id;
+    } catch {
+      /* ignore */
+    }
+  }
+  return { ...widgetData(), confirmId };
+}
+
+/** First tap arms the habit; a second tap within CONFIRM_MS completes it. */
+async function tapComplete(id: string) {
+  const state = await widgetState();
+  if (state.confirmId === id) {
+    await AsyncStorage.removeItem(CONFIRM_KEY).catch(() => {});
+    useHabitStore.getState().complete(id, dayKey());
+  } else {
+    await AsyncStorage.setItem(CONFIRM_KEY, JSON.stringify({ id, at: Date.now() })).catch(() => {});
+  }
 }
 
 const cardKey = (widgetId: number) => `widget-card:${widgetId}`;
@@ -41,7 +72,7 @@ async function stepCard(widgetId: number, currentId: string, dir: 1 | -1) {
  * Runs in a headless JS task whenever Android asks for a widget (added,
  * periodic update, resize) or the user taps an action on it. Shares the app's
  * persisted store, so a change here shows up in the app instantly (if open)
- * or on next launch. Completing happens in-app via the slide (deep link).
+ * or on next launch. Widgets can't swipe, so completing is tap, then tap again.
  */
 export async function widgetTaskHandler({ widgetInfo, widgetAction, clickAction, clickActionData, renderWidget }: WidgetTaskHandlerProps) {
   const { widgetName, widgetId, width, height } = widgetInfo;
@@ -53,11 +84,13 @@ export async function widgetTaskHandler({ widgetInfo, widgetAction, clickAction,
 
   // Headless start: make sure persisted data is loaded before reading/writing it.
   if (!useHabitStore.persist.hasHydrated()) await useHabitStore.persist.rehydrate();
+  if (!useLicense.persist.hasHydrated()) await useLicense.persist.rehydrate();
   setLang(resolveLang(useHabitStore.getState().settings.language));
 
   if (widgetAction === 'WIDGET_CLICK') {
     const id = typeof clickActionData?.id === 'string' ? clickActionData.id : null;
     const store = useHabitStore.getState();
+    if (id && clickAction === 'DONE') await tapComplete(id);
     if (id && clickAction === 'ADD') {
       const h = store.habits.find((x) => x.id === id);
       if (h) store.addValue(id, dayKey(), h.step);
@@ -65,10 +98,11 @@ export async function widgetTaskHandler({ widgetInfo, widgetAction, clickAction,
     if (id && (clickAction === 'NEXT' || clickAction === 'PREV')) await stepCard(widgetId, id, clickAction === 'NEXT' ? 1 : -1);
   }
 
+  const data = await widgetState();
   if (widgetName === CARD_WIDGET) {
-    renderWidget(renderCardWidget(widgetData(), await cardHabitFor(widgetId), width, height));
+    renderWidget(renderCardWidget(data, await cardHabitFor(widgetId), width, height));
   } else if (widgetName === MINI_WIDGET) {
-    renderWidget(renderMiniWidget(widgetData(), await cardHabitFor(widgetId), width, height));
+    renderWidget(renderMiniWidget(data, await cardHabitFor(widgetId), width, height));
   } else if (widgetName === STREAK_WIDGET) {
     renderWidget(renderStreakWidget(widgetData()));
   } else if (widgetName === SLEEP_WIDGET) {
@@ -76,6 +110,6 @@ export async function widgetTaskHandler({ widgetInfo, widgetAction, clickAction,
     await syncPhoneSleep().catch(() => 0);
     renderWidget(renderSleepWidget(widgetData(), width));
   } else {
-    renderWidget(renderTodayWidget(widgetData(), width, height));
+    renderWidget(renderTodayWidget(data, width, height));
   }
 }

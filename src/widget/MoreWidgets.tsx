@@ -6,9 +6,9 @@ import type { Habit } from '@/data/types';
 import { bestCurrentStreak, dayCompletion, dueOn, valueOn } from '@/logic/habits';
 import { fonts } from '@/theme/tokens';
 import { shiftKey, DAY_LETTERS, fromKey } from '@/utils/date';
-import { fmtNumber, unitFor } from '@/utils/format';
+import { fmtNumber } from '@/utils/format';
 import { t } from '@/i18n/core';
-import { completeUri, DARK, knobSvg, LIGHT, rgba, type Palette, type TodayWidgetData } from './TodayWidget';
+import { AddPill, ArrowButton, CheckButton, DARK, LIGHT, rgba, SUCCESS, type Palette, type TodayWidgetData } from './TodayWidget';
 
 /** Widget names — must match app.json → react-native-android-widget → widgets[].name. */
 export const STREAK_WIDGET = 'StreakWidget';
@@ -138,7 +138,7 @@ export function renderSleepWidget(data: TodayWidgetData, width: number) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Mini card — 2×2: art, progress, +step and slide                     */
+/* Mini card: 2×2 and up. Art, progress, +step and tap to complete.     */
 /* ------------------------------------------------------------------ */
 
 function MiniBody({ data, habitId, width, height, p }: { data: TodayWidgetData; habitId: string | null; width: number; height: number; p: Palette }) {
@@ -155,53 +155,67 @@ function MiniBody({ data, habitId, width, height, p }: { data: TodayWidgetData; 
   const done = v >= h.goalValue;
   const c = getTheme(h.themeId);
   const art = getArt(h.artId);
-  const pad = 8;
-  const innerW = Math.max(80, width - pad * 2);
-  const barH = 44;
-  const imgH = Math.max(50, height - pad * 2 - barH - 6);
+  const confirm = data.confirmId === h.id;
   const frac = Math.min(1, h.goalValue ? v / h.goalValue : 0);
 
+  const pad = 10;
+  const innerW = Math.max(80, width - pad * 2);
+  const btn = 38;
+  const barH = 46;
+  const gap = 8;
+  // Too short for the picture: a compact row layout instead of squashing it.
+  const compact = height < 150 || width < 120;
+  const imgH = Math.max(40, height - pad * 2 - barH - gap);
+  const progressW = Math.max(20, innerW - btn * 2 - 20);
+
+  const controls = (
+    <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', flexGap: 6 }}>
+      {!done && h.step < h.goalValue ? <AddPill h={h} size={btn} locked={data.locked} /> : null}
+      <CheckButton h={h} done={done} confirm={confirm} size={btn} p={p} locked={data.locked} />
+    </FlexWidget>
+  );
+
+  const info = (
+    <FlexWidget style={{ flex: 1, flexDirection: 'column' }} clickAction="OPEN_APP">
+      <TextWidget text={h.title} maxLines={1} truncate="END" style={{ fontSize: 14, fontFamily: fonts.bold, color: p.title }} />
+      <FlexWidget style={{ width: progressW, height: 5, borderRadius: 3, backgroundColor: p.chip, marginTop: 6 }}>
+        <FlexWidget style={{ width: Math.max(frac > 0 ? 5 : 0, Math.round(progressW * frac)), height: 5, borderRadius: 3, backgroundColor: (done ? SUCCESS : c.accent) as ColorProp }} />
+      </FlexWidget>
+    </FlexWidget>
+  );
+
+  if (compact) {
+    return (
+      <FlexWidget style={{ ...frame(p), padding: pad, justifyContent: 'center', flexGap: 8 }}>
+        <FlexWidget style={{ width: 'match_parent', flexDirection: 'row', alignItems: 'center', flexGap: 8 }}>
+          <ImageWidget image={art.thumb as number} imageWidth={34} imageHeight={34} radius={10} resizeMode="cover" />
+          {info}
+          {due.length > 1 ? <ArrowButton dir="right" id={h.id} size={30} p={p} /> : null}
+        </FlexWidget>
+        <FlexWidget style={{ width: 'match_parent', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <TextWidget text={done ? t('Done') : `${fmtNumber(v)} / ${fmtNumber(h.goalValue)}`} style={{ fontSize: 13, fontFamily: fonts.bold, color: (done ? SUCCESS : c.accent) as ColorProp }} />
+          {controls}
+        </FlexWidget>
+      </FlexWidget>
+    );
+  }
+
   return (
-    <FlexWidget style={{ width: 'match_parent', height: 'match_parent', borderRadius: 26, backgroundColor: p.bg, padding: pad, flexDirection: 'column' }}>
-      <OverlapWidget style={{ width: innerW, height: imgH }} clickAction={done ? 'OPEN_APP' : 'OPEN_URI'} clickActionData={done ? undefined : { uri: completeUri(h.id) }}>
-        <ImageWidget image={art.thumb as number} imageWidth={innerW} imageHeight={imgH} radius={18} resizeMode="cover" />
-        <FlexWidget style={{ width: innerW, height: imgH, padding: 7, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <FlexWidget style={{ ...frame(p), padding: pad, justifyContent: 'space-between' }}>
+      <OverlapWidget style={{ width: innerW, height: imgH }} clickAction="OPEN_APP">
+        <ImageWidget image={(innerW > 160 ? art.source : art.thumb) as number} imageWidth={innerW} imageHeight={imgH} radius={18} resizeMode="cover" />
+        <FlexWidget style={{ width: innerW, height: imgH, padding: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <TextWidget
-            text={done ? t('Done') : `${fmtNumber(v)}/${fmtNumber(h.goalValue)}`}
-            style={{ fontSize: 11, fontFamily: fonts.bold, color: done ? '#1E9E47' : '#1C1B22', backgroundColor: 'rgba(255, 255, 255, 0.92)', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}
+            text={done ? t('Done') : `${fmtNumber(v)} / ${fmtNumber(h.goalValue)}`}
+            style={{ fontSize: 12, fontFamily: fonts.bold, color: done ? '#1E9E47' : '#1C1B22', backgroundColor: 'rgba(255, 255, 255, 0.94)', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}
           />
-          {due.length > 1 ? (
-            <TextWidget
-              text="›"
-              clickAction="NEXT"
-              clickActionData={{ id: h.id }}
-              accessibilityLabel={t('Next habit')}
-              style={{ fontSize: 15, fontFamily: fonts.bold, color: '#1C1B22', backgroundColor: 'rgba(255, 255, 255, 0.92)', borderRadius: 11, paddingHorizontal: 8, paddingVertical: 1 }}
-            />
-          ) : (
-            <FlexWidget style={{ width: 1, height: 1 }} />
-          )}
+          {due.length > 1 ? <ArrowButton dir="right" id={h.id} size={32} p={p} onImage /> : <FlexWidget style={{ width: 1, height: 1 }} />}
         </FlexWidget>
       </OverlapWidget>
 
-      <FlexWidget style={{ width: 'match_parent', height: barH, marginTop: 6, flexDirection: 'row', alignItems: 'center', flexGap: 6, paddingLeft: 4 }}>
-        <FlexWidget style={{ flex: 1, flexDirection: 'column' }} clickAction="OPEN_APP">
-          <TextWidget text={h.title} maxLines={1} truncate="END" style={{ fontSize: 13.5, fontFamily: fonts.bold, color: p.title }} />
-          <FlexWidget style={{ width: 'match_parent', height: 4, borderRadius: 2, backgroundColor: p.chip, marginTop: 5 }}>
-            <FlexWidget style={{ width: Math.max(frac > 0 ? 4 : 0, Math.round((innerW - 60) * frac)), height: 4, borderRadius: 2, backgroundColor: (done ? '#34C759' : c.accent) as ColorProp }} />
-          </FlexWidget>
-        </FlexWidget>
-        {done ? (
-          <SvgWidget svg={knobSvg(34, true, p)} style={{ width: 34, height: 34 }} />
-        ) : (
-          <TextWidget
-            text={`+${fmtNumber(h.step)}`}
-            clickAction="ADD"
-            clickActionData={{ id: h.id }}
-            accessibilityLabel={t('Add {amount}', { amount: `${fmtNumber(h.step)} ${unitFor(h.step, h.unit)}` })}
-            style={{ fontSize: 13, fontFamily: fonts.bold, color: c.accent as ColorProp, backgroundColor: rgba(c.accent, 0.14), borderRadius: 17, paddingHorizontal: 10, paddingVertical: 8 }}
-          />
-        )}
+      <FlexWidget style={{ width: 'match_parent', height: barH, flexDirection: 'row', alignItems: 'center', flexGap: 8, paddingLeft: 4 }}>
+        {info}
+        {controls}
       </FlexWidget>
     </FlexWidget>
   );

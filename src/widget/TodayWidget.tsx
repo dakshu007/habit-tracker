@@ -10,8 +10,7 @@ import { relativeDayLabel } from '@/utils/date';
 import { fmtNumber, qty } from '@/utils/format';
 import { t } from '@/i18n/core';
 
-
-/** Widget names — must match app.json → react-native-android-widget → widgets[].name. */
+/** Widget names: must match app.json → react-native-android-widget → widgets[].name. */
 export const LIST_WIDGET = 'TodayHabits';
 export const CARD_WIDGET = 'HabitCard';
 /** @deprecated kept for older imports */
@@ -23,16 +22,22 @@ export interface TodayWidgetData {
   day: string;
   name: string;
   weekStart: 0 | 1;
+  /** Habit waiting for its second "complete" tap (widgets can't swipe, so they confirm instead). */
+  confirmId?: string | null;
+  /** Free week over without Pro: taps open the paywall instead of logging. */
+  locked?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
-/* Look: calm, warm neutrals with one accent — clean like system widgets */
+/* Look: calm, warm neutrals with one accent, clean like system widgets */
 /* ------------------------------------------------------------------ */
 
 export interface Palette {
   bg: ColorProp;
   surface: ColorProp;
   chip: ColorProp;
+  /** Round buttons: a step lighter than surface so they read on every wallpaper. */
+  button: ColorProp;
   title: ColorProp;
   sub: ColorProp;
   accent: ColorProp;
@@ -44,8 +49,9 @@ export const LIGHT: Palette = {
   bg: '#F3F1EC',
   surface: '#FFFFFF',
   chip: '#E8E5DF',
+  button: '#FFFFFF',
   title: '#1C1B22',
-  sub: '#8A8A95',
+  sub: '#7C7C88',
   accent: '#4C8DF6',
   knob: '#FFFFFF',
   knobTick: '#9A9AA4',
@@ -55,6 +61,7 @@ export const DARK: Palette = {
   bg: '#1F1F23',
   surface: '#2B2B30',
   chip: '#36363C',
+  button: '#45454D',
   title: '#F5F5F7',
   sub: '#A1A1AA',
   accent: '#6EA4FF',
@@ -62,9 +69,11 @@ export const DARK: Palette = {
   knobTick: '#9A9AA4',
 };
 
-const SUCCESS = '#34C759';
+export const SUCCESS = '#34C759';
+const SUCCESS_TEXT = '#1E9E47';
 export const rgba = (hex: string, a: number) => hexToRgba(hex, a) as ColorProp;
-export const completeUri = (id: string) => `habittracker://complete/${id}`;
+/** Opens the paywall (used for taps once the free week is over). */
+export const PAYWALL_URI = 'habittracker://paywall';
 
 export function knobSvg(size: number, done: boolean, p: Palette): string {
   const r = size / 2;
@@ -74,11 +83,12 @@ export function knobSvg(size: number, done: boolean, p: Palette): string {
     : `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${r}" cy="${r}" r="${r}" fill="${p.knob}"/><path d="M${13 * s} ${20.5 * s}l${4.5 * s} ${4.5 * s} ${9 * s} -${9.5 * s}" fill="none" stroke="${p.knobTick}" stroke-width="${2.6 * s}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
-const chevrons = (color: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M6 5l7 7-7 7M13 5l7 7-7 7" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** A tick in a filled circle (confirm state). */
+const tickSvg = (size: number, fill: string, stroke: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="${fill}"/><path d="M12.5 20.5l5 5 10-10.5" fill="none" stroke="${stroke}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-const arrow = (dir: 'left' | 'right', color: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="${dir === 'left' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+export const arrowSvg = (dir: 'left' | 'right', color: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="${dir === 'left' ? 'M14.5 6l-6 6 6 6' : 'M9.5 6l6 6-6 6'}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 function ringSvg(frac: number, label: string, color: string, track: string): string {
   const r = 19;
@@ -87,59 +97,113 @@ function ringSvg(frac: number, label: string, color: string, track: string): str
   return `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="${r}" fill="none" stroke="${track}" stroke-width="5"/><circle cx="24" cy="24" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${dash} ${c.toFixed(2)}" transform="rotate(-90 24 24)"/><text x="24" y="28.5" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="12.5" fill="${color}">${label}</text></svg>`;
 }
 
-/** The app's slide control, drawn for a widget. Tapping it opens the real slider. */
-function SlidePill({ h, done, height, p }: { h: Habit; done: boolean; height: number; p: Palette }) {
-  const knob = height - 10;
+/** Click props for "complete this habit" (two taps), or the paywall when locked. */
+export function completeClick(id: string, locked?: boolean) {
+  return locked ? { clickAction: 'OPEN_URI', clickActionData: { uri: PAYWALL_URI } } : { clickAction: 'DONE', clickActionData: { id } };
+}
+
+/** Click props for "+step", or the paywall when locked. */
+export function addClick(id: string, locked?: boolean) {
+  return locked ? { clickAction: 'OPEN_URI', clickActionData: { uri: PAYWALL_URI } } : { clickAction: 'ADD', clickActionData: { id } };
+}
+
+/** A round button with an arrow (switch habit). Big enough to hit, visible on any wallpaper. */
+export function ArrowButton({ dir, id, size, p, onImage }: { dir: 'left' | 'right'; id: string; size: number; p: Palette; onImage?: boolean }) {
+  const icon = Math.round(size * 0.55);
+  return (
+    <FlexWidget
+      clickAction={dir === 'left' ? 'PREV' : 'NEXT'}
+      clickActionData={{ id }}
+      accessibilityLabel={dir === 'left' ? t('Previous habit') : t('Next habit')}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: onImage ? 'rgba(255, 255, 255, 0.94)' : p.button,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <SvgWidget svg={arrowSvg(dir, onImage ? '#1C1B22' : (p.title as string))} style={{ width: icon, height: icon }} />
+    </FlexWidget>
+  );
+}
+
+/** "+1 glass" pill. */
+export function AddPill({ h, size, locked }: { h: Habit; size: number; locked?: boolean }) {
+  const c = getTheme(h.themeId);
+  return (
+    <FlexWidget
+      {...addClick(h.id, locked)}
+      accessibilityLabel={`Add ${qty(h.step, h.unit)} to ${h.title}`}
+      style={{ height: size, paddingHorizontal: 12, borderRadius: size / 2, backgroundColor: rgba(c.accent, 0.16), justifyContent: 'center', alignItems: 'center' }}
+    >
+      <TextWidget text={`+${fmtNumber(h.step)}`} style={{ fontSize: 14, fontFamily: fonts.bold, color: c.accent as ColorProp }} />
+    </FlexWidget>
+  );
+}
+
+/** Round complete button for rows: tap, then tap again to confirm. */
+export function CheckButton({ h, done, confirm, size, p, locked }: { h: Habit; done: boolean; confirm: boolean; size: number; p: Palette; locked?: boolean }) {
+  if (done) return <SvgWidget svg={knobSvg(size, true, p)} accessibilityLabel={t('{habit} done', { habit: h.title })} style={{ width: size, height: size }} />;
+  return (
+    <FlexWidget
+      {...completeClick(h.id, locked)}
+      accessibilityLabel={confirm ? t('Tap again to complete {habit}', { habit: h.title }) : t('Complete {habit}', { habit: h.title })}
+      style={{ width: size, height: size, borderRadius: size / 2, justifyContent: 'center', alignItems: 'center' }}
+    >
+      <SvgWidget svg={confirm ? tickSvg(size, SUCCESS, '#FFFFFF') : tickSvg(size, p.button as string, p.sub as string)} style={{ width: size, height: size }} />
+    </FlexWidget>
+  );
+}
+
+/** The big complete control for the card widget. Replaces the app's slider (widgets can't swipe). */
+function CompleteBar({ h, done, confirm, height, p, locked }: { h: Habit; done: boolean; confirm: boolean; height: number; p: Palette; locked?: boolean }) {
+  const knob = height - 12;
   if (done) {
     return (
       <FlexWidget
         clickAction="OPEN_APP"
-        style={{
-          width: 'match_parent',
-          height,
-          borderRadius: height / 2,
-          backgroundColor: rgba(SUCCESS, 0.14),
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingLeft: 18,
-          paddingRight: 5,
-        }}
+        style={{ width: 'match_parent', height, borderRadius: height / 2, backgroundColor: rgba(SUCCESS, 0.16), flexDirection: 'row', alignItems: 'center', paddingLeft: 6, paddingRight: 18, flexGap: 12 }}
       >
-        <FlexWidget style={{ flex: 1 }}>
-          <TextWidget text={h.doneLabel} maxLines={1} truncate="END" style={{ fontSize: 14, fontFamily: fonts.semibold, color: '#1E9E47' }} />
-        </FlexWidget>
         <SvgWidget svg={knobSvg(knob, true, p)} style={{ width: knob, height: knob }} />
+        <FlexWidget style={{ flex: 1 }}>
+          <TextWidget text={h.doneLabel || t('Done!')} maxLines={1} truncate="END" style={{ fontSize: 15, fontFamily: fonts.bold, color: SUCCESS_TEXT }} />
+        </FlexWidget>
       </FlexWidget>
     );
   }
   return (
     <FlexWidget
-      clickAction="OPEN_URI"
-      clickActionData={{ uri: completeUri(h.id) }}
-      accessibilityLabel={t('Slide to complete {habit}', { habit: h.title })}
+      {...completeClick(h.id, locked)}
+      accessibilityLabel={confirm ? t('Tap again to complete {habit}', { habit: h.title }) : t('Complete {habit}', { habit: h.title })}
       style={{
         width: 'match_parent',
         height,
         borderRadius: height / 2,
-        backgroundColor: p.chip,
+        backgroundColor: confirm ? SUCCESS : p.chip,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingLeft: 5,
-        paddingRight: 14,
+        paddingLeft: 6,
+        paddingRight: 18,
         flexGap: 12,
       }}
     >
-      <SvgWidget svg={knobSvg(knob, false, p)} style={{ width: knob, height: knob }} />
-      <FlexWidget style={{ flex: 1 }}>
-        <TextWidget text={t('Slide when you’re done')} maxLines={1} style={{ fontSize: 14.5, fontFamily: fonts.semibold, color: p.title }} />
+      <SvgWidget svg={confirm ? tickSvg(knob, '#FFFFFF', SUCCESS) : knobSvg(knob, false, p)} style={{ width: knob, height: knob }} />
+      <FlexWidget style={{ flex: 1, flexDirection: 'column' }}>
+        <TextWidget
+          text={confirm ? t('Tap again to confirm') : t('Tap when you’re done')}
+          maxLines={1}
+          style={{ fontSize: 15.5, fontFamily: fonts.bold, color: confirm ? '#FFFFFF' : p.title }}
+        />
+        {confirm ? null : <TextWidget text={t('Marks {habit} complete', { habit: h.title })} maxLines={1} truncate="END" style={{ fontSize: 11.5, fontFamily: fonts.medium, color: p.sub }} />}
       </FlexWidget>
-      <SvgWidget svg={chevrons(p.sub as string)} style={{ width: 18, height: 18 }} />
     </FlexWidget>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Card widget — one habit, like the app's card                        */
+/* Card widget: one habit, like the app's card                          */
 /* ------------------------------------------------------------------ */
 
 function CardBody({ data, habitId, width, height, p }: { data: TodayWidgetData; habitId: string | null; width: number; height: number; p: Palette }) {
@@ -167,55 +231,37 @@ function CardBody({ data, habitId, width, height, p }: { data: TodayWidgetData; 
   const art = getArt(h.artId);
   const doneCount = due.filter((x) => valueOn(data.logs, data.day, x.id) >= x.goalValue).length;
 
-  const pillH = 50;
-  const infoH = 50;
-  const gaps = 10 * 2;
-  const imgH = Math.max(70, height - pad * 2 - pillH - infoH - gaps);
+  const barH = 58;
+  const infoH = 48;
+  const gap = 10;
+  const imgH = Math.max(60, height - pad * 2 - barH - infoH - gap * 2);
+  const showImage = height >= 200;
 
   return (
-    <FlexWidget style={{ width: 'match_parent', height: 'match_parent', borderRadius: 28, backgroundColor: p.bg, padding: pad, flexDirection: 'column' }}>
-      <OverlapWidget style={{ width: innerW, height: imgH }} clickAction="OPEN_APP">
-        <ImageWidget image={art.source as number} imageWidth={innerW} imageHeight={imgH} radius={20} resizeMode="cover" />
-        <FlexWidget style={{ width: innerW, height: imgH, padding: 10, flexDirection: 'row', justifyContent: 'flex-end' }}>
-          <TextWidget
-            text={t('{done}/{total} today', { done: doneCount, total: due.length })}
-            style={{ fontSize: 11.5, fontFamily: fonts.bold, color: '#1C1B22', backgroundColor: 'rgba(255, 255, 255, 0.92)', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}
-          />
-        </FlexWidget>
-      </OverlapWidget>
+    <FlexWidget style={{ width: 'match_parent', height: 'match_parent', borderRadius: 28, backgroundColor: p.bg, padding: pad, flexDirection: 'column', justifyContent: 'space-between' }}>
+      {showImage ? (
+        <OverlapWidget style={{ width: innerW, height: imgH }} clickAction="OPEN_APP">
+          <ImageWidget image={art.source as number} imageWidth={innerW} imageHeight={imgH} radius={20} resizeMode="cover" />
+          <FlexWidget style={{ width: innerW, height: imgH, padding: 10, flexDirection: 'row', justifyContent: 'flex-end' }}>
+            <TextWidget
+              text={t('{done}/{total} today', { done: doneCount, total: due.length })}
+              style={{ fontSize: 11.5, fontFamily: fonts.bold, color: '#1C1B22', backgroundColor: 'rgba(255, 255, 255, 0.94)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5 }}
+            />
+          </FlexWidget>
+        </OverlapWidget>
+      ) : null}
 
-      <FlexWidget style={{ width: 'match_parent', height: infoH, flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 10, paddingHorizontal: 4 }}>
+      <FlexWidget style={{ width: 'match_parent', height: infoH, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, flexGap: 8 }}>
         <FlexWidget style={{ flex: 1, flexDirection: 'column' }} clickAction="OPEN_APP">
           <TextWidget text={h.title} maxLines={1} truncate="END" style={{ fontSize: 17, fontFamily: fonts.bold, color: p.title }} />
-          <TextWidget
-            text={`${fmtNumber(v)} / ${qty(h.goalValue, h.unit)}`}
-            maxLines={1}
-            style={{ fontSize: 12.5, fontFamily: fonts.medium, color: c.accent as ColorProp }}
-          />
+          <TextWidget text={`${fmtNumber(v)} / ${qty(h.goalValue, h.unit)}`} maxLines={1} style={{ fontSize: 12.5, fontFamily: fonts.semibold, color: c.accent as ColorProp }} />
         </FlexWidget>
-        {due.length > 1 && (
-          <FlexWidget style={{ flexDirection: 'row', flexGap: 8 }}>
-            <FlexWidget
-              clickAction="PREV"
-              clickActionData={{ id: h.id }}
-              accessibilityLabel={t('Previous habit')}
-              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: p.chip, justifyContent: 'center', alignItems: 'center' }}
-            >
-              <SvgWidget svg={arrow('left', p.title as string)} style={{ width: 18, height: 18 }} />
-            </FlexWidget>
-            <FlexWidget
-              clickAction="NEXT"
-              clickActionData={{ id: h.id }}
-              accessibilityLabel={t('Next habit')}
-              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: p.chip, justifyContent: 'center', alignItems: 'center' }}
-            >
-              <SvgWidget svg={arrow('right', p.title as string)} style={{ width: 18, height: 18 }} />
-            </FlexWidget>
-          </FlexWidget>
-        )}
+        {!done && h.step < h.goalValue ? <AddPill h={h} size={40} locked={data.locked} /> : null}
+        {due.length > 1 ? <ArrowButton dir="left" id={h.id} size={40} p={p} /> : null}
+        {due.length > 1 ? <ArrowButton dir="right" id={h.id} size={40} p={p} /> : null}
       </FlexWidget>
 
-      <SlidePill h={h} done={done} height={pillH} p={p} />
+      <CompleteBar h={h} done={done} confirm={data.confirmId === h.id} height={barH} p={p} locked={data.locked} />
     </FlexWidget>
   );
 }
@@ -228,46 +274,32 @@ export function renderCardWidget(data: TodayWidgetData, habitId: string | null, 
 }
 
 /* ------------------------------------------------------------------ */
-/* List widget — all of today's habits                                 */
+/* List widget: all of today's habits                                   */
 /* ------------------------------------------------------------------ */
 
-function Row({ h, value, p }: { h: Habit; value: number; p: Palette }) {
-  const c = getTheme(h.themeId);
+const ROW_H = 62;
+const ROW_GAP = 10;
+
+function Row({ h, value, p, confirm, locked }: { h: Habit; value: number; p: Palette; confirm: boolean; locked?: boolean }) {
   const art = getArt(h.artId);
   const done = value >= h.goalValue;
   return (
-    <FlexWidget
-      clickAction="OPEN_APP"
-      style={{ width: 'match_parent', flexDirection: 'row', alignItems: 'center', flexGap: 12, padding: 8, paddingRight: 10, marginBottom: 8, borderRadius: 22, backgroundColor: p.surface }}
-    >
-      <ImageWidget image={art.thumb as number} imageWidth={44} imageHeight={44} radius={14} resizeMode="cover" />
-      <FlexWidget style={{ flex: 1, flexDirection: 'column' }}>
-        <TextWidget text={h.title} maxLines={1} truncate="END" style={{ fontSize: 14.5, fontFamily: fonts.bold, color: p.title }} />
-        <TextWidget text={`${fmtNumber(value)} / ${qty(h.goalValue, h.unit)}`} maxLines={1} style={{ fontSize: 12, fontFamily: fonts.medium, color: p.sub }} />
-      </FlexWidget>
-      {done ? (
-        <SvgWidget svg={knobSvg(36, true, p)} accessibilityLabel={`${h.title} done`} style={{ width: 36, height: 36 }} />
-      ) : (
-        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', flexGap: 8 }}>
-          <TextWidget
-            text={`+${fmtNumber(h.step)}`}
-            clickAction="ADD"
-            clickActionData={{ id: h.id }}
-            accessibilityLabel={`Add ${qty(h.step, h.unit)} to ${h.title}`}
-            style={{ fontSize: 13, fontFamily: fonts.bold, color: c.accent as ColorProp, backgroundColor: rgba(c.accent, 0.13), borderRadius: 16, paddingHorizontal: 11, paddingVertical: 8 }}
-          />
-          {/* Mini slider — opens the real slide-to-complete */}
-          <FlexWidget
-            clickAction="OPEN_URI"
-            clickActionData={{ uri: completeUri(h.id) }}
-            accessibilityLabel={t('Slide to complete {habit}', { habit: h.title })}
-            style={{ width: 68, height: 36, borderRadius: 18, backgroundColor: p.chip, flexDirection: 'row', alignItems: 'center', paddingLeft: 4, paddingRight: 8 }}
-          >
-            <SvgWidget svg={knobSvg(28, false, p)} style={{ width: 28, height: 28 }} />
-            <SvgWidget svg={chevrons(p.sub as string)} style={{ width: 16, height: 16, marginLeft: 8 }} />
-          </FlexWidget>
+    // ListWidget drops item margins, so the gap is padding on a wrapper.
+    <FlexWidget style={{ width: 'match_parent', paddingBottom: ROW_GAP }}>
+      <FlexWidget
+        clickAction="OPEN_APP"
+        style={{ width: 'match_parent', height: ROW_H, flexDirection: 'row', alignItems: 'center', flexGap: 12, paddingLeft: 9, paddingRight: 9, borderRadius: 20, backgroundColor: p.surface }}
+      >
+        <ImageWidget image={art.thumb as number} imageWidth={44} imageHeight={44} radius={14} resizeMode="cover" />
+        <FlexWidget style={{ flex: 1, flexDirection: 'column' }}>
+          <TextWidget text={h.title} maxLines={1} truncate="END" style={{ fontSize: 14.5, fontFamily: fonts.bold, color: p.title }} />
+          <TextWidget text={`${fmtNumber(value)} / ${qty(h.goalValue, h.unit)}`} maxLines={1} style={{ fontSize: 12, fontFamily: fonts.medium, color: p.sub, marginTop: 1 }} />
         </FlexWidget>
-      )}
+        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', flexGap: 8 }}>
+          {!done && h.step < h.goalValue ? <AddPill h={h} size={40} locked={locked} /> : null}
+          <CheckButton h={h} done={done} confirm={confirm} size={40} p={p} locked={locked} />
+        </FlexWidget>
+      </FlexWidget>
     </FlexWidget>
   );
 }
@@ -279,9 +311,12 @@ function ListBody({ data, width, height, p }: { data: TodayWidgetData; width: nu
   const frac = due.length ? doneCount / due.length : 0;
   const pad = 16;
   const innerW = Math.max(60, width - pad * 2);
-  const headerH = 50 + 8 + 5 + 14;
-  const listH = Math.max(48, height - pad * 2 - headerH);
+  const headerH = 50 + 10 + 5 + 14;
+  const listH = Math.max(ROW_H, height - pad * 2 - headerH);
   const left = due.length - doneCount;
+  const fits = due.length * (ROW_H + ROW_GAP) <= listH + ROW_GAP;
+
+  const rows = due.map((h, i) => <Row key={h.id} h={h} value={values[i]} p={p} confirm={data.confirmId === h.id} locked={data.locked} />);
 
   return (
     <FlexWidget style={{ width: 'match_parent', height: 'match_parent', flexDirection: 'column', padding: pad, borderRadius: 28, backgroundColor: p.bg }}>
@@ -298,18 +333,16 @@ function ListBody({ data, width, height, p }: { data: TodayWidgetData; width: nu
         <SvgWidget svg={ringSvg(frac, `${doneCount}/${due.length}`, p.accent as string, p.chip as string)} style={{ width: 46, height: 46 }} />
       </FlexWidget>
 
-      <FlexWidget style={{ width: innerW, height: 5, borderRadius: 3, backgroundColor: p.chip, marginTop: 8, marginBottom: 14 }}>
+      <FlexWidget style={{ width: innerW, height: 5, borderRadius: 3, backgroundColor: p.chip, marginTop: 10, marginBottom: 14 }}>
         <FlexWidget style={{ width: Math.max(frac > 0 ? 6 : 0, Math.round(innerW * frac)), height: 5, borderRadius: 3, backgroundColor: p.accent }} />
       </FlexWidget>
 
       {due.length === 0 ? (
         <TextWidget text={t('Tap to plan your day')} clickAction="OPEN_APP" style={{ fontSize: 14, fontFamily: fonts.semibold, color: p.title }} />
+      ) : fits ? (
+        <FlexWidget style={{ width: 'match_parent', flexDirection: 'column' }}>{rows}</FlexWidget>
       ) : (
-        <ListWidget style={{ width: 'match_parent', height: listH }}>
-          {due.map((h, i) => (
-            <Row key={h.id} h={h} value={values[i]} p={p} />
-          ))}
-        </ListWidget>
+        <ListWidget style={{ width: 'match_parent', height: listH }}>{rows}</ListWidget>
       )}
     </FlexWidget>
   );

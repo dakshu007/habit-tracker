@@ -63,3 +63,7 @@ export { default as VolumeX } from 'lucide-react-native/icons/volume-x';
 export { default as Wind } from 'lucide-react-native/icons/wind';
 export { default as Zap } from 'lucide-react-native/icons/zap';
 export type { LucideIcon } from 'lucide-react-native';
+
+export { default as AlarmClock } from 'lucide-react-native/icons/alarm-clock';
+export { default as AlarmClockPlus } from 'lucide-react-native/icons/alarm-clock-plus';
+export { default as Droplet } from 'lucide-react-native/icons/droplet';

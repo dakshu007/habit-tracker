@@ -11,6 +11,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Process
+import android.provider.AlarmClock
 import android.provider.Settings
 import android.speech.RecognizerIntent
 import expo.modules.kotlin.Promise
@@ -88,6 +89,28 @@ class DeviceSignalsModule : Module() {
       }
     }
 
+    // Real alarms live in the phone's Clock app: it rings reliably through
+    // battery saver and Do Not Disturb, which an ordinary app can't promise.
+    Function("canSetAlarm") {
+      val ctx = appContext.reactContext ?: return@Function false
+      Intent(AlarmClock.ACTION_SET_ALARM).resolveActivity(ctx.packageManager) != null
+    }
+
+    // days: 0 = Sunday … 6 = Saturday (empty = one-time). Returns false if no Clock app took it.
+    Function("setAlarm") { hour: Int, minute: Int, message: String, days: List<Int>, skipUi: Boolean ->
+      val intent = Intent(AlarmClock.ACTION_SET_ALARM)
+        .putExtra(AlarmClock.EXTRA_HOUR, hour)
+        .putExtra(AlarmClock.EXTRA_MINUTES, minute)
+        .putExtra(AlarmClock.EXTRA_MESSAGE, message)
+        .putExtra(AlarmClock.EXTRA_SKIP_UI, skipUi)
+      if (days.isNotEmpty()) intent.putIntegerArrayListExtra(AlarmClock.EXTRA_DAYS, ArrayList(days.map { it + 1 }))
+      launch(intent)
+    }
+
+    Function("showAlarms") {
+      launch(Intent(AlarmClock.ACTION_SHOW_ALARMS))
+    }
+
     // Launcher icon variants (activity-aliases from plugins/with-alternate-icons).
     Function("getAppIcon") {
       val ctx = appContext.reactContext ?: return@Function DEFAULT_ICON
@@ -124,6 +147,21 @@ class DeviceSignalsModule : Module() {
         emptyList()
       }
       p.resolve(results)
+    }
+  }
+
+  private fun launch(intent: Intent): Boolean {
+    val activity = appContext.currentActivity
+    return try {
+      if (activity != null) {
+        activity.startActivity(intent)
+      } else {
+        val ctx = appContext.reactContext ?: return false
+        ctx.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+      }
+      true
+    } catch (e: Exception) {
+      false
     }
   }
 

@@ -125,5 +125,6 @@ export const usePro = () => useLicense((s) => isPro(s));
 
 export function usePrices(): Record<Plan, string> {
   const p = useLicense((s) => s.prices);
-  return { monthly: p.monthly ?? FALLBACK_PRICES.monthly, yearly: p.yearly ?? FALLBACK_PRICES.yearly, lifetime: p.lifetime ?? FALLBACK_PRICES.lifetime };
+  // `||`, not `??`: Google Play can return an empty price before a product is live.
+  return { monthly: p.monthly || FALLBACK_PRICES.monthly, yearly: p.yearly || FALLBACK_PRICES.yearly, lifetime: p.lifetime || FALLBACK_PRICES.lifetime };
 }

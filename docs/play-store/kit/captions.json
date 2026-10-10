@@ -1,10 +1,50 @@
 [
-  { "file": "home", "tone": "sage", "title": "Habits that feel|like a *reward*", "sub": "Illustrated cards. Slide when you're done." },
-  { "file": "run", "tone": "sky", "title": "Track every *run*", "sub": "Live GPS map, pace and distance. Saved on your phone." },
-  { "file": "stats", "tone": "lav", "title": "See your *progress*", "sub": "Streaks, heatmap and insights about you." },
-  { "file": "review", "tone": "peach", "title": "Your week,|as a *story*", "sub": "A beautiful weekly review every Sunday." },
-  { "file": "sleep", "tone": "night", "title": "Sleep tracked,|*no watch* needed", "sub": "Steps and sleep fill in by themselves." },
-  { "file": "editor", "tone": "sage", "title": "Build *any* habit", "sub": "Any goal, any unit, any days. 22 artworks." },
-  { "file": "widgets", "tone": "sky", "title": "Right on your|*home screen*", "sub": "5 widgets. Log a habit in one tap." },
-  { "file": "voice", "tone": "lav", "title": "Just *say it*", "sub": "\"Drank 2 glasses of water.\" Logged." }
+  {
+    "file": "home",
+    "tone": "lav",
+    "title": "Habits that feel|like a *reward*",
+    "sub": "Illustrated cards. Slide when you're done."
+  },
+  {
+    "file": "dark",
+    "tone": "night",
+    "title": "Swipe your day,|*slide* to finish",
+    "sub": "Smooth, premium, light and dark mode."
+  },
+  {
+    "file": "start",
+    "tone": "sage",
+    "title": "Start in *seconds*",
+    "sub": "Pick from 22 hand-drawn habits, or make your own."
+  },
+  {
+    "file": "stats",
+    "tone": "sky",
+    "title": "See your *progress*",
+    "sub": "Levels, streaks, insights and Year in Review."
+  },
+  {
+    "file": "challenges",
+    "tone": "peach",
+    "title": "Challenge|a *friend*",
+    "sub": "7, 21 and 30 day challenges. Share a code."
+  },
+  {
+    "file": "review",
+    "tone": "sage",
+    "title": "Your week,|as a *story*",
+    "sub": "A beautiful weekly review every Sunday."
+  },
+  {
+    "file": "reminders",
+    "tone": "lav",
+    "title": "Gentle *reminders*",
+    "sub": "A nudge only when habits are still open."
+  },
+  {
+    "file": "calendar",
+    "tone": "sky",
+    "title": "Every check-in,|at a *glance*",
+    "sub": "A calendar for every habit, day by day."
+  }
 ]

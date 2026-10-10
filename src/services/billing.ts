@@ -105,6 +105,7 @@ export async function refresh(): Promise<void> {
   } catch {
     // Keep cached prices.
   }
+  for (const k of Object.keys(prices) as Plan[]) if (!prices[k]?.trim()) delete prices[k];
   if (Object.keys(prices).length) useLicense.getState().setPrices(prices);
 
   try {

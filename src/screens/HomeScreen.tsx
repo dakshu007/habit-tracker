@@ -19,7 +19,7 @@ import { bestCurrentStreak, dueOn, isDoneOn } from '@/logic/habits';
 import { getTheme } from '@/data/themes';
 import { spacing } from '@/theme/tokens';
 import { overlay } from '@/components/ui/Overlay';
-import { Play, Snowflake } from '@/components/ui/lucide';
+import { Footprints, Play, Snowflake } from '@/components/ui/lucide';
 import { StreakInfo } from '@/components/home/StreakInfo';
 import { LiveRunPill } from '@/screens/RunsScreen';
 import { TrialPill, useTrialNudge } from '@/components/home/TrialPill';
@@ -145,10 +145,13 @@ export function HomeScreen() {
                 </GlassSurface>
               </PressableScale>
             )}
-            <GlassButton accessibilityLabel={t('Routines')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('Routines')}>
+            <GlassButton size={42} accessibilityLabel={t('Start a run')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('Run')}>
+              <Footprints size={20} color="#FFFFFF" strokeWidth={2.2} />
+            </GlassButton>
+            <GlassButton size={42} accessibilityLabel={t('Routines')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('Routines')}>
               <Play size={19} color="#FFFFFF" fill="#FFFFFF" />
             </GlassButton>
-            <GlassButton accessibilityLabel={t('New habit')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('HabitEditor')}>
+            <GlassButton size={42} accessibilityLabel={t('New habit')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('HabitEditor')}>
               <PlusIcon color="#FFFFFF" size={22} strokeWidth={2.4} />
             </GlassButton>
           </Animated.View>

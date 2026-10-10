@@ -8,7 +8,7 @@ import type { LngLat } from '@maplibre/maplibre-react-native';
 import { Txt } from '@/components/ui/Txt';
 import { Button, GlassButton, PressableScale } from '@/components/ui/Glass';
 import { CloseIcon } from '@/components/ui/icons';
-import { Navigation, Pause, Play, Square } from '@/components/ui/lucide';
+import { Navigation, Pause, Play, Route as History, Square } from '@/components/ui/lucide';
 import { RUN_BLUE, RunMap } from '@/components/run/RunMap';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useLiveRun, useRunStore } from '@/store/useRunStore';
@@ -266,11 +266,19 @@ export function RunScreen({ navigation, route }: RootScreenProps<'Run'>) {
       >
         {!live ? (
           <>
-            <View style={{ gap: 4 }}>
-              <Txt variant="h2">{t('Ready to run?')}</Txt>
-              <Txt variant="small" color="secondary">
-                {t('Your route is saved only on this phone.')}
-              </Txt>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Txt variant="h2">{t('Ready to run?')}</Txt>
+                <Txt variant="small" color="secondary">
+                  {t('Your route is saved only on this phone.')}
+                </Txt>
+              </View>
+              <PressableScale onPress={() => navigation.navigate('Runs')} accessibilityLabel={t('Run history')}>
+                <View style={{ height: 34, paddingHorizontal: 12, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.inputBg }}>
+                  <History size={15} color={theme.textPrimary} strokeWidth={2.2} />
+                  <Txt variant="label">{t('History')}</Txt>
+                </View>
+              </PressableScale>
             </View>
 
             {candidates.length > 0 && (

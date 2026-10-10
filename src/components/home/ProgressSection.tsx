@@ -14,7 +14,7 @@ import { useHabitStore, useActiveHabit, type ProgressView } from '@/store/useHab
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, radius, spacing } from '@/theme/tokens';
 import { dueOn, isDoneOn, isRestDay, streakFor, valueOn, weeklyHabits, weekSessions } from '@/logic/habits';
-import { Bed, MessageCircle, Mic, Share2, type LucideIcon } from '@/components/ui/lucide';
+import { Bed, Footprints, MessageCircle, Mic, Share2, type LucideIcon } from '@/components/ui/lucide';
 import { hexToRgba } from '@/theme/color';
 import { useNavigation } from '@react-navigation/native';
 import type { RootNav } from '@/navigation/types';
@@ -194,6 +194,7 @@ function DayActions({ day }: { day: string }) {
       )}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {day >= today && chip(Bed, rest ? t('Rest day on') : t('Rest day'), () => toggleRestDay(day), rest, '#9B6BF2')}
+        {day === today && chip(Footprints, t('Start a run'), () => navigation.navigate('Run'), false, '#FF8A3D')}
         {day === today && chip(Mic, t('Voice log'), () => navigation.navigate('VoiceLog'))}
         {day === today && chip(Share2, t('Share'), () => navigation.navigate('Share', { kind: 'today' }))}
         {day === today && chip(MessageCircle, buddy ? t('Tell {name}', { name: buddy.name }) : t('Tell a buddy'), () => (buddy ? sendToBuddy() : overlay.open(<BuddySheet sendAfter />)), false, '#25A55F')}

@@ -3,7 +3,7 @@
     "name": "Habit Tracker",
     "slug": "habit-tracker",
     "version": "1.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "habittracker",
     "userInterfaceStyle": "automatic",
@@ -83,12 +83,15 @@
             "buildArchs": [
               "arm64-v8a"
             ],
-            "minSdkVersion": 26
+            "minSdkVersion": 26,
+            "enableMinifyInReleaseBuilds": true,
+            "extraProguardRules": "# Native code looked up by name from JS, the manifest or other libraries.\n-keep class expo.modules.devicesignals.** { *; }\n-keep class com.reactnativeandroidwidget.** { *; }\n-keep class dev.matinzd.healthconnect.** { *; }\n-keep class androidx.health.connect.client.** { *; }\n-keep class expo.modules.iap.** { *; }\n-keep class dev.hyo.openiap.** { *; }\n-keep class com.android.billingclient.** { *; }\n-keep class org.maplibre.** { *; }\n-dontwarn org.maplibre.**"
           }
         }
       ],
       "expo-status-bar",
       "./plugins/with-high-refresh-rate",
+      "./plugins/with-phone-portrait",
       [
         "react-native-android-widget",
         {

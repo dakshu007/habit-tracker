@@ -16,7 +16,7 @@
       "package": "app.mykavo.habittracker",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#17161D",
+        "backgroundColor": "#DCEAE1",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -58,7 +58,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 140,
           "resizeMode": "contain",
-          "backgroundColor": "#EAF3FE",
+          "backgroundColor": "#EEF5F0",
           "dark": {
             "image": "./assets/splash-icon.png",
             "backgroundColor": "#1C1B22"

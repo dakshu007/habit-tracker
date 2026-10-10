@@ -645,4 +645,7 @@ export const hi: Record<string, string> = {
   'Also set an alarm for {habit}': '{habit} के लिए अलार्म भी लगाएँ',
   'Pro unlocked': 'Pro अनलॉक हुआ',
   'See all Pro plans': 'सभी Pro प्लान देखें',
+  'Not on today’s list': 'आज की सूची में नहीं',
+  '{habit}, next on {day}': '{habit}, अगली बार {day}',
+  '{habit}, in Weekly tasks': '{habit}, साप्ताहिक कामों में',
 };

@@ -16,6 +16,7 @@ import { ProgressSection } from '@/components/home/ProgressSection';
 import { useHabitStore, useActiveHabit, useVisibleHabits } from '@/store/useHabitStore';
 import { useTabFocused } from '@/navigation/MainTabs';
 import { bestCurrentStreak, dueOn, isDoneOn } from '@/logic/habits';
+import { NotToday } from '@/components/home/NotToday';
 import { getTheme } from '@/data/themes';
 import { spacing } from '@/theme/tokens';
 import { overlay } from '@/components/ui/Overlay';
@@ -209,6 +210,7 @@ export function HomeScreen() {
                 onCreate={() => navigation.navigate('HabitEditor')}
               />
             )}
+            {filter === 'today' && <NotToday day={day} />}
           </Animated.View>
 
           <Animated.View entering={enter(240)}>

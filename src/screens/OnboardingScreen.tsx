@@ -31,6 +31,7 @@ import { qty } from '@/utils/format';
 import { useMotion } from '@/theme/motion';
 import { BellRing } from '@/components/ui/lucide';
 import { t } from '@/i18n';
+import { scheduleLabel } from '@/logic/habits';
 
 const STEP_COLORS = [getTheme('sky').bgTop, getTheme('lavender').bgTop, getTheme('mint').bgTop, getTheme('sunset').bgTop];
 
@@ -214,6 +215,16 @@ function PickHabits({ picked, setPicked, onNext }: { picked: string[]; setPicked
                   }}
                 >
                   <HabitArt artId={tpl.artId} colors={c} compact={false} />
+                  {tpl.schedule.kind !== 'daily' && (
+                    // Not every day: say so up front, so it isn't a surprise on Home.
+                    <View style={{ position: 'absolute', top: 10, left: 10, right: 44, alignItems: 'flex-start' }}>
+                      <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: 'rgba(28,27,34,0.72)' }}>
+                        <Txt variant="micro" color="white" numberOfLines={1}>
+                          {scheduleLabel(tpl.schedule)}
+                        </Txt>
+                      </View>
+                    </View>
+                  )}
                   <View style={{ position: 'absolute', left: 6, right: 6, bottom: 6, padding: 10, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.94)' }}>
                     <Txt variant="label" color="#1C1B22" numberOfLines={1}>
                       {t(tpl.title)}

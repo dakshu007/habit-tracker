@@ -1,5 +1,6 @@
-import type { Habit, Logs } from '@/data/types';
-import { addDays, dayKey, fromKey, shiftKey, startOfWeek, weekKeys } from '@/utils/date';
+import type { Habit, Logs, Schedule } from '@/data/types';
+import { addDays, DAY_LABELS, dayKey, fromKey, shiftKey, startOfWeek, weekKeys } from '@/utils/date';
+import { t } from '@/i18n/core';
 
 /* ------------------------------------------------------------------ */
 /* Basics                                                              */
@@ -42,6 +43,26 @@ export function isScheduledOn(h: Habit, key: string): boolean {
 /** Day-level habits ("Today's tasks") due on `key`. */
 export function dueOn(habits: Habit[], key: string): Habit[] {
   return habits.filter((h) => !h.archived && h.schedule.kind !== 'weekly' && isScheduledOn(h, key));
+}
+
+/** "Every day", "3× a week" or "Mon · Wed · Fri" (Monday first). */
+export function scheduleLabel(s: Schedule): string {
+  if (s.kind === 'daily') return t('Every day');
+  if (s.kind === 'weekly') return t('{n}× a week', { n: s.timesPerWeek });
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const days = order.filter((d) => s.days.includes(d as never));
+  if (days.length === 7) return t('Every day');
+  if (days.length === 5 && !days.includes(0) && !days.includes(6)) return t('Weekdays');
+  return days.map((d) => t(DAY_LABELS[d])).join(' · ');
+}
+
+/** The next day (after `key`, within a week) a day-specific habit is due. */
+export function nextDueKey(h: Habit, key: string): string | null {
+  for (let i = 1; i <= 7; i++) {
+    const k = shiftKey(key, i);
+    if (isScheduledOn(h, k)) return k;
+  }
+  return null;
 }
 
 export function weeklyHabits(habits: Habit[]): Habit[] {

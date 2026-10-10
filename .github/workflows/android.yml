@@ -82,7 +82,9 @@ jobs:
         timeout-minutes: 40
         run: |
           # gradle.properties has no trailing newline — start on a fresh line.
-          printf '\norg.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g\nkotlin.daemon.jvmargs=-Xmx2g\n' >> gradle.properties
+          # Runners have 7 GB: Gradle (and R8 inside it) 4 GB, Kotlin daemon 1.5 GB,
+          # 2 workers. More than that swaps and the build stalls.
+          printf '\norg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=768m -XX:+UseParallelGC\nkotlin.daemon.jvmargs=-Xmx1536m\norg.gradle.workers.max=2\n' >> gradle.properties
           SIGNING=""
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"

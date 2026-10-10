@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import { ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -55,6 +55,10 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
   const lifetime = useLicense((s) => s.lifetime);
   const subscription = useLicense((s) => s.subscription);
   const trialStart = useLicense((s) => s.trialStart);
+  const codeUntil = useLicense((s) => s.codeUntil);
+  const redeemCode = useLicense((s) => s.redeemCode);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [code, setCode] = useState('');
   const unlocked = useUnlocked();
   const [plan, setPlan] = useState<Plan>('yearly');
   const [busy, setBusy] = useState<'buy' | 'restore' | null>(null);
@@ -105,13 +109,28 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
     if (ok) haptic.success();
   };
 
+  const applyCode = () => {
+    if (!code.trim()) return;
+    if (redeemCode(code)) {
+      haptic.success();
+      setCodeOpen(false);
+      setCode('');
+      setNote(null);
+    } else {
+      haptic.warning();
+      setNote(t('That code isn’t valid.'));
+    }
+  };
+
   const status = lifetime
     ? t('Lifetime unlocked. Thank you!')
     : subscription
       ? subscription === 'yearly'
         ? t('You’re on Pro yearly. Thank you!')
         : t('You’re on Pro monthly. Thank you!')
-      : left > 0
+      : codeUntil && codeUntil > Date.now()
+        ? t('Pro unlocked with a code')
+        : left > 0
         ? t('{n} days left in your free week', { n: left })
         : t('Your free week has ended');
 
@@ -244,6 +263,35 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
                 {busy === 'restore' ? t('Checking…') : t('Restore purchase')}
               </Txt>
             </PressableScale>
+            {codeOpen ? (
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <TextInput
+                  value={code}
+                  onChangeText={setCode}
+                  onSubmitEditing={applyCode}
+                  placeholder={t('Access code')}
+                  placeholderTextColor={theme.textTertiary}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  autoFocus
+                  returnKeyType="done"
+                  style={{ flex: 1, height: 46, borderRadius: 23, paddingHorizontal: 18, backgroundColor: cardBg, color: theme.textPrimary, fontSize: 15.5 }}
+                />
+                <PressableScale onPress={applyCode}>
+                  <View style={{ height: 46, paddingHorizontal: 20, borderRadius: 23, backgroundColor: SKY[2], alignItems: 'center', justifyContent: 'center' }}>
+                    <Txt variant="button" color="white">
+                      {t('Apply')}
+                    </Txt>
+                  </View>
+                </PressableScale>
+              </View>
+            ) : (
+              <PressableScale onPress={() => setCodeOpen(true)} style={{ alignSelf: 'center', padding: 6 }}>
+                <Txt variant="small" color="secondary">
+                  {t('Have an access code?')}
+                </Txt>
+              </PressableScale>
+            )}
             {!unlocked && (
               <Txt variant="small" color="tertiary" style={{ textAlign: 'center' }}>
                 {t('You can still open the app and look at your history.')}

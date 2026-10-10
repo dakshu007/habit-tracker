@@ -8,8 +8,20 @@ Everything below matches build 21 and later. Copy the answers as written.
 ## Ads
 **No**, my app does not contain ads.
 
-## App access
-**All functionality is available without special access.** (No login. During testing the paywall never blocks reviewers in the first 7 days.)
+## Sign in details (was "App access")
+**Is any part of your app restricted?** → **Yes** (Pro needs a payment after the 7-day in-app trial)
+
+Add instructions:
+- Name: `Pro access code`
+- Username / email: leave empty, or write `No account needed`
+- Password: `PLAYREVIEW-HT26`
+- Any other information:
+  ```
+  No sign-in or account is needed. Every feature is free for 7 days after first launch, with no payment details asked. To unlock Habit Tracker Pro without paying: Profile tab > Habit Tracker Pro > "Have an access code?" > enter PLAYREVIEW-HT26 > Apply. This unlocks every feature for 30 days.
+  ```
+- Tick "Allow Android to use the credentials you provide for performance and app compatibility testing" if shown.
+
+The code lives in `src/store/useLicense.ts` (`ACCESS_CODES`). Change it there if it ever leaks.
 
 ## Content rating (IARC questionnaire)
 - Category: **Utility, Productivity, Communication or Other** (pick "All other app types" if asked)

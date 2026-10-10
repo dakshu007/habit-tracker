@@ -29,6 +29,15 @@ export const PAYWALL_MODE: 'live' | 'preview' = PAYWALL;
 
 const DAY = 86_400_000;
 
+/**
+ * Access code for Google Play reviewers (they can't buy or use free trials).
+ * Give it only in Play Console → App content → Sign in details. It unlocks
+ * Pro on that phone for CODE_DAYS; change it here if it ever leaks.
+ */
+const ACCESS_CODES = ['PLAYREVIEW-HT26'];
+const CODE_DAYS = 30;
+const normalize = (c: string) => c.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
 interface LicenseState {
   /** Epoch ms the free trial began (null until onboarding finishes). */
   trialStart: number | null;
@@ -38,6 +47,10 @@ interface LicenseState {
   subscription: 'monthly' | 'yearly' | null;
   /** Localized prices from Google Play, e.g. "₹399.00". */
   prices: Partial<Record<Plan, string>>;
+  /** Epoch ms an access code keeps Pro unlocked until (reviewers). */
+  codeUntil: number | null;
+  /** Returns true when the code is valid (and unlocks Pro). */
+  redeemCode: (code: string) => boolean;
   startTrial: () => void;
   setOwnership: (o: { lifetime: boolean; subscription: LicenseState['subscription'] }) => void;
   setPrices: (p: Partial<Record<Plan, string>>) => void;
@@ -50,6 +63,12 @@ export const useLicense = create<LicenseState>()(
       lifetime: false,
       subscription: null,
       prices: {},
+      codeUntil: null,
+      redeemCode: (code) => {
+        const ok = ACCESS_CODES.some((c) => normalize(c) === normalize(code));
+        if (ok) set({ codeUntil: Date.now() + CODE_DAYS * DAY });
+        return ok;
+      },
       startTrial: () => {
         const begin = () => {
           if (get().trialStart == null) set({ trialStart: Date.now() });
@@ -81,12 +100,13 @@ export function trialDaysLeft(trialStart: number | null, now = Date.now()): numb
   return Math.max(0, Math.ceil((trialStart + TRIAL_DAYS * DAY - now) / DAY));
 }
 
-type Ownership = Pick<LicenseState, 'trialStart' | 'lifetime' | 'subscription'>;
+type Ownership = Pick<LicenseState, 'trialStart' | 'lifetime' | 'subscription' | 'codeUntil'>;
 
-export const isPro = (s: Pick<LicenseState, 'lifetime' | 'subscription'>) => s.lifetime || s.subscription != null;
+export const isPro = (s: Pick<LicenseState, 'lifetime' | 'subscription' | 'codeUntil'>, now = Date.now()) =>
+  s.lifetime || s.subscription != null || (s.codeUntil ?? 0) > now;
 
 export function unlockedFrom(s: Ownership, now = Date.now()): boolean {
-  return PAYWALL_MODE !== 'live' || isPro(s) || trialDaysLeft(s.trialStart, now) > 0;
+  return PAYWALL_MODE !== 'live' || isPro(s, now) || trialDaysLeft(s.trialStart, now) > 0;
 }
 
 /** Can the user log right now? (Outside React.) */
@@ -97,7 +117,8 @@ export function useUnlocked(): boolean {
   const trialStart = useLicense((s) => s.trialStart);
   const lifetime = useLicense((s) => s.lifetime);
   const subscription = useLicense((s) => s.subscription);
-  return unlockedFrom({ trialStart, lifetime, subscription });
+  const codeUntil = useLicense((s) => s.codeUntil);
+  return unlockedFrom({ trialStart, lifetime, subscription, codeUntil });
 }
 
 export const usePro = () => useLicense((s) => isPro(s));

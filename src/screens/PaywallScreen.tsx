@@ -78,7 +78,8 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
   const save = monthly && yearly ? Math.round((1 - yearly / (monthly * 12)) * 100) : null;
 
   // Launch: founder prices, with the regular price struck through.
-  const founder = isFounderTime();
+  // Founder pricing is India-only: other countries see their regular local price.
+  const founder = isFounderTime() && prices.yearly.includes('₹');
   const PLANS: { id: Plan; title: string; price: string; was?: string; caption: string; badge?: string }[] = [
     { id: 'monthly', title: t('Monthly'), price: t('{price} / month', { price: prices.monthly }), caption: t('Cancel anytime') },
     {

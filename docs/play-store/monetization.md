@@ -2,30 +2,24 @@
 
 Free download · **7-day trial** of everything (14 days when invited by a friend; in the app, no card) · then a **free plan forever** (5 habits) or **Pro**.
 
-| Plan | Play product | Launch (founder) price | Regular price | Global |
-|---|---|---|---|---|
-| Monthly | `pro_monthly`, base plan `monthly` | ₹99 | ₹99 | $3.99 |
-| **Yearly** (pre-selected) | `pro_yearly`, base plan `yearly` | **₹399**, kept for life | ₹499 | $24.99 |
-| Lifetime | `pro_lifetime` (one-time) | **₹999** | ₹1,499 | $59.99 |
+| Plan | Play product | India | Other countries (approx.) |
+|---|---|---|---|
+| Monthly | `pro_monthly`, base plan `monthly` | ₹99 | $3.99 (set ₹349 for all countries, then India ₹99) |
+| **Yearly** (pre-selected) | `pro_yearly`, base plan `yearly` | ₹499 | $24.99 (₹2,199, then India ₹499) |
+| Lifetime | `pro_lifetime` (one-time, purchase option `buy`) | ₹1,499 | $59.99 (₹5,299, then India ₹1,499) |
 
 IDs must match `SKU` in `src/store/useLicense.ts`. Don't use `lifetime_unlock` (burned on a deleted subscription).
 
 **Free plan** (after the trial, forever): 5 habits with logging, streaks, reminders and alarms, the Today widget, backup and export, challenges, weekly review, 1 AI weekly insight per week.
 **Pro**: unlimited habits, auto-tracking (Health Connect), GPS runs, sleep from phone use, voice logging, insights, Year in Review, PDF/CSV reports, all 5 widgets, AI coach chat.
 
-## Founder pricing (launch to 31 Dec 2026)
-1. **Now:** in Play Console set monthly **₹99**, yearly **₹399**, lifetime **₹999**.
-2. The app shows "Founder price" with the regular price struck through until `FOUNDER_UNTIL` in `useLicense.ts` (31 Dec 2026).
-3. **On 1 Jan 2027:** raise yearly to **₹499** and lifetime to **₹1,499**.
-   - Yearly: Subscriptions → `pro_yearly` → base plan `yearly` → edit price → when Play asks about existing subscribers, choose to **keep existing subscribers on their current price** (legacy price). Founders keep ₹399 for as long as they stay subscribed.
-   - Lifetime: One-time products → `pro_lifetime` → purchase option `buy` → edit price.
-4. Global: set USD prices once (Play converts the rest), or adjust key countries by hand.
+No founder discount at launch. To run one later, lower the Play prices and set `FOUNDER_UNTIL` in `useLicense.ts`: the paywall then shows a "Founder price" tag with the regular rupee price struck through (India only).
 
 ## One-time setup
 1. **Payments profile**: Play Console → Settings → Payments profile.
 2. **Upload the first `.aab`** (from the GitHub release) to Internal testing: Play only allows products after a build with the `BILLING` permission is uploaded.
 3. **Subscriptions** (Monetize → Products → Subscriptions):
-   - Create `pro_monthly` → add base plan `monthly` → Auto-renewing, billing period 1 month, price ₹99 → Activate.
+   - Create `pro_monthly` → add base plan `monthly` → Auto-renewing, billing period 1 month, price ₹99 (India) → Activate.
    - Create `pro_yearly` → add base plan `yearly` → Auto-renewing, billing period 1 year, price ₹399 → Activate.
    - Don't add a Play free-trial offer: the app already gives everyone a free trial and a free plan.
 4. **One-time product** (Monetize → Products → In-app products): `pro_lifetime`, name "Habit Tracker Pro (Lifetime)", ₹999 → Activate.

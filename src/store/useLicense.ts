@@ -9,9 +9,9 @@ import type { Habit } from '@/data/types';
 /**
  * Habit Tracker Pro: Google Play product ids (create them in Play Console,
  * see docs/play-store/monetization.md). Prices live in Play Console:
- *  - pro_monthly      subscription, ₹99 / month
- *  - pro_yearly       subscription, ₹499 / year (founder price ₹399 at launch, kept for life)
- *  - pro_lifetime     one-time in-app product, ₹1,499 (founder price ₹999 at launch)
+ *  - pro_monthly      subscription, ₹99 / month   (other countries about $3.99)
+ *  - pro_yearly       subscription, ₹499 / year   (about $24.99)
+ *  - pro_lifetime     one-time in-app product, ₹1,499 (about $59.99)
  *                     (`lifetime_unlock` is taken by a deleted subscription)
  */
 export const SKU = { monthly: 'pro_monthly', yearly: 'pro_yearly', lifetime: 'pro_lifetime' } as const;
@@ -23,12 +23,15 @@ export const TRIAL_DAYS = 7;
 export const REFERRED_TRIAL_DAYS = 14;
 /** Free plan after the trial: this many habits stay fully usable, forever. */
 export const FREE_HABITS = 5;
-/** Shown until Google Play returns the real localized prices (the launch prices). */
-export const FALLBACK_PRICES: Record<Plan, string> = { monthly: '₹99', yearly: '₹399', lifetime: '₹999' };
-/** Regular prices, shown struck through while founder pricing runs. */
+/** Shown until Google Play returns the real localized prices. */
+export const FALLBACK_PRICES: Record<Plan, string> = { monthly: '₹99', yearly: '₹499', lifetime: '₹1,499' };
+/**
+ * Optional launch offer: set FOUNDER_UNTIL to a date and lower the Play prices
+ * to show a "Founder price" tag with these regular prices struck through
+ * (India only). Off by default.
+ */
 export const REGULAR_PRICES: Partial<Record<Plan, string>> = { yearly: '₹499', lifetime: '₹1,499' };
-/** Founder pricing ends here (launch + about 60 days). Raise the Play prices on this day too. */
-export const FOUNDER_UNTIL = new Date('2026-12-31T23:59:59+05:30').getTime();
+export const FOUNDER_UNTIL = 0;
 export const isFounderTime = (now = Date.now()) => now < FOUNDER_UNTIL;
 
 /**

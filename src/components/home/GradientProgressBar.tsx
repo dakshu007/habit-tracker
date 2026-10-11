@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
+  cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -14,6 +15,7 @@ import { Txt } from '@/components/ui/Txt';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, radius } from '@/theme/tokens';
 import { useMotion } from '@/theme/motion';
+import { useTabFocused } from '@/navigation/MainTabs';
 
 const BAR_H = 12;
 const MARKER_W = 12;
@@ -52,15 +54,22 @@ export function GradientProgressBar({ fraction, minLabel, maxLabel }: GradientPr
 
   // Looping sheen position 0..1.
   const sweep = useSharedValue(0);
+  // Loop only while Home is on screen: a running loop under the glass tab bar
+  // makes it re-blur every frame, which slows taps on mid-range phones.
+  const focused = useTabFocused('Home');
   const sheenOn = m.id !== 'off' && m.id !== 'minimal';
   useEffect(() => {
-    if (!sheenOn) return;
+    if (!sheenOn || !focused) return;
     sweep.value = withRepeat(
       withTiming(1, { duration: 1600 * m.speed, easing: Easing.inOut(Easing.ease) }),
       -1,
       false,
     );
-  }, [sweep, sheenOn, m.speed]);
+    return () => {
+      cancelAnimation(sweep);
+      sweep.value = 0;
+    };
+  }, [sweep, sheenOn, focused, m.speed]);
 
   const maskStyle = useAnimatedStyle(() => ({ width: f.value * trackW }));
   const markerStyle = useAnimatedStyle(() => ({

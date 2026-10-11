@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useState, type ComponentType } from 'react';
-import { BackHandler, View } from 'react-native';
+import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
+import { BackHandler, InteractionManager, View } from 'react-native';
 import { BlurTargetView } from 'expo-blur';
 import Animated, { Easing, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
@@ -20,16 +20,18 @@ import { useRatingPrompt } from '@/services/rating';
 import type { TabName } from './types';
 
 const TABS: TabName[] = ['Home', 'Stats', 'Calendar', 'Reminders', 'Profile'];
+// memo: switching tabs re-renders the host, but the screens themselves
+// shouldn't redo their work (that was most of the tap-to-switch delay).
 const SCREENS: Record<TabName, ComponentType> = {
-  Home: HomeScreen,
-  Stats: StatsScreen,
-  Calendar: CalendarScreen,
-  Reminders: RemindersScreen,
-  Profile: ProfileScreen,
+  Home: memo(HomeScreen),
+  Stats: memo(StatsScreen),
+  Calendar: memo(CalendarScreen),
+  Reminders: memo(RemindersScreen),
+  Profile: memo(ProfileScreen),
 };
 
 /** Distance a scene travels while cross-fading between neighbouring tabs. */
-const SHIFT = 42;
+const SHIFT = 28;
 
 interface TabsApi {
   active: TabName;
@@ -64,10 +66,20 @@ export function MainTabs() {
   useRatingPrompt();
   const activeIndex = TABS.indexOf(active);
 
-  const go = (t: TabName) => {
+  const go = useCallback((t: TabName) => {
     setMounted((cur) => (cur.has(t) ? cur : new Set(cur).add(t)));
     setActive(t);
-  };
+  }, []);
+
+  // Build the other tabs once Home has settled, so the first visit to each is instant too.
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => setMounted(new Set(TABS)), 800);
+    });
+    return () => task.cancel();
+  }, []);
+
+  const api = useMemo(() => ({ active, visible, go }), [active, visible, go]);
 
   // Android back: close an open sheet first, then return to Home, then exit.
   useEffect(() => {
@@ -81,11 +93,11 @@ export function MainTabs() {
       return false;
     });
     return () => sub.remove();
-  }, [active, visible]);
+  }, [active, visible, go]);
 
   return (
     <BlurTargetContext.Provider value={target}>
-      <TabsContext.Provider value={{ active, visible, go }}>
+      <TabsContext.Provider value={api}>
         <View style={{ flex: 1, backgroundColor: theme.screenBase }}>
           <BlurTargetView ref={target} style={{ flex: 1, backgroundColor: theme.screenBase }}>
             {TABS.map((name, i) => {
@@ -116,7 +128,7 @@ interface SceneProps {
 
 function Scene({ offset, speed, children }: SceneProps) {
   const isActive = offset === 0;
-  const timing = { duration: Math.max(1, 260 * speed), easing: Easing.out(Easing.cubic) };
+  const timing = { duration: Math.max(1, 170 * speed), easing: Easing.out(Easing.cubic) };
   const style = useAnimatedStyle(() => ({
     opacity: withTiming(isActive ? 1 : 0, timing),
     transform: [{ translateX: withTiming(isActive ? 0 : Math.sign(offset) * SHIFT, timing) }],

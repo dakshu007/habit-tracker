@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
+import { useTabFocused } from '@/navigation/MainTabs';
 
 import { Txt } from '@/components/ui/Txt';
 import { PressableScale } from '@/components/ui/Glass';
@@ -35,11 +36,19 @@ export function ProCard() {
 
   const sweep = useSharedValue(0);
   const pulse = useSharedValue(0);
+  // Only animate while Profile is on screen (tabs stay mounted in the background).
+  const focused = useTabFocused('Profile');
   useEffect(() => {
-    if (owned || !motion) return;
+    if (owned || !motion || !focused) return;
     sweep.value = withRepeat(withSequence(withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.cubic) }), withDelay(2200, withTiming(0, { duration: 0 }))), -1);
     pulse.value = withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.sin) }), -1, true);
-  }, [owned, motion, sweep, pulse]);
+    return () => {
+      cancelAnimation(sweep);
+      cancelAnimation(pulse);
+      sweep.value = 0;
+      pulse.value = 0;
+    };
+  }, [owned, motion, focused, sweep, pulse]);
 
   const sheen = useAnimatedStyle(() => ({ transform: [{ translateX: -160 + sweep.value * (w + 320) }, { rotate: '18deg' }] }));
   const glow = useAnimatedStyle(() => ({ transform: [{ scale: 1 + pulse.value * 0.08 }], opacity: 0.55 + pulse.value * 0.45 }));

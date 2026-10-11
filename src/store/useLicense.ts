@@ -4,20 +4,32 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { PAYWALL } from '@/buildFlags';
 
+import type { Habit } from '@/data/types';
+
 /**
- * Habit Tracker Pro — Google Play product ids (create them in Play Console,
- * see docs/play-store/monetization.md):
- *  - pro_monthly      subscription, ₹59 / month
- *  - pro_yearly       subscription, ₹399 / year
- *  - pro_lifetime     one-time in-app product, ₹999 (`lifetime_unlock` is taken by a deleted subscription)
+ * Habit Tracker Pro: Google Play product ids (create them in Play Console,
+ * see docs/play-store/monetization.md). Prices live in Play Console:
+ *  - pro_monthly      subscription, ₹99 / month
+ *  - pro_yearly       subscription, ₹499 / year (founder price ₹399 at launch, kept for life)
+ *  - pro_lifetime     one-time in-app product, ₹1,499 (founder price ₹999 at launch)
+ *                     (`lifetime_unlock` is taken by a deleted subscription)
  */
 export const SKU = { monthly: 'pro_monthly', yearly: 'pro_yearly', lifetime: 'pro_lifetime' } as const;
 export type Plan = keyof typeof SKU;
 export const SUB_SKUS: string[] = [SKU.monthly, SKU.yearly];
 
 export const TRIAL_DAYS = 7;
-/** Shown until Google Play returns the real localized prices. */
-export const FALLBACK_PRICES: Record<Plan, string> = { monthly: '₹59', yearly: '₹399', lifetime: '₹999' };
+/** Friends who join from an invite link get a longer trial. */
+export const REFERRED_TRIAL_DAYS = 14;
+/** Free plan after the trial: this many habits stay fully usable, forever. */
+export const FREE_HABITS = 5;
+/** Shown until Google Play returns the real localized prices (the launch prices). */
+export const FALLBACK_PRICES: Record<Plan, string> = { monthly: '₹99', yearly: '₹399', lifetime: '₹999' };
+/** Regular prices, shown struck through while founder pricing runs. */
+export const REGULAR_PRICES: Partial<Record<Plan, string>> = { yearly: '₹499', lifetime: '₹1,499' };
+/** Founder pricing ends here (launch + about 60 days). Raise the Play prices on this day too. */
+export const FOUNDER_UNTIL = new Date('2026-12-31T23:59:59+05:30').getTime();
+export const isFounderTime = (now = Date.now()) => now < FOUNDER_UNTIL;
 
 /**
  * 'live'    — Play Store builds: 7-day trial, then logging needs Pro.
@@ -49,6 +61,12 @@ interface LicenseState {
   prices: Partial<Record<Plan, string>>;
   /** Epoch ms an access code keeps Pro unlocked until (reviewers). */
   codeUntil: number | null;
+  /** Epoch ms Pro earned by inviting friends lasts until (from the backend). */
+  rewardUntil: number | null;
+  /** Length of this install's free trial (longer when invited by a friend). */
+  trialDays: number;
+  setRewardUntil: (ms: number | null) => void;
+  setTrialDays: (days: number) => void;
   /** Returns true when the code is valid (and unlocks Pro). */
   redeemCode: (code: string) => boolean;
   startTrial: () => void;
@@ -64,6 +82,10 @@ export const useLicense = create<LicenseState>()(
       subscription: null,
       prices: {},
       codeUntil: null,
+      rewardUntil: null,
+      trialDays: TRIAL_DAYS,
+      setRewardUntil: (ms) => set({ rewardUntil: ms }),
+      setTrialDays: (days) => set({ trialDays: days }),
       redeemCode: (code) => {
         const ok = ACCESS_CODES.some((c) => normalize(c) === normalize(code));
         if (ok) set({ codeUntil: Date.now() + CODE_DAYS * DAY });
@@ -95,21 +117,23 @@ export const useLicense = create<LicenseState>()(
 );
 
 /** Whole days left in the trial (0 when it's over). */
-export function trialDaysLeft(trialStart: number | null, now = Date.now()): number {
-  if (trialStart == null) return TRIAL_DAYS;
-  return Math.max(0, Math.ceil((trialStart + TRIAL_DAYS * DAY - now) / DAY));
+export function trialDaysLeft(trialStart: number | null, now = Date.now(), days = useLicense.getState().trialDays ?? TRIAL_DAYS): number {
+  if (trialStart == null) return days;
+  return Math.max(0, Math.ceil((trialStart + days * DAY - now) / DAY));
 }
 
-type Ownership = Pick<LicenseState, 'trialStart' | 'lifetime' | 'subscription' | 'codeUntil'>;
+type Ownership = Pick<LicenseState, 'trialStart' | 'lifetime' | 'subscription' | 'codeUntil' | 'rewardUntil' | 'trialDays'>;
 
-export const isPro = (s: Pick<LicenseState, 'lifetime' | 'subscription' | 'codeUntil'>, now = Date.now()) =>
-  s.lifetime || s.subscription != null || (s.codeUntil ?? 0) > now;
+/** Paid (or earned) Pro: a subscription, lifetime, a reviewer code or invite rewards. Not the trial. */
+export const isPro = (s: Pick<LicenseState, 'lifetime' | 'subscription' | 'codeUntil' | 'rewardUntil'>, now = Date.now()) =>
+  s.lifetime || s.subscription != null || (s.codeUntil ?? 0) > now || (s.rewardUntil ?? 0) > now;
 
+/** Every Pro feature available right now: Pro, the trial, or a test build. */
 export function unlockedFrom(s: Ownership, now = Date.now()): boolean {
-  return PAYWALL_MODE !== 'live' || isPro(s, now) || trialDaysLeft(s.trialStart, now) > 0;
+  return PAYWALL_MODE !== 'live' || isPro(s, now) || trialDaysLeft(s.trialStart, now, s.trialDays ?? TRIAL_DAYS) > 0;
 }
 
-/** Can the user log right now? (Outside React.) */
+/** Are Pro features available right now? (Outside React.) */
 export const isUnlocked = () => unlockedFrom(useLicense.getState());
 
 /** Same, as a hook. */
@@ -118,10 +142,37 @@ export function useUnlocked(): boolean {
   const lifetime = useLicense((s) => s.lifetime);
   const subscription = useLicense((s) => s.subscription);
   const codeUntil = useLicense((s) => s.codeUntil);
-  return unlockedFrom({ trialStart, lifetime, subscription, codeUntil });
+  const rewardUntil = useLicense((s) => s.rewardUntil);
+  const trialDays = useLicense((s) => s.trialDays);
+  return unlockedFrom({ trialStart, lifetime, subscription, codeUntil, rewardUntil, trialDays });
 }
 
+/**
+ * Free plan: the first FREE_HABITS active habits (oldest first) stay fully
+ * usable after the trial. The rest stay visible, with their history, but
+ * need Pro to log.
+ */
+export function freeHabitIds(habits: Habit[]): Set<string> {
+  const live = habits.filter((h) => !h.archived).sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+  return new Set(live.slice(0, FREE_HABITS).map((h) => h.id));
+}
+
+/** Can this habit be logged right now? (Outside React; pass the current habits.) */
+export const canLogHabit = (habits: Habit[], id: string) => isUnlocked() || freeHabitIds(habits).has(id);
+
+/** Can another habit be added right now? */
+export const canAddHabit = (habits: Habit[]) => isUnlocked() || habits.filter((h) => !h.archived).length < FREE_HABITS;
+
 export const usePro = () => useLicense((s) => isPro(s));
+
+/** Which plan the AI coach should meter against. */
+export function aiPlan(): 'subscription' | 'lifetime' | 'trial' | 'free' {
+  const s = useLicense.getState();
+  if (s.subscription != null || (s.codeUntil ?? 0) > Date.now() || (s.rewardUntil ?? 0) > Date.now() || PAYWALL_MODE !== 'live') return 'subscription';
+  if (s.lifetime) return 'lifetime';
+  if (trialDaysLeft(s.trialStart) > 0) return 'trial';
+  return 'free';
+}
 
 export function usePrices(): Record<Plan, string> {
   const p = useLicense((s) => s.prices);

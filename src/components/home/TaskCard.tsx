@@ -20,7 +20,7 @@ import { fmtNumber, qty } from '@/utils/format';
 import type { Habit } from '@/data/types';
 import { useNavigation } from '@react-navigation/native';
 import type { RootNav } from '@/navigation/types';
-import { useUnlocked } from '@/store/useLicense';
+import { useCanLogHabit } from '@/store/access';
 
 /** Front card aspect ratio from Figma: 358 × 503. */
 export const CARD_ASPECT = 503 / 358;
@@ -58,8 +58,8 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
   const future = day > today;
   /** Past days can be viewed but never logged. */
   const past = day < today;
-  /** After the free week without the lifetime unlock, cards are view-only. */
-  const unlocked = useUnlocked();
+  /** After the trial, only the free plan's habits can be logged without Pro. */
+  const unlocked = useCanLogHabit(habit.id);
   const navigation = useNavigation<RootNav>();
 
   const quit = habit.quit;
@@ -160,7 +160,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
           <SlideToComplete
             done={done}
             disabled={future || past || !unlocked || (rest && !done)}
-            idleLabel={future ? t('Opens on the day') : past ? t('Past days are locked') : !unlocked ? t('Unlock to keep logging') : rest ? t('Rest day, enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
+            idleLabel={future ? t('Opens on the day') : past ? t('Past days are locked') : !unlocked ? t('Pro habit, unlock to log') : rest ? t('Rest day, enjoy it') : quit ? t('Slide to confirm a clean day') : t("Slide when you're done")}
             doneLabel={quit ? t('Clean day logged. Proud of you.') : habit.doneLabel}
             onComplete={() => {
               complete(habit.id, day);
@@ -187,7 +187,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
             !unlocked && !done && !future && !past ? (
               <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Paywall')} style={{ alignSelf: 'center', marginTop: -6, paddingHorizontal: 10, paddingVertical: 2 }}>
                 <Txt variant="small" color={colors.accent} style={{ fontSize: 11.5, fontWeight: '700' }}>
-                  {t('Your free week is over. Tap to unlock')}
+                  {t('Free plan includes 5 habits. Tap to unlock all')}
                 </Txt>
               </Pressable>
             ) : (

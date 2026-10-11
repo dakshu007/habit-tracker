@@ -85,7 +85,7 @@
             ],
             "minSdkVersion": 26,
             "enableMinifyInReleaseBuilds": true,
-            "extraProguardRules": "# Native code looked up by name from JS, the manifest or other libraries.\n-keep class expo.modules.devicesignals.** { *; }\n-keep class com.reactnativeandroidwidget.** { *; }\n-keep class dev.matinzd.healthconnect.** { *; }\n-keep class androidx.health.connect.client.** { *; }\n-keep class expo.modules.iap.** { *; }\n-keep class dev.hyo.openiap.** { *; }\n-keep class com.android.billingclient.** { *; }\n-keep class org.maplibre.** { *; }\n-dontwarn org.maplibre.**"
+            "extraProguardRules": "# Native code looked up by name from JS, the manifest or other libraries.\n-keep class expo.modules.devicesignals.** { *; }\n-keep class com.reactnativeandroidwidget.** { *; }\n-keep class dev.matinzd.healthconnect.** { *; }\n-keep class androidx.health.connect.client.** { *; }\n-keep class expo.modules.iap.** { *; }\n-keep class dev.hyo.openiap.** { *; }\n-keep class com.android.billingclient.** { *; }\n-keep class org.maplibre.** { *; }\n-dontwarn org.maplibre.**\n-keep class com.android.installreferrer.** { *; }"
           }
         }
       ],

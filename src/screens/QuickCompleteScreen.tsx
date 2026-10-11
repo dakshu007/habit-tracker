@@ -20,7 +20,7 @@ import { t } from '@/i18n';
  * Once completed it celebrates briefly and sends you back to the home screen.
  */
 export function QuickCompleteScreen({ navigation, route }: RootScreenProps<'QuickComplete'>) {
-  useRequireUnlock();
+  useRequireUnlock(route.params.id);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const m = useMotion();

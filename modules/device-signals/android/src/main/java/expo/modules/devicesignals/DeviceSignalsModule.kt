@@ -14,6 +14,8 @@ import android.os.Process
 import android.provider.AlarmClock
 import android.provider.Settings
 import android.speech.RecognizerIntent
+import com.android.installreferrer.api.InstallReferrerClient
+import com.android.installreferrer.api.InstallReferrerStateListener
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -109,6 +111,37 @@ class DeviceSignalsModule : Module() {
 
     Function("showAlarms") {
       launch(Intent(AlarmClock.ACTION_SHOW_ALARMS))
+    }
+
+    // Stable per-device id for this app (ANDROID_ID, scoped to our signing key).
+    // Only used, hashed on the server, so one phone can't count as many invited friends.
+    Function("getDeviceId") {
+      val ctx = appContext.reactContext ?: return@Function null
+      Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ANDROID_ID)
+    }
+
+    // The referrer string from the Play Store link this install came from ("" if none).
+    AsyncFunction("getInstallReferrer") { promise: Promise ->
+      val ctx = appContext.reactContext
+      if (ctx == null) {
+        promise.resolve("")
+        return@AsyncFunction
+      }
+      val client = InstallReferrerClient.newBuilder(ctx).build()
+      try {
+        client.startConnection(object : InstallReferrerStateListener {
+          override fun onInstallReferrerSetupFinished(code: Int) {
+            val value = if (code == InstallReferrerClient.InstallReferrerResponse.OK) {
+              try { client.installReferrer.installReferrer ?: "" } catch (e: Exception) { "" }
+            } else ""
+            try { client.endConnection() } catch (_: Exception) {}
+            promise.resolve(value)
+          }
+          override fun onInstallReferrerServiceDisconnected() {}
+        })
+      } catch (e: Exception) {
+        promise.resolve("")
+      }
     }
 
     // Launcher icon variants (activity-aliases from plugins/with-alternate-icons).

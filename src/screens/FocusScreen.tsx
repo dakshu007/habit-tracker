@@ -50,7 +50,7 @@ function mmss(ms: number) {
  * notification mark the end, and the minutes are logged to the habit.
  */
 export function FocusScreen({ navigation, route }: RootScreenProps<'Focus'>) {
-  useRequireUnlock();
+  useRequireUnlock(route.params.habitId);
   useKeepAwake();
   const insets = useSafeAreaInsets();
   const habit = useHabit(route.params.habitId);

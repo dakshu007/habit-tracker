@@ -19,6 +19,9 @@ interface DeviceSignalsModule {
   /** days: 0 = Sunday … 6 = Saturday; empty = one-time. */
   setAlarm(hour: number, minute: number, message: string, days: number[], skipUi: boolean): boolean;
   showAlarms(): boolean;
+  getDeviceId(): string | null;
+  /** Referrer string of the Play Store link this install came from, '' if none. */
+  getInstallReferrer(): Promise<string>;
 }
 
 export type AppIconId = 'sage' | 'ink' | 'midnight' | 'sand';

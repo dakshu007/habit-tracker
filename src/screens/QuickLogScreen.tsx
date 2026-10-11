@@ -17,14 +17,13 @@ import { fmtNumber, qty } from '@/utils/format';
 import { haptic } from '@/utils/haptics';
 import { t } from '@/i18n';
 import type { RootScreenProps } from '@/navigation/types';
-import { useRequireUnlock } from '@/navigation/useRequireUnlock';
+import { canLogHabit } from '@/store/useLicense';
 
 /**
  * Quick log sheet — opened from the Quick Settings tile (habittracker://quick-log).
  * + adds one step; tapping the check opens the real slide-to-complete.
  */
 export function QuickLogScreen({ navigation }: RootScreenProps<'QuickLog'>) {
-  useRequireUnlock();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const m = useMotion();
@@ -32,7 +31,8 @@ export function QuickLogScreen({ navigation }: RootScreenProps<'QuickLog'>) {
   const logs = useHabitStore((s) => s.logs);
   const today = useHabitStore((s) => s.today);
   const addValue = useHabitStore((s) => s.addValue);
-  const due = dueOn(habits, today);
+  // After the trial the free plan logs its first 5 habits; the rest need Pro.
+  const due = dueOn(habits, today).filter((h) => canLogHabit(habits, h.id));
 
   const close = () => {
     if (navigation.canGoBack()) navigation.goBack();

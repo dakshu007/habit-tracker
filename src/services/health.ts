@@ -12,6 +12,7 @@ import {
 
 import type { Habit, HealthSource } from '@/data/types';
 import { useHabitStore } from '@/store/useHabitStore';
+import { isUnlocked } from '@/store/useLicense';
 import { addDays, dayKey, fromKey } from '@/utils/date';
 import { t } from '@/i18n';
 
@@ -172,7 +173,8 @@ let syncing = false;
 
 /** Pull the last `days` days for every synced habit into the log. */
 export async function syncHealth(days = 7): Promise<number> {
-  if (syncing || Platform.OS !== 'android') return 0;
+  // Auto-tracking is a Pro feature (the trial includes it).
+  if (syncing || Platform.OS !== 'android' || !isUnlocked()) return 0;
   const habits = useHabitStore.getState().habits.filter((h): h is Habit & { sync: HealthSource } => !!h.sync && !h.archived);
   if (!habits.length) return 0;
   if ((await healthStatus()) !== 'ready') return 0;

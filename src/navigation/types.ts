@@ -20,6 +20,7 @@ export type RootStackParamList = {
   Runs: undefined;
   VoiceLog: undefined;
   Paywall: undefined;
+  Coach: undefined;
   YearReview: { year?: number } | undefined;
   RunDetail: { id: string; fresh?: boolean };
 };

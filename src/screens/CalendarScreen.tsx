@@ -14,7 +14,7 @@ import { useHabitStore } from '@/store/useHabitStore';
 import { useTabs } from '@/navigation/MainTabs';
 import { useNavigation } from '@react-navigation/native';
 import type { RootNav } from '@/navigation/types';
-import { isUnlocked } from '@/store/useLicense';
+import { canLogHabit } from '@/store/useLicense';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, spacing } from '@/theme/tokens';
 import { dayCompletion, dueOn, isRestDay, isScheduledOn, valueOn, weeklyHabits } from '@/logic/habits';
@@ -269,7 +269,7 @@ function DaySheet({ day }: { day: string }) {
                 accessibilityLabel={done ? t('{habit} done', { habit: h.title }) : t('Complete {habit}', { habit: h.title })}
                 onPress={() => {
                   if (done) return; // completions are final
-                  if (!isUnlocked()) {
+                  if (!canLogHabit(useHabitStore.getState().habits, h.id)) {
                     overlay.close();
                     return navigation.navigate('Paywall');
                   }

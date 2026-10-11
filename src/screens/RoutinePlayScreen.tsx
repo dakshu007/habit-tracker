@@ -18,11 +18,9 @@ import { spacing } from '@/theme/tokens';
 import { haptic } from '@/utils/haptics';
 import { t } from '@/i18n';
 import type { RootScreenProps } from '@/navigation/types';
-import { useRequireUnlock } from '@/navigation/useRequireUnlock';
 
 /** Plays a routine: one habit card at a time; sliding advances to the next. */
 export function RoutinePlayScreen({ navigation, route }: RootScreenProps<'RoutinePlay'>) {
-  useRequireUnlock();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const m = useMotion();

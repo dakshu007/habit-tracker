@@ -39,6 +39,26 @@ The code lives in `src/store/useLicense.ts` (`ACCESS_CODES`). Change it there if
 **No**
 
 ## Data safety
+> Two sets of answers. Use **"Offline build"** while `src/config/backend.ts` is empty (invites and the coach are off).
+> Switch to **"With invites and the AI coach"** in Play Console **before** you publish the build that fills in the backend config.
+
+### With invites and the AI coach
+**Does your app collect or share any of the required user data types?** → **Yes**
+- **Is all of the user data collected by your app encrypted in transit?** → Yes
+- **Do you provide a way for users to request that their data is deleted?** → Yes (email support@mykavo.app; erasing the app's data also drops the anonymous ID)
+
+Data types to tick:
+| Category → type | Collected | Shared | Optional? | Purpose |
+|---|---|---|---|---|
+| **App info and performance → Other app performance data**: none | | | | |
+| **Device or other IDs → Device or other IDs** (anonymous user ID, hashed device ID) | Yes | No | Required | App functionality (invites), Fraud prevention |
+| **App activity → Other user-generated content** (AI coach questions) | Yes, processed ephemerally | Yes, with Anthropic as a service provider only (Google does not count service providers as sharing, so answer **No**) | Optional | App functionality |
+| **App activity → Other actions** (days the app was opened, for invites) | Yes | No | Optional | App functionality |
+| **Health and fitness → Fitness info** (habit summary sent with an AI question: habit names, streaks, completion) | Yes, processed ephemerally | No | Optional | App functionality |
+
+Everything else stays as in the offline answers below (location, Health Connect raw data, photos, voice and purchases stay on the phone).
+
+### Offline build
 **Does your app collect or share any of the required user data types?** → **No**
 
 Why this is correct (Google counts data as "collected" only when it leaves the device):

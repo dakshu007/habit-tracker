@@ -2,6 +2,7 @@ import { AppState, Platform } from 'react-native';
 
 import { DeviceSignals } from '../../modules/device-signals';
 import { useHabitStore } from '@/store/useHabitStore';
+import { isUnlocked } from '@/store/useLicense';
 import { detectSleep, LOOKBACK_MS, sleepValue, sleepWindow, type SleepResult } from '@/logic/sleep';
 import { addDays, dayKey, fromKey } from '@/utils/date';
 
@@ -30,7 +31,8 @@ export async function readSleep(bed: number, wake: number, key: string): Promise
 let syncing = false;
 
 export async function syncPhoneSleep(days = 7): Promise<number> {
-  if (syncing || !phoneSleepSupported() || !hasUsageAccess()) return 0;
+  // Sleep from phone use is a Pro feature (the trial includes it).
+  if (syncing || !isUnlocked() || !phoneSleepSupported() || !hasUsageAccess()) return 0;
   const habits = useHabitStore.getState().habits.filter((h) => h.phoneSleep && !h.archived);
   if (!habits.length) return 0;
   syncing = true;

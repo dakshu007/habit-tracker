@@ -1,10 +1,10 @@
-# Privacy Policy — Habit Tracker
+# Privacy Policy: Habit Tracker
 
-_Last updated: 10 October 2026_
+_Last updated: 11 October 2026_
 
 ## The short version
 
-Habit Tracker works offline. Your habits, history, notes, moods and profile photo are stored only on your phone. We don’t have servers that receive your data, we don’t sell data, and there are no ads or third-party trackers.
+Habit Tracker works offline. Your habits, history, notes, moods and profile photo are stored only on your phone. Two optional features use our small server: friend invites and the AI coach (both explained below). We don’t sell data, and there are no ads or third-party trackers.
 
 ## What the app stores on your device
 
@@ -25,6 +25,14 @@ If you turn on "Sleep from phone use" for a habit, the app reads only the times 
 ## Voice logging
 
 Voice logging opens your phone's own speech recognizer (usually Google voice typing). That service turns your words into text under its own privacy policy; Habit Tracker never records audio and only receives the text, which is used once to find the habit and amount and is not kept.
+
+## Invites and your anonymous ID
+
+To run invites, the app creates an anonymous ID on our server (Supabase, hosted in India) the first time it opens. No name, email or phone number is attached. The server keeps your invite code, who invited you (if anyone), the days an invited install was opened (to check it was really used), a one-way hash of your device ID (so one phone can't count as many friends), and any Pro time you earned from invites. When you install from a friend's link, Google Play passes their invite code to the app.
+
+## AI coach
+
+The AI coach is optional and for people aged 18 and over. When you ask it something, the app sends your question, the recent chat and a short summary of your habits (habit names, goals, schedules, streaks, the last 14 days of completion and average mood) to our server, which forwards it to Anthropic (Claude) to write the reply. Your chat history is kept only on your phone. Our server stores only how many replies you used, not what you asked. Anthropic processes the request under its commercial terms and does not use it to train its models. If you report a reply, that reply and your reason are stored so we can review it. Don't share sensitive health details in the chat.
 
 ## Reports
 

@@ -17,6 +17,7 @@ import { QuickLogScreen } from '@/screens/QuickLogScreen';
 import { RunScreen } from '@/screens/RunScreen';
 import { VoiceLogScreen } from '@/screens/VoiceLogScreen';
 import { PaywallScreen } from '@/screens/PaywallScreen';
+import { CoachScreen } from '@/screens/CoachScreen';
 import { YearReviewScreen } from '@/screens/YearReviewScreen';
 import { RunDetailScreen, RunsScreen } from '@/screens/RunsScreen';
 import { useHabitStore } from '@/store/useHabitStore';
@@ -49,6 +50,7 @@ export function RootNavigator() {
           <Stack.Screen name="Runs" component={RunsScreen} />
           <Stack.Screen name="YearReview" component={YearReviewScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="Paywall" component={PaywallScreen} options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="Coach" component={CoachScreen} options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="RunDetail" component={RunDetailScreen} />
           <Stack.Screen
             name="QuickLog"

@@ -18,6 +18,7 @@ import { DAY_NAMES, MONTH_LABELS } from '@/utils/date';
 import { pct } from '@/utils/format';
 import { t } from '@/i18n';
 import type { RootScreenProps } from '@/navigation/types';
+import { useRequireUnlock } from '@/navigation/useRequireUnlock';
 
 const SKY = ['#7EC2F0', '#3F95DA', '#056EBE'] as const;
 const MOOD_COLORS = ['#8E9BF5', '#B9BCC6', '#3FC1A5', '#F5A623'];
@@ -33,6 +34,7 @@ function heat(f: number | null | undefined, dark: boolean): string {
 
 /** The year, story-style: totals, a 365-day heatmap, top habit, best month and day. */
 export function YearReviewScreen({ navigation, route }: RootScreenProps<'YearReview'>) {
+  useRequireUnlock();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();

@@ -18,7 +18,7 @@ import { requestPinWidget } from 'react-native-android-widget';
 import { CARD_WIDGET, LIST_WIDGET } from '@/widget/TodayWidget';
 import { MINI_WIDGET, SLEEP_WIDGET, STREAK_WIDGET } from '@/widget/MoreWidgets';
 import { getProfileStyle } from '@/data/profileStyles';
-import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Users } from '@/components/ui/lucide';
+import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Sparkles, Users } from '@/components/ui/lucide';
 import { ReportSheet } from '@/components/profile/ReportSheet';
 import { AppIconPicker } from '@/components/profile/AppIconPicker';
 import { ProCard } from '@/components/profile/ProCard';
@@ -29,6 +29,9 @@ import { BuddySheet } from '@/components/profile/BuddySheet';
 import { LANGUAGES, t } from '@/i18n';
 import { haptic } from '@/utils/haptics';
 import type { RootNav } from '@/navigation/types';
+import { isUnlocked } from '@/store/useLicense';
+import { ReferralCard } from '@/components/profile/ReferralCard';
+import { backendEnabled } from '@/config/backend';
 
 const toast = (msg: string) => ToastAndroid.show(msg, ToastAndroid.SHORT);
 
@@ -226,15 +229,27 @@ export function ProfileScreen() {
       </Card>
 
       <SectionTitle>{t('Friends')}</SectionTitle>
+      {backendEnabled() && <ReferralCard />}
       <Card style={{ paddingVertical: 4 }}>
-        <Row
-          icon={<Users size={19} color="#F5A623" strokeWidth={2} />}
-          iconBg="#F5A623"
-          title={t('Invite friends')}
-          subtitle={t('Send the app, or a challenge code to do together')}
-          onPress={() => inviteFriends().catch(() => {})}
-          right={<ChevronRight size={18} color={theme.textTertiary} />}
-        />
+        {backendEnabled() ? (
+          <Row
+            icon={<Sparkles size={19} color="#7E6CF0" strokeWidth={2} />}
+            iconBg="#7E6CF0"
+            title={t('Your AI coach')}
+            subtitle={t('Ask anything about your habits')}
+            onPress={() => navigation.navigate('Coach')}
+            right={<ChevronRight size={18} color={theme.textTertiary} />}
+          />
+        ) : (
+          <Row
+            icon={<Users size={19} color="#F5A623" strokeWidth={2} />}
+            iconBg="#F5A623"
+            title={t('Invite friends')}
+            subtitle={t('Send the app, or a challenge code to do together')}
+            onPress={() => inviteFriends().catch(() => {})}
+            right={<ChevronRight size={18} color={theme.textTertiary} />}
+          />
+        )}
         <Row
           last
           icon={<HeartHandshake size={19} color="#25A55F" strokeWidth={2} />}
@@ -261,7 +276,7 @@ export function ProfileScreen() {
           iconBg="#056EBE"
           title={t('Monthly report')}
           subtitle={t('PDF summary or CSV spreadsheet')}
-          onPress={() => overlay.open(<ReportSheet />)}
+          onPress={() => (isUnlocked() ? overlay.open(<ReportSheet />) : navigation.navigate('Paywall'))}
           right={<ChevronRight size={18} color={theme.textTertiary} />}
         />
         <Row

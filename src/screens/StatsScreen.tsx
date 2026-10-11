@@ -35,10 +35,14 @@ import { t } from '@/i18n';
 import type { RootNav } from '@/navigation/types';
 import { getProfileStyle } from '@/data/profileStyles';
 import { Insights } from '@/components/stats/Insights';
+import { useUnlocked } from '@/store/useLicense';
+import { ProLock } from '@/components/ui/ProLock';
+import { CoachCard } from '@/components/coach/CoachCard';
 
 export function StatsScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<RootNav>();
+  const unlocked = useUnlocked();
   const habits = useHabitStore((s) => s.habits);
   const logs = useHabitStore((s) => s.logs);
   const cardStyle = getProfileStyle(useHabitStore((s) => s.profile.cardStyle));
@@ -131,13 +135,15 @@ export function StatsScreen() {
         </LinearGradient>
       </Card>
 
+      <CoachCard />
+
       {/* Quick entries */}
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <EntryCard Icon={Trophy} color="#F5A623" title={t('Challenges')} sub={t('7 · 21 · 30 days')} onPress={() => navigation.navigate('Challenges')} />
         <EntryCard Icon={CalendarCheck} color="#7E6CF0" title={t('Weekly review')} sub={t('Your week, story-style')} onPress={() => navigation.navigate('Review')} />
       </View>
 
-      <PressableScale onPress={() => navigation.navigate('YearReview')} scaleTo={0.98}>
+      <PressableScale onPress={() => navigation.navigate(unlocked ? 'YearReview' : 'Paywall')} scaleTo={0.98}>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: hexToRgba('#056EBE', 0.15), alignItems: 'center', justifyContent: 'center' }}>
             <Sparkles size={21} color="#3F95DA" strokeWidth={2} />
@@ -151,7 +157,7 @@ export function StatsScreen() {
         </Card>
       </PressableScale>
 
-      <Insights />
+      {unlocked ? <Insights /> : <ProLock title={t('Insights')} body={t('See your best days and patterns, and what helps you most.')} />}
       <MoodInsights />
       <FreezeCard />
 

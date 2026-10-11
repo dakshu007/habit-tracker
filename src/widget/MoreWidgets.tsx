@@ -8,7 +8,7 @@ import { fonts } from '@/theme/tokens';
 import { shiftKey, DAY_LETTERS, fromKey } from '@/utils/date';
 import { fmtNumber } from '@/utils/format';
 import { t } from '@/i18n/core';
-import { AddPill, ArrowButton, CheckButton, DARK, LIGHT, rgba, SUCCESS, type Palette, type TodayWidgetData } from './TodayWidget';
+import { AddPill, ArrowButton, CheckButton, DARK, isLocked, LIGHT, ProWidget, rgba, SUCCESS, type Palette, type TodayWidgetData } from './TodayWidget';
 
 /** Widget names — must match app.json → react-native-android-widget → widgets[].name. */
 export const STREAK_WIDGET = 'StreakWidget';
@@ -26,6 +26,7 @@ const frame = (p: Palette) => ({ width: 'match_parent' as const, height: 'match_
 /* ------------------------------------------------------------------ */
 
 function StreakBody({ data, p }: { data: TodayWidgetData; p: Palette }) {
+  if (data.pro === false) return <ProWidget title={t('Streak')} p={p} />;
   const best = bestCurrentStreak(data.habits, data.logs, data.day, data.weekStart);
   const n = best?.streak.current ?? 0;
   const days = Array.from({ length: 7 }, (_, i) => shiftKey(data.day, i - 6));
@@ -80,6 +81,7 @@ export function sleepHabit(habits: Habit[]): Habit | undefined {
 }
 
 function SleepBody({ data, width, p }: { data: TodayWidgetData; width: number; p: Palette }) {
+  if (data.pro === false) return <ProWidget title={t('Sleep')} p={p} />;
   const purple = '#8E7CF5';
   const h = sleepHabit(data.habits);
   if (!h) {
@@ -142,6 +144,7 @@ export function renderSleepWidget(data: TodayWidgetData, width: number) {
 /* ------------------------------------------------------------------ */
 
 function MiniBody({ data, habitId, width, height, p }: { data: TodayWidgetData; habitId: string | null; width: number; height: number; p: Palette }) {
+  if (data.pro === false) return <ProWidget title={t('Mini habit')} p={p} />;
   const due = dueOn(data.habits, data.day);
   if (!due.length) {
     return (
@@ -170,8 +173,8 @@ function MiniBody({ data, habitId, width, height, p }: { data: TodayWidgetData; 
 
   const controls = (
     <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', flexGap: 6 }}>
-      {!done && h.step < h.goalValue ? <AddPill h={h} size={btn} locked={data.locked} /> : null}
-      <CheckButton h={h} done={done} confirm={confirm} size={btn} p={p} locked={data.locked} />
+      {!done && h.step < h.goalValue ? <AddPill h={h} size={btn} locked={isLocked(data, h.id)} /> : null}
+      <CheckButton h={h} done={done} confirm={confirm} size={btn} p={p} locked={isLocked(data, h.id)} />
     </FlexWidget>
   );
 

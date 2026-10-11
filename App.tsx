@@ -28,6 +28,7 @@ import { startHealthSync } from '@/services/health';
 import { useLiveRun } from '@/store/useRunStore';
 import { startPhoneSleepSync } from '@/services/phoneSleep';
 import { startBilling } from '@/services/billing';
+import { startBackend } from '@/services/backend';
 import { offerCrashReport } from '@/services/crashLog';
 import { useLicense } from '@/store/useLicense';
 import { setLang, useLang } from '@/i18n';
@@ -58,6 +59,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       VoiceLog: 'voice',
       Challenges: 'join/:code',
       Paywall: 'paywall',
+      Coach: 'coach',
     },
   },
 };
@@ -140,6 +142,8 @@ function App() {
     useHabitStore.getState().applyFreezes();
     useLiveRun.getState().load(); // a run left recording shows on Home
     setTimeout(offerCrashReport, 1200);
+    // Invites and AI coach backend (no-op until src/config/backend.ts is filled in).
+    setTimeout(() => startBackend().catch(() => {}), 1500);
     return () => {
       stopNotifications();
       stopWidget();

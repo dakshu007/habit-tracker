@@ -6,21 +6,24 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Txt } from '@/components/ui/Txt';
 import { Button, GlassButton, PressableScale } from '@/components/ui/Glass';
 import { CheckIcon, CloseIcon } from '@/components/ui/icons';
-import { FileText, Footprints, Gift, Mic, MoonStar, Sparkles, Trophy, type LucideIcon } from '@/components/ui/lucide';
+import { Activity, FileText, Footprints, Gift, Mic, MoonStar, Sparkles, Trophy, type LucideIcon } from '@/components/ui/lucide';
 import { HabitArt } from '@/components/art/HabitArt';
 import { useTheme } from '@/theme/ThemeContext';
 import { hexToRgba } from '@/theme/color';
-import { PAYWALL_MODE, TRIAL_DAYS, trialDaysLeft, useLicense, usePrices, usePro, useUnlocked, type Plan } from '@/store/useLicense';
+import { FREE_HABITS, isFounderTime, PAYWALL_MODE, REGULAR_PRICES, trialDaysLeft, useLicense, usePrices, usePro, useUnlocked, type Plan } from '@/store/useLicense';
 import { buy, manageSubscription, refresh, restorePurchases } from '@/services/billing';
 import { haptic } from '@/utils/haptics';
 import { t } from '@/i18n';
 import type { RootScreenProps } from '@/navigation/types';
+import { backendEnabled } from '@/config/backend';
 
 const SKY = ['#7EC2F0', '#3F95DA', '#056EBE'] as const;
 const GOLD = '#F5A623';
 
 const PERKS: { Icon: LucideIcon; title: string; body: string }[] = [
-  { Icon: Sparkles, title: 'Every habit, every illustration', body: 'Unlimited habits, themes, widgets and streak freezes.' },
+  { Icon: Sparkles, title: 'Unlimited habits', body: 'The free plan keeps 5. Pro has no limit, plus every widget.' },
+  { Icon: Activity, title: 'Auto-tracking', body: 'Steps, workouts, floors and sleep fill in by themselves.' },
+  { Icon: Sparkles, title: 'Your AI coach', body: 'Ask anything about your habits. It knows your streaks and history.' },
   { Icon: Footprints, title: 'GPS runs with a live map', body: 'Distance, pace and splits, logged to your habit.' },
   { Icon: MoonStar, title: 'Sleep from phone use', body: 'No watch needed.' },
   { Icon: Mic, title: 'Voice logging', body: '“2 glasses of water”. Done.' },
@@ -43,7 +46,7 @@ function like(display: string, value: number): string {
 
 /**
  * Habit Tracker Pro: monthly, yearly (pre-selected, best value) or lifetime.
- * Shown when the free week ends and from Profile. Closing it keeps the app
+ * Shown when the trial ends, at free-plan limits and from Profile. Closing it keeps the app
  * open in view-only mode.
  */
 export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
@@ -74,16 +77,25 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
   const perMonth = yearly ? like(prices.yearly, yearly / 12) : null;
   const save = monthly && yearly ? Math.round((1 - yearly / (monthly * 12)) * 100) : null;
 
-  const PLANS: { id: Plan; title: string; price: string; caption: string; badge?: string }[] = [
+  // Launch: founder prices, with the regular price struck through.
+  const founder = isFounderTime();
+  const PLANS: { id: Plan; title: string; price: string; was?: string; caption: string; badge?: string }[] = [
     { id: 'monthly', title: t('Monthly'), price: t('{price} / month', { price: prices.monthly }), caption: t('Cancel anytime') },
     {
       id: 'yearly',
       title: t('Yearly'),
       price: t('{price} / year', { price: prices.yearly }),
-      caption: perMonth ? t('Just {price}/month', { price: perMonth }) : t('Billed once a year'),
-      badge: save && save > 0 ? t('Save {pct}%', { pct: save }) : t('Best value'),
+      was: founder ? REGULAR_PRICES.yearly : undefined,
+      caption: founder ? t('Founder price, kept as long as you stay subscribed') : perMonth ? t('Just {price}/month', { price: perMonth }) : t('Billed once a year'),
+      badge: founder ? t('Founder price') : save && save > 0 ? t('Save {pct}%', { pct: save }) : t('Best value'),
     },
-    { id: 'lifetime', title: t('Lifetime'), price: t('{price} once', { price: prices.lifetime }), caption: t('Pay once, yours forever') },
+    {
+      id: 'lifetime',
+      title: t('Lifetime'),
+      price: t('{price} once', { price: prices.lifetime }),
+      was: founder ? REGULAR_PRICES.lifetime : undefined,
+      caption: founder ? t('Founder price, for a limited time') : t('Pay once, yours forever'),
+    },
   ];
 
   const purchase = async () => {
@@ -131,8 +143,8 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
       : codeUntil && codeUntil > Date.now()
         ? t('Pro unlocked with a code')
         : left > 0
-        ? t('{n} days left in your free week', { n: left })
-        : t('Your free week has ended');
+        ? t('{n} days left in your free trial', { n: left })
+        : t('You’re on the free plan: {n} habits', { n: FREE_HABITS });
 
   const art = Math.min(96, (width - 80) / 3);
   const cardBg = isDark ? theme.cardElevated : '#FFFFFF';
@@ -183,7 +195,7 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
             {pro ? t('You’re all set') : t('Habit Tracker Pro')}
           </Txt>
           <Txt variant="body" color="rgba(255,255,255,0.9)" style={{ textAlign: 'center' }}>
-            {pro ? t('Every feature is unlocked.') : t('Keep every habit going. Try it free for {n} days.', { n: TRIAL_DAYS })}
+            {pro ? t('Every feature is unlocked.') : t('Free forever for {n} habits. Pro unlocks everything.', { n: FREE_HABITS })}
           </Txt>
         </View>
 
@@ -235,7 +247,14 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
                         {p.caption}
                       </Txt>
                     </View>
-                    <Txt variant="h3">{p.price}</Txt>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      {p.was ? (
+                        <Txt variant="small" color="tertiary" style={{ textDecorationLine: 'line-through' }}>
+                          {p.was}
+                        </Txt>
+                      ) : null}
+                      <Txt variant="h3">{p.price}</Txt>
+                    </View>
                   </View>
                 </PressableScale>
               );
@@ -302,7 +321,7 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
             )}
             {!unlocked && (
               <Txt variant="small" color="tertiary" style={{ textAlign: 'center' }}>
-                {t('You can still open the app and look at your history.')}
+                {t('Your first {n} habits stay free forever, and your history is always yours.', { n: FREE_HABITS })}
               </Txt>
             )}
             {PAYWALL_MODE === 'preview' && (
@@ -317,7 +336,7 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
           <Txt variant="micro" color="secondary">
             {t('Everything in Pro')}
           </Txt>
-          {PERKS.map(({ Icon, title, body }) => (
+          {PERKS.filter((p) => backendEnabled() || p.title !== 'Your AI coach').map(({ Icon, title, body }) => (
             <View key={title} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: hexToRgba(SKY[2], isDark ? 0.25 : 0.1) }}>
                 <Icon size={19} color={isDark ? SKY[0] : SKY[2]} strokeWidth={2} />

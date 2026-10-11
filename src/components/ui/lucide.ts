@@ -67,3 +67,5 @@ export type { LucideIcon } from 'lucide-react-native';
 export { default as AlarmClock } from 'lucide-react-native/icons/alarm-clock';
 export { default as AlarmClockPlus } from 'lucide-react-native/icons/alarm-clock-plus';
 export { default as Droplet } from 'lucide-react-native/icons/droplet';
+export { default as ArrowUp } from 'lucide-react-native/icons/arrow-up';
+export { default as MessageCircleHeart } from 'lucide-react-native/icons/message-circle-heart';

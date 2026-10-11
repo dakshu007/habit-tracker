@@ -24,8 +24,10 @@ export interface TodayWidgetData {
   weekStart: 0 | 1;
   /** Habit waiting for its second "complete" tap (widgets can't swipe, so they confirm instead). */
   confirmId?: string | null;
-  /** Free week over without Pro: taps open the paywall instead of logging. */
-  locked?: boolean;
+  /** Pro (or the trial): every widget and habit works. */
+  pro?: boolean;
+  /** Habits the free plan can't log: their taps open the paywall instead. */
+  lockedIds?: string[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -72,7 +74,7 @@ export const DARK: Palette = {
 export const SUCCESS = '#34C759';
 const SUCCESS_TEXT = '#1E9E47';
 export const rgba = (hex: string, a: number) => hexToRgba(hex, a) as ColorProp;
-/** Opens the paywall (used for taps once the free week is over). */
+/** Opens the paywall (used for taps for what the free plan can't do). */
 export const PAYWALL_URI = 'habittracker://paywall';
 
 export function knobSvg(size: number, done: boolean, p: Palette): string {
@@ -95,6 +97,26 @@ function ringSvg(frac: number, label: string, color: string, track: string): str
   const c = 2 * Math.PI * r;
   const dash = (Math.max(0, Math.min(1, frac)) * c).toFixed(2);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="${r}" fill="none" stroke="${track}" stroke-width="5"/><circle cx="24" cy="24" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${dash} ${c.toFixed(2)}" transform="rotate(-90 24 24)"/><text x="24" y="28.5" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="12.5" fill="${color}">${label}</text></svg>`;
+}
+
+export const isLocked = (data: TodayWidgetData, id: string) => !!data.lockedIds?.includes(id);
+
+/** On the free plan, Pro widgets show this instead (the Today list stays free). */
+export function ProWidget({ title, p }: { title: string; p: Palette }) {
+  return (
+    <FlexWidget
+      clickAction="OPEN_URI"
+      clickActionData={{ uri: PAYWALL_URI }}
+      style={{ width: 'match_parent', height: 'match_parent', borderRadius: 28, backgroundColor: p.bg, padding: 18, justifyContent: 'center', alignItems: 'center', flexGap: 6 }}
+    >
+      <TextWidget text={title} maxLines={1} style={{ fontSize: 15, fontFamily: fonts.bold, color: p.title }} />
+      <TextWidget text={t('A Pro widget')} maxLines={1} style={{ fontSize: 12.5, fontFamily: fonts.medium, color: p.sub }} />
+      <TextWidget
+        text={t('Unlock')}
+        style={{ fontSize: 13, fontFamily: fonts.bold, color: '#FFFFFF', backgroundColor: '#056EBE', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 8, marginTop: 6 }}
+      />
+    </FlexWidget>
+  );
 }
 
 /** Click props for "complete this habit" (two taps), or the paywall when locked. */
@@ -207,6 +229,7 @@ function CompleteBar({ h, done, confirm, height, p, locked }: { h: Habit; done: 
 /* ------------------------------------------------------------------ */
 
 function CardBody({ data, habitId, width, height, p }: { data: TodayWidgetData; habitId: string | null; width: number; height: number; p: Palette }) {
+  if (data.pro === false) return <ProWidget title={t('Habit card')} p={p} />;
   const due = dueOn(data.habits, data.day);
   const pad = 12;
   const innerW = Math.max(120, width - pad * 2);
@@ -256,12 +279,12 @@ function CardBody({ data, habitId, width, height, p }: { data: TodayWidgetData; 
           <TextWidget text={h.title} maxLines={1} truncate="END" style={{ fontSize: 17, fontFamily: fonts.bold, color: p.title }} />
           <TextWidget text={`${fmtNumber(v)} / ${qty(h.goalValue, h.unit)}`} maxLines={1} style={{ fontSize: 12.5, fontFamily: fonts.semibold, color: c.accent as ColorProp }} />
         </FlexWidget>
-        {!done && h.step < h.goalValue ? <AddPill h={h} size={40} locked={data.locked} /> : null}
+        {!done && h.step < h.goalValue ? <AddPill h={h} size={40} locked={isLocked(data, h.id)} /> : null}
         {due.length > 1 ? <ArrowButton dir="left" id={h.id} size={40} p={p} /> : null}
         {due.length > 1 ? <ArrowButton dir="right" id={h.id} size={40} p={p} /> : null}
       </FlexWidget>
 
-      <CompleteBar h={h} done={done} confirm={data.confirmId === h.id} height={barH} p={p} locked={data.locked} />
+      <CompleteBar h={h} done={done} confirm={data.confirmId === h.id} height={barH} p={p} locked={isLocked(data, h.id)} />
     </FlexWidget>
   );
 }
@@ -316,7 +339,7 @@ function ListBody({ data, width, height, p }: { data: TodayWidgetData; width: nu
   const left = due.length - doneCount;
   const fits = due.length * (ROW_H + ROW_GAP) <= listH + ROW_GAP;
 
-  const rows = due.map((h, i) => <Row key={h.id} h={h} value={values[i]} p={p} confirm={data.confirmId === h.id} locked={data.locked} />);
+  const rows = due.map((h, i) => <Row key={h.id} h={h} value={values[i]} p={p} confirm={data.confirmId === h.id} locked={isLocked(data, h.id)} />);
 
   return (
     <FlexWidget style={{ width: 'match_parent', height: 'match_parent', flexDirection: 'column', padding: pad, borderRadius: 28, backgroundColor: p.bg }}>

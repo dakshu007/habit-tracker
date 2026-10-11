@@ -61,8 +61,8 @@ export function ProCard() {
       : owned
         ? t('Every feature is unlocked.')
         : trialLeft > 0
-          ? t('{n} days left in your free week', { n: trialLeft })
-          : t('Your free week has ended');
+          ? t('{n} days left in your free trial', { n: trialLeft })
+          : t('Free plan: 5 habits. Get Pro for everything.');
 
   const open = () => (subscription && !lifetime ? manageSubscription() : navigation.navigate('Paywall'));
 

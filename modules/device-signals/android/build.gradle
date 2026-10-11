@@ -16,3 +16,8 @@ android {
     abortOnError false
   }
 }
+
+dependencies {
+  // Play Install Referrer: reads the invite code from the Play Store link a friend installed from.
+  implementation 'com.android.installreferrer:installreferrer:2.2'
+}

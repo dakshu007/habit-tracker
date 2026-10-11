@@ -5,7 +5,7 @@ import { useHabitStore } from '@/store/useHabitStore';
 import { dueOn, isDoneOn } from '@/logic/habits';
 import { dayKey } from '@/utils/date';
 import { CARD_WIDGET, LIST_WIDGET, renderCardWidget, renderTodayWidget, type TodayWidgetData } from './TodayWidget';
-import { isUnlocked, useLicense } from '@/store/useLicense';
+import { freeHabitIds, isUnlocked, useLicense } from '@/store/useLicense';
 import { resolveLang, setLang } from '@/i18n/core';
 import { MINI_WIDGET, renderMiniWidget, renderSleepWidget, renderStreakWidget, SLEEP_WIDGET, STREAK_WIDGET } from './MoreWidgets';
 import { syncPhoneSleep } from '@/services/phoneSleep';
@@ -19,7 +19,10 @@ const CONFIRM_MS = 20_000;
 /** Current store state shaped for widgets (always "today", not the app's selected day). */
 export function widgetData(): TodayWidgetData {
   const s = useHabitStore.getState();
-  return { habits: s.habits, logs: s.logs, day: dayKey(), name: s.profile.name, weekStart: s.settings.weekStart, locked: !isUnlocked() };
+  const pro = isUnlocked();
+  const free = freeHabitIds(s.habits);
+  const lockedIds = pro ? [] : s.habits.filter((h) => !free.has(h.id)).map((h) => h.id);
+  return { habits: s.habits, logs: s.logs, day: dayKey(), name: s.profile.name, weekStart: s.settings.weekStart, pro, lockedIds };
 }
 
 /** widgetData plus the habit waiting for its confirming tap, if any. */

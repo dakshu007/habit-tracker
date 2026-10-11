@@ -30,9 +30,11 @@ import { t } from '@/i18n';
 import { AutoTrack } from '@/components/editor/AutoTrack';
 import { PhoneSleep } from '@/components/editor/PhoneSleep';
 import { connectHealth, healthStatus } from '@/services/health';
-import { isUnlocked as canLog } from '@/store/useLicense';
+import { canAddHabit } from '@/store/useLicense';
 import { isUnlocked, useUnlockedAchievements } from '@/logic/unlocks';
 import { showLocked } from '@/components/profile/ProfileParts';
+import { useUnlocked } from '@/store/useLicense';
+import { ProLock } from '@/components/ui/ProLock';
 
 type ScheduleKind = Schedule['kind'];
 
@@ -51,6 +53,12 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
   const currency = useHabitStore((s) => s.settings.currency);
   const unlocked = useUnlockedAchievements();
   const isNew = !existing;
+  const proOn = useUnlocked();
+
+  // Free plan after the trial: 5 habits. Show the paywall before the user fills in a 6th.
+  useEffect(() => {
+    if (isNew && !canAddHabit(useHabitStore.getState().habits)) navigation.replace('Paywall');
+  }, [isNew, navigation]);
   const [h, setH] = useState<Habit>(() => {
     if (existing) return existing;
     const t = templates.find((x) => x.key === route.params?.templateKey);
@@ -90,7 +98,7 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
       haptic.warning();
       return;
     }
-    if (isNew && !canLog()) return navigation.navigate('Paywall');
+    if (isNew && !canAddHabit(useHabitStore.getState().habits)) return navigation.navigate('Paywall');
     const final: Habit = { ...h, title: h.title.trim(), subtitle: h.subtitle.trim(), unit: h.unit.trim(), goalValue: goal };
     if (final.reminder.enabled) await ensurePermission();
     if (isNew) addHabit(final);
@@ -449,11 +457,17 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
           )}
         </Card>
 
-          <AutoTrack h={h} onChange={(sync, unit) => {
-            setH((cur) => ({ ...cur, sync, unit: unit ?? cur.unit }));
-            if (unit) setCustomUnit(!UNIT_SUGGESTIONS.includes(unit));
-          }} />
-          <PhoneSleep h={h} onChange={(phoneSleep) => setH((cur) => ({ ...cur, phoneSleep, sync: phoneSleep ? undefined : cur.sync }))} />
+          {proOn ? (
+            <>
+              <AutoTrack h={h} onChange={(sync, unit) => {
+                setH((cur) => ({ ...cur, sync, unit: unit ?? cur.unit }));
+                if (unit) setCustomUnit(!UNIT_SUGGESTIONS.includes(unit));
+              }} />
+              <PhoneSleep h={h} onChange={(phoneSleep) => setH((cur) => ({ ...cur, phoneSleep, sync: phoneSleep ? undefined : cur.sync }))} />
+            </>
+          ) : (
+            <ProLock title={t('Auto-tracking')} body={t('Fill this habit from steps, workouts and sleep automatically, with no typing.')} />
+          )}
           </>
         )}
 

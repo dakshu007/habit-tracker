@@ -7,13 +7,29 @@
 //
 // Deploy: Supabase → Edge Functions → Deploy a new function → name "coach" →
 // paste this file. Secrets: ANTHROPIC_API_KEY (required), HT_SERVICE_KEY
-// (only if SUPABASE_SERVICE_ROLE_KEY isn't available in your project).
+// (only if the service key isn't found automatically). It checks the user's
+// token itself, so the gateway's legacy "Verify JWT" setting can stay off.
 
 import Anthropic from "npm:@anthropic-ai/sdk@0.129.0";
 
 const MODEL = "claude-haiku-5-5";
 const URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("HT_SERVICE_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SERVICE_KEY = Deno.env.get("HT_SERVICE_KEY") ?? newSecretKey() ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+/** Projects on the new API keys expose them as JSON in SUPABASE_SECRET_KEYS. */
+function newSecretKey(): string | undefined {
+  const raw = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (!raw) return undefined;
+  try {
+    const v = JSON.parse(raw);
+    if (typeof v === "string") return v;
+    if (Array.isArray(v)) return v.find((x) => typeof x === "string") ?? v[0]?.api_key ?? v[0]?.key;
+    if (v && typeof v === "object") return v.default ?? (Object.values(v).find((x) => typeof x === "string") as string | undefined);
+  } catch {
+    if (raw.startsWith("sb_secret_")) return raw;
+  }
+  return undefined;
+}
 const anthropic = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY")! });
 
 type Plan = "subscription" | "lifetime" | "trial" | "free";

@@ -5,7 +5,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withSequence,
   withSpring,
   withTiming,
@@ -24,8 +23,6 @@ import type { TabName } from '@/navigation/types';
 
 const ROW_PAD = 5;
 const GAP = 8;
-const MOVE_SLOP = 6;
-const HOLD_MS = 140;
 
 interface GlassTabBarProps {
   tabs: TabName[];
@@ -39,8 +36,8 @@ interface GlassTabBarProps {
  * fill, top gloss, diagonal light streak, bright rim and an outer definition
  * edge.
  *
- * One gesture drives it: tap a tab, or hold and sweep — the glass lens lifts,
- * follows your finger with a tick per tab, and releasing picks the tab under it.
+ * Tap a tab, or slide along the bar: the glass lens lifts, follows your
+ * finger with a tick per tab, and releasing picks the tab under it.
  */
 export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
   const { isDark } = useTheme();
@@ -84,21 +81,31 @@ export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
     return Math.max(0, Math.min(count - 1, raw));
   };
 
-  const gesture = Gesture.Pan()
-    .minDistance(0)
+  // Taps and sweeps are separate gestures. A pan alone (minDistance 0) only
+  // activates after a move event, and many phones report none for a clean
+  // tap, so taps were dropped there (fine on 120 Hz Samsungs, broken on others).
+  const tap = Gesture.Tap()
     .enabled(slotW > 0)
-    .onBegin((e) => {
+    .maxDistance(24)
+    .maxDuration(800)
+    .onEnd((e, success) => {
+      if (!success) return;
+      const target = Math.round(toIndex(e.x));
+      idx.value = withSpring(target, m.ui);
+      hovered.value = target;
+      scheduleOnRN(select, target);
+    });
+
+  const sweep = Gesture.Pan()
+    .enabled(slotW > 0)
+    .minDistance(12)
+    .onStart((e) => {
       startX.value = e.x;
-      dragging.value = false;
-      lift.value = withDelay(HOLD_MS, withTiming(1, { duration: 160 }));
+      dragging.value = true;
+      lift.value = withTiming(1, { duration: 120 });
+      scheduleOnRN(pickUp);
     })
     .onUpdate((e) => {
-      if (!dragging.value && (Math.abs(e.x - startX.value) > MOVE_SLOP || lift.value > 0.5)) {
-        dragging.value = true;
-        lift.value = withTiming(1, { duration: 120 });
-        scheduleOnRN(pickUp);
-      }
-      if (!dragging.value) return;
       const f = toIndex(e.x);
       idx.value = f;
       const h = Math.round(f);
@@ -117,6 +124,9 @@ export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
       dragging.value = false;
       lift.value = withSpring(0, m.release);
     });
+
+  // Whichever is recognised first wins: a short touch is a tap, a slide is a sweep.
+  const gesture = Gesture.Race(sweep, tap);
 
   const lensStyle = useAnimatedStyle(() => {
     const s = 1 + lift.value * 0.16;

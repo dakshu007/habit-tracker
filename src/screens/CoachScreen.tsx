@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Keyboard, KeyboardAvoidingView, Pressable, TextInput, ToastAndroid, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown, LinearTransition } from 'react-native-reanimated';
+
 
 import { DeviceSignals } from '../../modules/device-signals';
 import { Txt } from '@/components/ui/Txt';
@@ -210,11 +210,11 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
 
   const greeting = (
     <View style={{ gap: 26, paddingTop: 10 }}>
-      <Animated.View entering={FadeInDown.duration(380)}>
-        <Txt variant="display" color={ink} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7} style={{ fontSize: 34, lineHeight: 40, letterSpacing: -1 }}>
+      <View>
+        <Txt variant="display" color={ink} numberOfLines={3} maxFontSizeMultiplier={1.1} style={{ fontSize: 34, lineHeight: 40, letterSpacing: -1 }}>
           {firstName ? t('Hi {name}, how can I help you?', { name: firstName }) : t('Hi, how can I help you?')}
         </Txt>
-      </Animated.View>
+      </View>
 
       {/* Stacked suggestion cards, like a hand of cards */}
       <View style={{ height: 330 }}>
@@ -223,9 +223,8 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
           const topic = TOPICS[idx];
           const isFront = depth === 0;
           return (
-            <Animated.View
+            <View
               key={topic.key}
-              layout={LinearTransition.springify().damping(18)}
               style={{
                 position: 'absolute',
                 left: depth * 14,
@@ -260,7 +259,7 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
                   </View>
                 </View>}
                 {isFront && (
-                  <Animated.View entering={FadeIn} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                     <View style={{ width: 150, height: 150, borderRadius: 75, overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: 4, borderColor: 'rgba(255,255,255,0.7)' }}>
                       <HabitArt artId={topic.art} mode="thumb" />
                     </View>
@@ -270,10 +269,10 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
                         {topic.key === 'insight' || unlocked ? t('Tap to ask') : t('Pro')}
                       </Txt>
                     </View>
-                  </Animated.View>
+                  </View>
                 )}
               </Pressable>
-            </Animated.View>
+            </View>
           );
         })}
       </View>
@@ -307,15 +306,15 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
         ListHeaderComponent={empty ? greeting : null}
         renderItem={({ item: m }) =>
           m.role === 'user' ? (
-            <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'flex-end' }}>
+            <View style={{ alignItems: 'flex-end' }}>
               <View style={{ maxWidth: '84%', paddingHorizontal: 16, paddingVertical: 11, borderRadius: 22, borderBottomRightRadius: 6, backgroundColor: isDark ? '#3A4A41' : INK }}>
                 <Txt variant="bodyRegular" color="#FFFFFF">
                   {m.text}
                 </Txt>
               </View>
-            </Animated.View>
+            </View>
           ) : (
-            <Animated.View entering={FadeIn.duration(260)} style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#2B3A32' : '#E3EEE6' }}>
                 <Bot size={16} color={ACCENT} strokeWidth={2.2} />
               </View>
@@ -334,7 +333,7 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
                   </View>
                 </PressableScale>
               </View>
-            </Animated.View>
+            </View>
           )
         }
         ListFooterComponent={

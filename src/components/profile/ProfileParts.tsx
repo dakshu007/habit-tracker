@@ -134,7 +134,7 @@ export function IdentityCard() {
             </View>
           </PressableScale>
           <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-            <Txt variant="title" color="white" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+            <Txt variant="title" color="white" numberOfLines={1} maxFontSizeMultiplier={1.1}>
               {profile.name || t('Add your name')}
             </Txt>
             {/* Wraps instead of running under the edit button on narrow or large-font phones. */}
@@ -332,7 +332,7 @@ export function AchievementsGrid() {
         {list.map((a) => (
           <PressableScale key={a.id} silent onPress={() => (haptic.light(), overlay.open(<BadgeSheet a={a} />))} style={{ width: '25%', alignItems: 'center', gap: 6 }}>
             <Badge a={a} size={58} />
-            <Txt variant="small" color={a.unlocked ? 'primary' : 'secondary'} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ fontSize: 11.5, width: '100%', paddingHorizontal: 2, textAlign: 'center' }}>
+            <Txt variant="small" color={a.unlocked ? 'primary' : 'secondary'} numberOfLines={1} maxFontSizeMultiplier={1.1} style={{ fontSize: 11.5, width: '100%', paddingHorizontal: 2, textAlign: 'center' }}>
               {t(a.title)}
             </Txt>
           </PressableScale>

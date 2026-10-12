@@ -1,5 +1,5 @@
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
-import { BackHandler, InteractionManager, View } from 'react-native';
+import { BackHandler, View } from 'react-native';
 import { BlurTargetView } from 'expo-blur';
 import Animated, { Easing, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
@@ -71,12 +71,14 @@ export function MainTabs() {
     setActive(t);
   }, []);
 
-  // Build the other tabs once Home has settled, so the first visit to each is instant too.
+  // Build the other tabs once Home has settled, one at a time, so the first
+  // visit to each is instant without slowing Home's first paint.
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
-      setTimeout(() => setMounted(new Set(TABS)), 800);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    TABS.slice(1).forEach((tab, i) => {
+      timers.push(setTimeout(() => setMounted((cur) => (cur.has(tab) ? cur : new Set(cur).add(tab))), 2500 + i * 700));
     });
-    return () => task.cancel();
+    return () => timers.forEach(clearTimeout);
   }, []);
 
   const api = useMemo(() => ({ active, visible, go }), [active, visible, go]);

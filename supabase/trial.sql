@@ -1,5 +1,5 @@
 -- Trial per phone: reinstalling the app can't restart the free trial.
--- Paste into Supabase → SQL Editor → New query → Run. Safe to run again.
+-- Paste into Supabase > SQL Editor > New query > Run. Safe to run again.
 -- (Also included at the end of schema.sql.)
 
 create table if not exists public.device_trials (

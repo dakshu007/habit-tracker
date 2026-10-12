@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { Txt } from '@/components/ui/Txt';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, radius } from '@/theme/tokens';
+import { useMotion } from '@/theme/motion';
 
 export interface SegmentOption<T extends string> {
   key: T;
@@ -18,7 +19,6 @@ interface SegmentedControlProps<T extends string> {
 }
 
 const PAD = 6;
-const SPRING = { damping: 18, stiffness: 210, mass: 0.7 } as const;
 
 /**
  * Surface-track segmented control (Now / Today / Week). The active segment is a
@@ -27,6 +27,7 @@ const SPRING = { damping: 18, stiffness: 210, mass: 0.7 } as const;
  */
 export function SegmentedControl<T extends string>({ options, value, onChange }: SegmentedControlProps<T>) {
   const { theme, isDark } = useTheme();
+  const SPRING = useMotion().ui;
   const inactiveColor = isDark ? '#B0B3B7' : palette.ink;
 
   const [trackW, setTrackW] = useState(0);

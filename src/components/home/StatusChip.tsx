@@ -2,45 +2,35 @@ import { View } from 'react-native';
 
 import { Txt } from '@/components/ui/Txt';
 import { palette, radius } from '@/theme/tokens';
-import type { TaskStatus } from '@/data/types';
 
-/**
- * Floating status chip (top-right of the task card). White pill with a soft
- * drop shadow, a status dot and label — green for both states per Figma, with
- * a filled dot when done.
- */
-export function StatusChip({ status }: { status: TaskStatus }) {
-  const done = status === 'done';
+export type ChipTone = 'done' | 'progress' | 'idle' | 'upcoming';
+
+const TONES: Record<ChipTone, { dot: string; text: string }> = {
+  done: { dot: palette.success, text: '#1E9E47' },
+  progress: { dot: '#FF9F0A', text: '#C77700' },
+  idle: { dot: '#B9B9C2', text: '#6B6B76' },
+  upcoming: { dot: '#7D8BFF', text: '#5563D8' },
+};
+
+/** Floating white status pill (top-right of the task card). */
+export function StatusChip({ tone, label }: { tone: ChipTone; label: string }) {
+  const c = TONES[tone];
   return (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
         gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 8,
+        paddingHorizontal: 11,
+        paddingVertical: 7,
         borderRadius: radius.statusChip,
-        backgroundColor: palette.white,
-        // drop-shadow-[0px_4px_2px_rgba(0,0,0,0.04)]
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 2,
-        elevation: 2,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        boxShadow: '0px 4px 10px rgba(0,0,0,0.08)',
       }}
     >
-      <View
-        style={{
-          width: 7,
-          height: 7,
-          borderRadius: radius.full,
-          backgroundColor: palette.success,
-          opacity: done ? 1 : 0.9,
-        }}
-      />
-      <Txt variant="statusChip" color="success">
-        {done ? 'Done' : 'In progress'}
+      <View style={{ width: 7, height: 7, borderRadius: radius.full, backgroundColor: c.dot }} />
+      <Txt variant="statusChip" color={c.text}>
+        {label}
       </Txt>
     </View>
   );

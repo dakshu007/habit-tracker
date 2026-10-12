@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { DeviceMotion } from 'expo-sensors';
 
@@ -21,33 +22,45 @@ const RECENTER = 0.015; // per-sample drift correction toward the held angle
  * reading and slowly follows posture changes so it never drifts to an extreme.
  * No-ops (stays at 0) on devices/platforms without device-motion.
  */
-export function useDeviceTilt(): DeviceTilt {
+export function useDeviceTilt(enabled = true): DeviceTilt {
   const tiltX = useSharedValue(0);
   const tiltY = useSharedValue(0);
 
   useEffect(() => {
+    if (!enabled) {
+      // Sensors off (setting disabled or screen hidden): settle flat, save battery.
+      tiltX.value = withTiming(0, { duration: 300 });
+      tiltY.value = withTiming(0, { duration: 300 });
+      return;
+    }
     let mounted = true;
     let origin: { beta: number; gamma: number } | null = null;
     let sub: { remove: () => void } | null = null;
 
-    const clamp = (v: number) => (v < -1 ? -1 : v > 1 ? 1 : v);
+    const clamp = (v: number) => (!Number.isFinite(v) ? 0 : v < -1 ? -1 : v > 1 ? 1 : v);
 
     (async () => {
       try {
         const available = await DeviceMotion.isAvailableAsync();
         if (!available || !mounted) return;
-        // Permission only matters on mobile web; guard so native never throws.
-        try {
-          await DeviceMotion.requestPermissionsAsync();
-        } catch {
-          /* not required on native */
+        // Permission only matters on mobile web. On Android it would ask for
+        // "Physical activity", which motion sensors don't need.
+        if (Platform.OS === 'web') {
+          try {
+            await DeviceMotion.requestPermissionsAsync();
+          } catch {
+            /* ignore */
+          }
         }
         DeviceMotion.setUpdateInterval(UPDATE_MS);
         sub = DeviceMotion.addListener((data) => {
           const rot = data?.rotation;
           if (!rot) return;
           const { beta, gamma } = rot; // radians: beta = front-back, gamma = left-right
-          if (origin === null) {
+          // Some sensors (and emulators) send NaN now and then. One bad sample
+          // would poison the origin and hide the tilting card layers for good.
+          if (!Number.isFinite(beta) || !Number.isFinite(gamma)) return;
+          if (origin === null || !Number.isFinite(origin.beta) || !Number.isFinite(origin.gamma)) {
             origin = { beta, gamma };
             return;
           }
@@ -69,7 +82,7 @@ export function useDeviceTilt(): DeviceTilt {
       mounted = false;
       sub?.remove();
     };
-  }, [tiltX, tiltY]);
+  }, [enabled, tiltX, tiltY]);
 
   return { tiltX, tiltY };
 }

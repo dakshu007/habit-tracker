@@ -3,34 +3,34 @@ import { View } from 'react-native';
 import { Txt } from '@/components/ui/Txt';
 import { radius, spacing } from '@/theme/tokens';
 import { hexToRgba } from '@/theme/color';
-import type { Task } from '@/data/types';
+import { qty } from '@/utils/format';
+import type { HabitColors } from '@/data/types';
+import { t } from '@/i18n';
 
 /**
- * "Goal" badge on the right of the card title row. Background is the task's
- * accent; the border is the lighter accent (bgGradientTop) at 0.2 alpha —
- * exactly as Figma derives `rgba(111,183,237,0.2)` for the Cycling card.
+ * "Goal" badge on the right of the card title row. Background is the habit's
+ * accent; the border is the lighter accent (bgTop) at 0.2 alpha, per Figma.
  */
-export function GoalBadge({ task }: { task: Task }) {
+export function GoalBadge({ colors, goal, unit }: { colors: HabitColors; goal: number; unit: string }) {
   return (
     <View
       style={{
         alignItems: 'center',
         justifyContent: 'center',
         padding: spacing.badgePad,
-        borderRadius: radius.goalBadge,
-        backgroundColor: task.accentColor,
+        borderRadius: radius.goalBadge + 4,
+        backgroundColor: colors.accent,
         borderWidth: 1,
-        borderColor: hexToRgba(task.bgGradientTop, 0.2),
+        borderColor: hexToRgba(colors.bgTop, 0.2),
+        minWidth: 64,
       }}
     >
-      <View style={{ alignItems: 'center', gap: 2 }}>
-        <Txt variant="goalLabel" color="white">
-          Goal
-        </Txt>
-        <Txt variant="goalValue" color="white">
-          {task.goalValue} {task.unit}
-        </Txt>
-      </View>
+      <Txt variant="goalLabel" color="rgba(255,255,255,0.85)">
+        {t('Goal')}
+      </Txt>
+      <Txt variant="goalValue" color="white" numberOfLines={1}>
+        {qty(goal, unit)}
+      </Txt>
     </View>
   );
 }

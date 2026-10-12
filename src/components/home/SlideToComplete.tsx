@@ -3,19 +3,20 @@ import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolateColor,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { scheduleOnRN } from 'react-native-worklets';
+import { haptic } from '@/utils/haptics';
 
 import { Txt } from '@/components/ui/Txt';
 import { CheckIcon, ChevronsRight } from '@/components/ui/icons';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, radius } from '@/theme/tokens';
+import { useMotion } from '@/theme/motion';
 
 const TRACK_H = 62;
 const KNOB = 50;
@@ -27,6 +28,9 @@ interface SlideToCompleteProps {
   onComplete: () => void;
   /** Celebratory copy shown once complete (per-task, from Figma). */
   doneLabel?: string;
+  /** Locked (future days): shows the label but can't be dragged. */
+  disabled?: boolean;
+  idleLabel?: string;
 }
 
 /**
@@ -39,8 +43,9 @@ interface SlideToCompleteProps {
  * knob, and the check pops. The celebration runs whenever `done` flips from
  * false → true (gesture, daily reset undo, or external completion alike).
  */
-export function SlideToComplete({ done, onComplete, doneLabel = 'Done!' }: SlideToCompleteProps) {
+export function SlideToComplete({ done, onComplete, doneLabel = 'Done!', disabled = false, idleLabel = "Slide when you're done" }: SlideToCompleteProps) {
   const { theme } = useTheme();
+  const m = useMotion();
   const x = useSharedValue(0);
   const startX = useSharedValue(0);
   const maxX = useSharedValue(0);
@@ -52,13 +57,14 @@ export function SlideToComplete({ done, onComplete, doneLabel = 'Done!' }: Slide
 
   // Fire the celebration on a false → true transition.
   const celebrate = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    haptic.success();
     ring.value = 0;
     ring.value = withTiming(1, { duration: 620 });
+    if (!m.pop) return;
     checkPop.value = withSequence(
-      withTiming(0.6, { duration: 80 }),
-      withTiming(1.35, { duration: 140 }),
-      withSpring(1, { damping: 8, stiffness: 240 }),
+      withTiming(0.75, { duration: 80 }),
+      withTiming(1.18, { duration: 140 }),
+      withSpring(1, m.release),
     );
   };
 
@@ -70,7 +76,7 @@ export function SlideToComplete({ done, onComplete, doneLabel = 'Done!' }: Slide
       progress.value = withTiming(1, { duration: 160 });
       if (!prevDone.current) celebrate();
     } else {
-      x.value = withSpring(0, { damping: 18, stiffness: 200 });
+      x.value = withSpring(0, m.ui);
       progress.value = withTiming(0, { duration: 160 });
     }
     prevDone.current = done;
@@ -87,7 +93,8 @@ export function SlideToComplete({ done, onComplete, doneLabel = 'Done!' }: Slide
   };
 
   const pan = Gesture.Pan()
-    .enabled(!done)
+    .enabled(!done && !disabled)
+    .activeOffsetX(8)
     .onBegin(() => {
       startX.value = x.value;
     })
@@ -99,9 +106,9 @@ export function SlideToComplete({ done, onComplete, doneLabel = 'Done!' }: Slide
       if (maxX.value > 0 && x.value > maxX.value * THRESHOLD) {
         x.value = withTiming(maxX.value, { duration: 140 });
         progress.value = withTiming(1, { duration: 140 });
-        runOnJS(onComplete)();
+        scheduleOnRN(onComplete);
       } else {
-        x.value = withSpring(0, { damping: 18, stiffness: 200 });
+        x.value = withSpring(0, m.ui);
       }
     });
 
@@ -140,8 +147,8 @@ export function SlideToComplete({ done, onComplete, doneLabel = 'Done!' }: Slide
         }}
         pointerEvents="none"
       >
-        <Txt variant="slideLabel" color={done ? 'success' : 'primary'} numberOfLines={1}>
-          {done ? doneLabel : "Slide when you're done"}
+        <Txt variant="slideLabel" color={done ? 'success' : disabled ? 'secondary' : 'primary'} numberOfLines={1}>
+          {done ? doneLabel : idleLabel}
         </Txt>
       </View>
 

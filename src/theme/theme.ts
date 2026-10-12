@@ -32,8 +32,17 @@ export interface Theme {
   tabBarTrack: string;
   tabActiveBg: string; // active tab circle — white in both themes
 
+  // Glass + chrome
+  glassFill: string; // translucent card fill over tinted backgrounds
+  glassRim: string; // 1px highlight edge on glass
+  hairline: string; // dividers
+  inputBg: string;
+  iconMuted: string;
+  overlay: string; // sheet backdrop tint
+
   // Status + fixed gradients
   success: string;
+  danger: string;
   progressFillFrom: string;
   progressFillTo: string;
 }
@@ -57,7 +66,15 @@ export const lightTheme: Theme = {
   tabBarTrack: palette.tabBarTrack,
   tabActiveBg: palette.white,
 
+  glassFill: 'rgba(255,255,255,0.62)',
+  glassRim: 'rgba(255,255,255,0.9)',
+  hairline: 'rgba(28,27,34,0.07)',
+  inputBg: palette.surface,
+  iconMuted: palette.inkMuted,
+  overlay: 'rgba(20,20,28,0.28)',
+
   success: palette.success,
+  danger: palette.danger,
   progressFillFrom: palette.progressFillFrom,
   progressFillTo: palette.progressFillTo,
 };
@@ -82,7 +99,15 @@ export const darkTheme: Theme = {
   tabBarTrack: palette.tabBarTrack, // same rgba(0,0,0,0.08) as light, per frame
   tabActiveBg: palette.white, // active tab circle stays white
 
+  glassFill: 'rgba(255,255,255,0.07)',
+  glassRim: 'rgba(255,255,255,0.14)',
+  hairline: 'rgba(255,255,255,0.08)',
+  inputBg: '#2D2D33',
+  iconMuted: '#B0B3B7',
+  overlay: 'rgba(0,0,0,0.5)',
+
   success: palette.success,
+  danger: palette.danger,
   progressFillFrom: palette.progressFillFrom,
   progressFillTo: palette.progressFillTo,
 };

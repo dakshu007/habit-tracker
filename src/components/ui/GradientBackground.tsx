@@ -13,6 +13,8 @@ interface GradientBackgroundProps {
   pos: SharedValue<number>;
   children?: ReactNode;
   style?: ViewStyle;
+  /** Fill the whole screen (onboarding) instead of fading into the base, so white text stays readable. */
+  full?: boolean;
 }
 
 /**
@@ -25,7 +27,7 @@ interface GradientBackgroundProps {
  */
 const GRADIENT_HEIGHT_RATIO = 764 / 1206;
 
-export function GradientBackground({ colors, pos, children, style }: GradientBackgroundProps) {
+export function GradientBackground({ colors, pos, children, style, full }: GradientBackgroundProps) {
   const { theme, isDark } = useTheme();
   const { height } = useWindowDimensions();
   const gradientHeight = Math.round(height * GRADIENT_HEIGHT_RATIO);
@@ -49,6 +51,23 @@ export function GradientBackground({ colors, pos, children, style }: GradientBac
     const bl = Math.round(a.b + (b.b - a.b) * t);
     return { backgroundColor: `rgb(${r}, ${g}, ${bl})` };
   }, [rgb]);
+
+  if (full) {
+    return (
+      <View style={[{ flex: 1, backgroundColor: theme.screenBase }, style]}>
+        <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, accentStyle]} />
+        {/* Light at the top, the full color behind the text at the bottom. */}
+        <LinearGradient
+          colors={['rgba(255,255,255,0.32)', 'rgba(255,255,255,0)', isDark ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.12)']}
+          locations={[0, 0.5, 1]}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          pointerEvents="none"
+        />
+        {isDark && <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.25)' }} />}
+        {children}
+      </View>
+    );
+  }
 
   return (
     <View style={[{ flex: 1, backgroundColor: theme.screenBase }, style]}>

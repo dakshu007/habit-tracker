@@ -1,0 +1,144 @@
+name: Android APK
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Two builds on separate machines, in parallel: one Gradle run each, so they
+  # never fight over memory (two runs in one job used to stall for an hour).
+  build:
+    name: build (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [apk, aab]
+    env:
+      TARGET: ${{ matrix.target }}
+      BUILD_NUMBER: ${{ github.run_number }}
+      # Optional secrets — the build works without them.
+      EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - name: Decide whether this target runs
+        id: plan
+        run: |
+          # The Google Play bundle needs the upload key; the test APK always builds.
+          if [ "$TARGET" = "aab" ] && [ -z "$KEYSTORE_B64" ]; then echo "run=false" >> "$GITHUB_OUTPUT"; else echo "run=true" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/checkout@v4
+        if: steps.plan.outputs.run == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.plan.outputs.run == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        if: steps.plan.outputs.run == 'true'
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.plan.outputs.run == 'true'
+
+      - name: Install dependencies
+        if: steps.plan.outputs.run == 'true'
+        run: npm ci
+
+      - name: Type-check
+        if: steps.plan.outputs.run == 'true'
+        run: npx tsc --noEmit
+
+      - name: Set paywall mode
+        if: steps.plan.outputs.run == 'true'
+        run: |
+          # Google Play bundle: 7-day trial, then Pro. GitHub test APK: never locks.
+          if [ "$TARGET" = "aab" ]; then sed -i "s/= 'preview'/= 'live'/" src/buildFlags.ts; fi
+          grep "PAYWALL" src/buildFlags.ts
+
+      - name: Generate native Android project
+        if: steps.plan.outputs.run == 'true'
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build with Gradle
+        if: steps.plan.outputs.run == 'true'
+        working-directory: android
+        timeout-minutes: 40
+        run: |
+          # gradle.properties has no trailing newline — start on a fresh line.
+          # Runners have 7 GB: Gradle (and R8 inside it) 4 GB, Kotlin daemon 1.5 GB,
+          # 2 workers. More than that swaps and the build stalls.
+          printf '\norg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=768m -XX:+UseParallelGC\nkotlin.daemon.jvmargs=-Xmx1536m\norg.gradle.workers.max=2\n' >> gradle.properties
+          SIGNING=""
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            SIGNING="-Pandroid.injected.signing.store.file=$RUNNER_TEMP/upload.jks -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD -Pandroid.injected.signing.key.alias=$KEY_ALIAS -Pandroid.injected.signing.key.password=$KEY_PASSWORD"
+          fi
+          TASK=assembleRelease
+          [ "$TARGET" = "aab" ] && TASK=bundleRelease
+          ./gradlew $TASK $SIGNING --no-daemon --stacktrace --console=plain
+
+      - name: Upload Gradle reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-reports-${{ matrix.target }}
+          path: android/build/reports/
+          if-no-files-found: ignore
+
+      - name: Collect output
+        if: steps.plan.outputs.run == 'true'
+        run: |
+          mkdir -p out
+          if [ "$TARGET" = "aab" ]; then
+            cp android/app/build/outputs/bundle/release/app-release.aab "out/HabitTracker-build-${BUILD_NUMBER}.aab"
+          else
+            cp android/app/build/outputs/apk/release/app-release.apk "out/HabitTracker-build-${BUILD_NUMBER}.apk"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: steps.plan.outputs.run == 'true'
+        with:
+          name: out-${{ matrix.target }}
+          path: out/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: out-*
+          merge-multiple: true
+          path: out
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la out
+          gh release create "build-${BUILD_NUMBER}" out/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "Habit Tracker · build ${BUILD_NUMBER}" \
+            --target "${GITHUB_SHA}" \
+            --prerelease \
+            --notes "Android test build ${BUILD_NUMBER} from ${GITHUB_SHA::7}. Download the APK below and open it on your phone (allow installs from your browser if asked). The .aab is for Google Play."

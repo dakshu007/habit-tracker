@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
+  cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -13,12 +14,13 @@ import Animated, {
 import { Txt } from '@/components/ui/Txt';
 import { useTheme } from '@/theme/ThemeContext';
 import { palette, radius } from '@/theme/tokens';
+import { useMotion } from '@/theme/motion';
+import { useTabFocused } from '@/navigation/MainTabs';
 
 const BAR_H = 12;
 const MARKER_W = 12;
 const MARKER_H = 10;
 const SHEEN_W = 48;
-const FILL_SPRING = { damping: 18, stiffness: 120, mass: 0.8 } as const;
 
 interface GradientProgressBarProps {
   /** Progress fraction 0..1. */
@@ -38,6 +40,8 @@ interface GradientProgressBarProps {
  */
 export function GradientProgressBar({ fraction, minLabel, maxLabel }: GradientProgressBarProps) {
   const { theme } = useTheme();
+  const m = useMotion();
+  const FILL_SPRING = m.ui;
   const [trackW, setTrackW] = useState(0);
 
   const clamped = Math.max(0, Math.min(1, fraction));
@@ -50,13 +54,22 @@ export function GradientProgressBar({ fraction, minLabel, maxLabel }: GradientPr
 
   // Looping sheen position 0..1.
   const sweep = useSharedValue(0);
+  // Loop only while Home is on screen: a running loop under the glass tab bar
+  // makes it re-blur every frame, which slows taps on mid-range phones.
+  const focused = useTabFocused('Home');
+  const sheenOn = m.id !== 'off' && m.id !== 'minimal';
   useEffect(() => {
+    if (!sheenOn || !focused) return;
     sweep.value = withRepeat(
-      withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.ease) }),
+      withTiming(1, { duration: 1600 * m.speed, easing: Easing.inOut(Easing.ease) }),
       -1,
       false,
     );
-  }, [sweep]);
+    return () => {
+      cancelAnimation(sweep);
+      sweep.value = 0;
+    };
+  }, [sweep, sheenOn, focused, m.speed]);
 
   const maskStyle = useAnimatedStyle(() => ({ width: f.value * trackW }));
   const markerStyle = useAnimatedStyle(() => ({
@@ -67,7 +80,7 @@ export function GradientProgressBar({ fraction, minLabel, maxLabel }: GradientPr
   const sheenStyle = useAnimatedStyle(() => {
     const fillW = f.value * trackW;
     return {
-      opacity: fillW > SHEEN_W ? 0.5 : 0,
+      opacity: sheenOn && fillW > SHEEN_W ? 0.5 : 0,
       transform: [{ translateX: -SHEEN_W + sweep.value * (fillW + SHEEN_W) }],
     };
   });

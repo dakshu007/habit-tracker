@@ -1,0 +1,50 @@
+[
+  {
+    "file": "home",
+    "tone": "lav",
+    "title": "Habits that feel|like a *reward*",
+    "sub": "Illustrated cards. Slide when you're done."
+  },
+  {
+    "file": "dark",
+    "tone": "night",
+    "title": "Swipe your day,|*slide* to finish",
+    "sub": "Smooth, premium, light and dark mode."
+  },
+  {
+    "file": "start",
+    "tone": "sage",
+    "title": "Start in *seconds*",
+    "sub": "Pick from 22 hand-drawn habits, or make your own."
+  },
+  {
+    "file": "stats",
+    "tone": "sky",
+    "title": "See your *progress*",
+    "sub": "Levels, streaks, insights and Year in Review."
+  },
+  {
+    "file": "challenges",
+    "tone": "peach",
+    "title": "Challenge|a *friend*",
+    "sub": "7, 21 and 30 day challenges. Share a code."
+  },
+  {
+    "file": "review",
+    "tone": "sage",
+    "title": "Your week,|as a *story*",
+    "sub": "A beautiful weekly review every Sunday."
+  },
+  {
+    "file": "reminders",
+    "tone": "lav",
+    "title": "Gentle *reminders*",
+    "sub": "A nudge only when habits are still open."
+  },
+  {
+    "file": "calendar",
+    "tone": "sky",
+    "title": "Every check-in,|at a *glance*",
+    "sub": "A calendar for every habit, day by day."
+  }
+]

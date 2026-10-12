@@ -1,25 +1,189 @@
 {
   "expo": {
-    "name": "habit-tracker",
+    "name": "Habit Tracker",
     "slug": "habit-tracker",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "version": "1.0",
+    "orientation": "default",
     "icon": "./assets/icon.png",
+    "scheme": "habittracker",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#FFFFFF",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "app.mykavo.habittracker"
     },
     "android": {
+      "package": "app.mykavo.habittracker",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#DCEAE1",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.ACTIVITY_RECOGNITION"
+      ],
+      "allowBackup": true,
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.READ_FLOORS_CLIMBED",
+        "android.permission.health.READ_SLEEP"
+      ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "plugins": [
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/plus-jakarta-sans/400Regular/PlusJakartaSans_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/plus-jakarta-sans/500Medium/PlusJakartaSans_500Medium.ttf",
+            "./node_modules/@expo-google-fonts/plus-jakarta-sans/600SemiBold/PlusJakartaSans_600SemiBold.ttf",
+            "./node_modules/@expo-google-fonts/plus-jakarta-sans/700Bold/PlusJakartaSans_700Bold.ttf",
+            "./node_modules/@expo-google-fonts/plus-jakarta-sans/800ExtraBold/PlusJakartaSans_800ExtraBold.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 140,
+          "resizeMode": "contain",
+          "backgroundColor": "#EEF5F0",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#1C1B22"
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#4C8DF6"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-sharing",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": [
+              "arm64-v8a"
+            ],
+            "minSdkVersion": 26,
+            "enableMinifyInReleaseBuilds": true,
+            "extraProguardRules": "# Native code looked up by name from JS, the manifest or other libraries.\n-keep class expo.modules.devicesignals.** { *; }\n-keep class com.reactnativeandroidwidget.** { *; }\n-keep class dev.matinzd.healthconnect.** { *; }\n-keep class androidx.health.connect.client.** { *; }\n-keep class expo.modules.iap.** { *; }\n-keep class dev.hyo.openiap.** { *; }\n-keep class com.android.billingclient.** { *; }\n-keep class org.maplibre.** { *; }\n-dontwarn org.maplibre.**\n-keep class com.android.installreferrer.** { *; }"
+          }
+        }
+      ],
+      "expo-status-bar",
+      "./plugins/with-high-refresh-rate",
+      "./plugins/with-phone-portrait",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "HabitCard",
+              "label": "Habit card",
+              "description": "Your habit card, with tap to complete",
+              "minWidth": "250dp",
+              "minHeight": "250dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 3,
+              "maxResizeWidth": "500dp",
+              "maxResizeHeight": "600dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-card-preview.png"
+            },
+            {
+              "name": "TodayHabits",
+              "label": "Today's habits",
+              "description": "All of today's habits, with +1 and tap to complete",
+              "minWidth": "250dp",
+              "minHeight": "180dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "500dp",
+              "maxResizeHeight": "600dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-preview.png"
+            },
+            {
+              "name": "MiniHabit",
+              "label": "Mini habit",
+              "description": "One habit, small: +1 and tap to complete",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "320dp",
+              "maxResizeHeight": "320dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-mini-preview.png"
+            },
+            {
+              "name": "StreakWidget",
+              "label": "Streak",
+              "description": "Your best streak and this week at a glance",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "320dp",
+              "maxResizeHeight": "320dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-streak-preview.png"
+            },
+            {
+              "name": "SleepWidget",
+              "label": "Sleep",
+              "description": "Last night’s sleep and the week",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "320dp",
+              "maxResizeHeight": "320dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-sleep-preview.png"
+            }
+          ]
+        }
+      ],
+      "react-native-health-connect",
+      "./plugins/with-quick-tile",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to map your runs.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": true,
+          "androidForegroundServiceIcon": "./assets/notification-icon.png"
+        }
+      ],
+      "@maplibre/maplibre-react-native",
+      "./plugins/with-app-shortcuts",
+      "expo-iap",
+      "./plugins/with-alternate-icons"
+    ]
   }
 }

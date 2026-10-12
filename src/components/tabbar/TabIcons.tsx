@@ -108,7 +108,7 @@ export const TAB_ICONS = {
   Home: HomeIcon,
   Stats: StatsIcon,
   Calendar: CalendarIcon,
-  Notifications: BellIcon,
+  Reminders: BellIcon,
   Profile: ProfileIcon,
 } as const;
 

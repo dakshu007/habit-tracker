@@ -1,0 +1,25 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.devicesignals'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.devicesignals"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+  lintOptions {
+    abortOnError false
+  }
+}
+
+dependencies {
+  // Play Install Referrer: reads the invite code from the Play Store link a friend installed from.
+  implementation 'com.android.installreferrer:installreferrer:2.2'
+  // Google Drive backup: authorization for the app's hidden Drive folder.
+  implementation 'com.google.android.gms:play-services-auth:22.0.0'
+}

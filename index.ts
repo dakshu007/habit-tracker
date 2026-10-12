@@ -1,10 +1,17 @@
 // gesture-handler must be the first import in the entry file.
 import 'react-native-gesture-handler';
 import { registerRootComponent } from 'expo';
+import { registerWidgetTaskHandler } from 'react-native-android-widget';
 
 import App from './App';
+import { installCrashLog } from './src/services/crashLog';
 
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
+// Catch fatal JS errors as early as possible (see services/crashLog).
+installCrashLog();
+import { widgetTaskHandler } from './src/widget/widgetTaskHandler';
+// Defines the GPS run task at module scope (it can run headless with the app closed).
+import './src/services/runTracker';
+
 registerRootComponent(App);
+// Home-screen widget renders + click actions run in a headless JS task.
+registerWidgetTaskHandler(widgetTaskHandler);

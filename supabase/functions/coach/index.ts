@@ -5,7 +5,7 @@
 // the reply and returns it. The Claude API key lives only here, as the secret
 // ANTHROPIC_API_KEY. Conversations are not stored, only reply counts.
 //
-// Deploy: Supabase Reply: Edge Functions > Deploy a new function > name "coach" >
+// Deploy: Supabase > Edge Functions > Deploy a new function > name "coach" >
 // paste this file. Secrets: ANTHROPIC_API_KEY (required), HT_SERVICE_KEY
 // (only if the service key isn't found automatically). It checks the user's
 // token itself, so the gateway's legacy "Verify JWT" setting can stay off.

@@ -18,10 +18,11 @@ import { requestPinWidget } from 'react-native-android-widget';
 import { CARD_WIDGET, LIST_WIDGET } from '@/widget/TodayWidget';
 import { MINI_WIDGET, SLEEP_WIDGET, STREAK_WIDGET } from '@/widget/MoreWidgets';
 import { getProfileStyle } from '@/data/profileStyles';
-import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Sparkles, Users } from '@/components/ui/lucide';
+import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Bot, Users } from '@/components/ui/lucide';
 import { ReportSheet } from '@/components/profile/ReportSheet';
 import { AppIconPicker } from '@/components/profile/AppIconPicker';
 import { ProCard } from '@/components/profile/ProCard';
+import { ProBadge } from '@/components/profile/ProBadge';
 import { inviteFriends } from '@/services/invite';
 import { useRunStore } from '@/store/useRunStore';
 import { fmtKm } from '@/logic/run';
@@ -92,7 +93,7 @@ export function ProfileScreen() {
     ]);
 
   return (
-    <Screen title={t('Profile')} accent={getProfileStyle(profile.cardStyle).colors[1]}>
+    <Screen title={t('Profile')} accent={getProfileStyle(profile.cardStyle).colors[1]} right={<ProBadge />}>
       <IdentityCard />
 
       <ProCard />
@@ -233,8 +234,8 @@ export function ProfileScreen() {
       <Card style={{ paddingVertical: 4 }}>
         {backendEnabled() ? (
           <Row
-            icon={<Sparkles size={19} color="#7E6CF0" strokeWidth={2} />}
-            iconBg="#7E6CF0"
+            icon={<Bot size={19} color="#5E8C74" strokeWidth={2} />}
+            iconBg="#5E8C74"
             title={t('Your AI coach')}
             subtitle={t('Ask anything about your habits')}
             onPress={() => navigation.navigate('Coach')}

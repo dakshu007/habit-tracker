@@ -69,3 +69,5 @@ export { default as AlarmClockPlus } from 'lucide-react-native/icons/alarm-clock
 export { default as Droplet } from 'lucide-react-native/icons/droplet';
 export { default as ArrowUp } from 'lucide-react-native/icons/arrow-up';
 export { default as MessageCircleHeart } from 'lucide-react-native/icons/message-circle-heart';
+export { default as Bot } from 'lucide-react-native/icons/bot';
+export { default as SquarePen } from 'lucide-react-native/icons/square-pen';

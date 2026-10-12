@@ -133,18 +133,19 @@ export function IdentityCard() {
               <CameraIcon size={15} color="#1C1B22" strokeWidth={2.2} />
             </View>
           </PressableScale>
-          <View style={{ flex: 1, gap: 3 }}>
-            <Txt variant="title" color="white" numberOfLines={1}>
+          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+            <Txt variant="title" color="white" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               {profile.name || t('Add your name')}
             </Txt>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {/* Wraps instead of running under the edit button on narrow or large-font phones. */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 6, rowGap: 4 }}>
               <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' }}>
                 <Txt variant="micro" color="white">
                   {t('Lv {n}', { n: stats.lvl.level })} · {t(levelTitle(stats.lvl.level))}
                 </Txt>
               </View>
               {joinedLabel && (
-                <Txt variant="small" color="rgba(255,255,255,0.85)" numberOfLines={1}>
+                <Txt variant="small" color="rgba(255,255,255,0.85)" numberOfLines={1} style={{ flexShrink: 1 }}>
                   {t('since {date}', { date: joinedLabel })}
                 </Txt>
               )}

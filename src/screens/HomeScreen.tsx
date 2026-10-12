@@ -17,6 +17,7 @@ import { useHabitStore, useActiveHabit, useVisibleHabits } from '@/store/useHabi
 import { useTabFocused } from '@/navigation/MainTabs';
 import { bestCurrentStreak, dueOn, isDoneOn } from '@/logic/habits';
 import { NotToday } from '@/components/home/NotToday';
+import { CoachPill } from '@/components/home/CoachPill';
 import { getTheme } from '@/data/themes';
 import { spacing } from '@/theme/tokens';
 import { overlay } from '@/components/ui/Overlay';
@@ -121,6 +122,7 @@ export function HomeScreen() {
               <Txt variant="title" color="white" numberOfLines={1}>
                 {name || t('Ready to grow?')}
               </Txt>
+              <CoachPill />
             </View>
             {((streak && streak.streak.current > 0) || freezes > 0) && (
               <PressableScale silent onPress={() => overlay.open(<StreakInfo />)} accessibilityLabel={t('Streak and freezes')}>

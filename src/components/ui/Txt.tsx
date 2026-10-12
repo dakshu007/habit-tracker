@@ -17,7 +17,13 @@ interface TxtProps extends TextProps {
  * Typography primitive — applies a type ramp entry plus a theme color role.
  * Pass a raw hex/rgba to `color` for per-habit accent text.
  */
-export function Txt({ variant, color = 'primary', style, ...rest }: TxtProps) {
+/**
+ * Android "Font size" can go to 200%. Past ~1.3x the layouts (cards, chips,
+ * steppers) can't fit on a phone, so text grows up to this much and no more.
+ */
+const MAX_FONT_SCALE = 1.3;
+
+export function Txt({ variant, color = 'primary', style, maxFontSizeMultiplier = MAX_FONT_SCALE, ...rest }: TxtProps) {
   const { theme } = useTheme();
 
   const roleColor: Record<Exclude<ColorRole, 'inherit'>, string> = {
@@ -33,5 +39,5 @@ export function Txt({ variant, color = 'primary', style, ...rest }: TxtProps) {
   const resolved =
     color === 'inherit' ? undefined : color in roleColor ? roleColor[color as keyof typeof roleColor] : color;
 
-  return <Text {...rest} style={[type[variant], resolved ? { color: resolved } : null, style]} />;
+  return <Text {...rest} maxFontSizeMultiplier={maxFontSizeMultiplier} style={[type[variant], resolved ? { color: resolved } : null, style]} />;
 }

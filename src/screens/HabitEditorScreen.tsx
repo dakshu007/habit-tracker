@@ -397,8 +397,8 @@ export function HabitEditorScreen({ navigation, route }: RootScreenProps<'HabitE
             ))}
             <MiniChip label={t('custom…')} active={customUnit} color={colors.accent} onPress={() => setCustomUnit(true)} />
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <Txt variant="h3">{t('Each + tap adds')}</Txt>
               <Txt variant="small" color="secondary">
                 {t('Quick-log step on the Home screen')}
@@ -548,7 +548,7 @@ function Stepper({ value, onMinus, onPlus }: { value: string; onMinus: () => voi
   const { theme } = useTheme();
   const btn = { width: 36, height: 36, borderRadius: 18, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: theme.cardElevated };
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 4, borderRadius: 24, backgroundColor: theme.inputBg }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 4, borderRadius: 24, backgroundColor: theme.inputBg, flexShrink: 0 }}>
       <PressableScale onPress={() => (haptic.tick(), onMinus())} silent accessibilityLabel={t('Decrease')} style={btn}>
         <MinusIcon size={16} color={theme.textPrimary} strokeWidth={2.4} />
       </PressableScale>

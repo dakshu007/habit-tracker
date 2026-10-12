@@ -66,6 +66,9 @@ export function ProCard() {
 
   const open = () => (subscription && !lifetime ? manageSubscription() : navigation.navigate('Paywall'));
 
+  // Paid: the banner steps aside; a small plan button sits in the Profile header instead (ProBadge).
+  if (owned) return null;
+
   return (
     <PressableScale onPress={open} scaleTo={0.98} accessibilityLabel={`${title}. ${subtitle}`}>
       <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ borderRadius: 28, overflow: 'hidden', boxShadow: '0px 14px 32px rgba(91,108,240,0.38)' }}>

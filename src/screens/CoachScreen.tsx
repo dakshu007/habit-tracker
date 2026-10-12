@@ -1,26 +1,36 @@
-import { useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, ToastAndroid, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Keyboard, KeyboardAvoidingView, Pressable, TextInput, ToastAndroid, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn, FadeInDown, LinearTransition } from 'react-native-reanimated';
 
+import { DeviceSignals } from '../../modules/device-signals';
 import { Txt } from '@/components/ui/Txt';
-import { Button, GlassButton, PressableScale } from '@/components/ui/Glass';
+import { Button, PressableScale } from '@/components/ui/Glass';
 import { CloseIcon } from '@/components/ui/icons';
-import { ArrowUp, Flag, MessageCircleHeart, Sparkles } from '@/components/ui/lucide';
+import { ArrowUp, Bot, Flag, Mic, SquarePen } from '@/components/ui/lucide';
+import { HabitArt } from '@/components/art/HabitArt';
 import { useTheme } from '@/theme/ThemeContext';
-import { hexToRgba } from '@/theme/color';
 import { fonts } from '@/theme/tokens';
 import { useCoachStore, type CoachMessage } from '@/store/useCoachStore';
+import { useHabitStore } from '@/store/useHabitStore';
 import { useUnlocked } from '@/store/useLicense';
 import { reportReply, sendToCoach, weeklyInsight, type CoachResult } from '@/services/coach';
 import { backendEnabled } from '@/config/backend';
 import { haptic } from '@/utils/haptics';
+import { getLang } from '@/i18n/core';
 import { t } from '@/i18n';
 import type { RootScreenProps } from '@/navigation/types';
 
-const VIOLET = ['#5B6CF0', '#8E5CF5'] as const;
+/** Mild, calm colours (habit apps live in soft pastels). */
+const INK = '#2E3A33';
+const ACCENT = '#5E8C74';
 
-const PROMPTS = ['Why do I keep skipping?', 'Plan a better week for me', 'How can I sleep better?', 'Which habit should I focus on?'];
+type Topic = { key: 'insight' | 'skip' | 'plan'; title: string; sub: string; art: string; light: string; dark: string };
+const TOPICS: Topic[] = [
+  { key: 'insight', title: 'This week’s insight', sub: 'One pattern from your week, and one small idea', art: 'aura-lotus', light: '#E3EEE6', dark: '#2B3A32' },
+  { key: 'skip', title: 'Why do I keep skipping?', sub: 'Find what’s getting in the way', art: 'aura-shoe', light: '#F6E6DA', dark: '#3B2F28' },
+  { key: 'plan', title: 'Plan a better week for me', sub: 'A simple plan around your habits', art: 'aura-drop', light: '#E9E5F5', dark: '#312D3E' },
+];
 
 const reasonText = (r: Exclude<CoachResult, { ok: true }>['reason']) =>
   r === 'limit'
@@ -32,22 +42,38 @@ const reasonText = (r: Exclude<CoachResult, { ok: true }>['reason']) =>
         : t('The coach couldn’t answer just now. Please try again.');
 
 /**
- * The AI coach: a chat that knows your habits (a short summary of goals,
- * streaks and the last 14 days is sent with each question). Opt-in, never
- * pops up by itself. Replies can be reported.
+ * The AI coach. Empty chat: a big greeting and a stack of soft suggestion
+ * cards (tap the front one to ask it, tap a card behind to bring it forward).
+ * Then a clean chat with a rounded input box, voice input and send.
  */
 export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const unlocked = useUnlocked();
+  const name = useHabitStore((s) => s.profile.name);
   const messages = useCoachStore((s) => s.messages);
   const consent = useCoachStore((s) => s.consent);
   const remaining = useCoachStore((s) => s.remaining);
-  const weekly = useCoachStore((s) => s.weekly);
   const [text, setText] = useState('');
-  const [busy, setBusy] = useState<'chat' | 'weekly' | null>(null);
+  const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [order, setOrder] = useState<number[]>([0, 1, 2]);
+  const [kbOpen, setKbOpen] = useState(false);
   const list = useRef<FlatList<CoachMessage>>(null);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', () => {
+      setKbOpen(true);
+      setTimeout(() => list.current?.scrollToEnd({ animated: true }), 60);
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKbOpen(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  const scrollDown = () => setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
 
   const send = async (q: string) => {
     const msg = q.trim();
@@ -56,20 +82,36 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
     haptic.tick();
     setText('');
     setNote(null);
-    setBusy('chat');
+    setBusy(true);
+    scrollDown();
     const res = await sendToCoach(msg);
-    setBusy(null);
+    setBusy(false);
     if (!res.ok) setNote(reasonText(res.reason));
-    setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
+    scrollDown();
   };
 
-  const getWeekly = async () => {
+  const askInsight = async () => {
     if (busy) return;
-    setBusy('weekly');
+    haptic.tick();
     setNote(null);
+    setBusy(true);
     const res = await weeklyInsight();
-    setBusy(null);
-    if (!res.ok) setNote(reasonText(res.reason));
+    setBusy(false);
+    if (res.ok) {
+      const store = useCoachStore.getState();
+      const now = Date.now();
+      store.add({ id: `wq${now}`, role: 'user', text: t('This week’s insight'), at: now });
+      store.add({ id: `wa${now}`, role: 'assistant', text: res.text, at: now + 1 });
+    } else setNote(reasonText(res.reason));
+    scrollDown();
+  };
+
+  const pick = (topic: Topic) => (topic.key === 'insight' ? askInsight() : send(t(topic.title)));
+
+  const listen = async () => {
+    if (!DeviceSignals?.canRecognizeSpeech()) return ToastAndroid.show(t('Voice input isn’t available on this phone.'), ToastAndroid.SHORT);
+    const results = await DeviceSignals.recognizeSpeech(t('Ask your coach'), getLang() === 'hi' ? 'hi-IN' : null).catch(() => [] as string[]);
+    if (results[0]) setText((cur) => (cur ? `${cur} ${results[0]}` : results[0]));
   };
 
   const report = (m: CoachMessage) =>
@@ -84,31 +126,44 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
       })),
     ]);
 
+  const newChat = () => {
+    if (!messages.length) return;
+    haptic.tick();
+    useCoachStore.getState().clear();
+    setNote(null);
+  };
+
+  const ink = isDark ? '#F2F1EE' : INK;
+  const iconBtn = { width: 42, height: 42, borderRadius: 21, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: theme.inputBg };
+
   const header = (
-    <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 18, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.22)' }}>
-        <Sparkles size={22} color="#FFFFFF" strokeWidth={2.2} />
+    <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <PressableScale onPress={() => navigation.goBack()} accessibilityLabel={t('Close')} style={iconBtn}>
+        <CloseIcon size={19} color={ink} />
+      </PressableScale>
+      <View style={{ flex: 1, alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Bot size={18} color={ACCENT} strokeWidth={2.2} />
+          <Txt variant="h3" color={ink}>
+            {t('Your coach')}
+          </Txt>
+        </View>
+        {unlocked && remaining != null ? (
+          <Txt variant="small" color="tertiary" style={{ fontSize: 11.5 }}>
+            {t('{n} replies left', { n: remaining })}
+          </Txt>
+        ) : null}
       </View>
-      <View style={{ flex: 1 }}>
-        <Txt variant="h2" color="white">
-          {t('Your coach')}
-        </Txt>
-        <Txt variant="small" color="rgba(255,255,255,0.85)" numberOfLines={1}>
-          {unlocked && remaining != null ? t('{n} replies left', { n: remaining }) : t('Knows your habits, here to help')}
-        </Txt>
-      </View>
-      <GlassButton accessibilityLabel={t('Close')} fill="rgba(255,255,255,0.22)" onPress={() => navigation.goBack()}>
-        <CloseIcon size={20} color="#FFFFFF" />
-      </GlassButton>
+      <PressableScale onPress={newChat} accessibilityLabel={t('New chat')} style={[iconBtn, { opacity: messages.length ? 1 : 0.4 }]}>
+        <SquarePen size={18} color={ink} strokeWidth={2} />
+      </PressableScale>
     </View>
   );
 
   if (!backendEnabled()) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.screenBase }}>
-        <LinearGradient colors={[...VIOLET]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          {header}
-        </LinearGradient>
+        {header}
         <View style={{ padding: 24, gap: 8 }}>
           <Txt variant="h3">{t('The coach is coming soon')}</Txt>
           <Txt variant="body" color="secondary">
@@ -123,11 +178,14 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
   if (!consent) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.screenBase }}>
-        <LinearGradient colors={[...VIOLET]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          {header}
-        </LinearGradient>
+        {header}
         <View style={{ padding: 22, gap: 14 }}>
-          <Txt variant="h2">{t('Meet your AI coach')}</Txt>
+          <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#2B3A32' : '#E3EEE6' }}>
+            <Bot size={28} color={ACCENT} strokeWidth={2} />
+          </View>
+          <Txt variant="display" color={ink}>
+            {t('Meet your AI coach')}
+          </Txt>
           {[
             t('Ask about motivation, routines, sleep or why a habit isn’t sticking. It sees a short summary of your habits (names, goals, streaks and the last 14 days) to give personal answers.'),
             t('Replies come from an AI (Claude, by Anthropic). It can be wrong, and it isn’t medical or mental-health advice.'),
@@ -135,158 +193,213 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
             t('The coach is for people aged 18 and over.'),
           ].map((line) => (
             <View key={line} style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, marginTop: 9, backgroundColor: VIOLET[0] }} />
+              <View style={{ width: 6, height: 6, borderRadius: 3, marginTop: 9, backgroundColor: ACCENT }} />
               <Txt variant="bodyRegular" style={{ flex: 1 }}>
                 {line}
               </Txt>
             </View>
           ))}
-          <Button label={t('I’m 18 or older, continue')} color={VIOLET[0]} onPress={() => (haptic.success(), useCoachStore.getState().setConsent(true))} style={{ marginTop: 8 }} />
+          <Button label={t('I’m 18 or older, continue')} color={ACCENT} onPress={() => (haptic.success(), useCoachStore.getState().setConsent(true))} style={{ marginTop: 8 }} />
         </View>
       </View>
     );
   }
 
-  const bubbleBg = isDark ? theme.cardElevated : '#FFFFFF';
+  const empty = messages.length === 0;
+
+  const greeting = (
+    <View style={{ gap: 26, paddingTop: 10 }}>
+      <Animated.View entering={FadeInDown.duration(380)}>
+        <Txt variant="display" color={ink} style={{ fontSize: 38, lineHeight: 44, letterSpacing: -1.2 }}>
+          {name ? t('Hi {name}, how can I help you?', { name }) : t('Hi, how can I help you?')}
+        </Txt>
+      </Animated.View>
+
+      {/* Stacked suggestion cards, like a hand of cards */}
+      <View style={{ height: 330 }}>
+        {[...order].reverse().map((idx, i, arr) => {
+          const depth = arr.length - 1 - i; // 0 = front
+          const topic = TOPICS[idx];
+          const isFront = depth === 0;
+          return (
+            <Animated.View
+              key={topic.key}
+              layout={LinearTransition.springify().damping(18)}
+              style={{
+                position: 'absolute',
+                left: depth * 14,
+                right: depth * 14,
+                top: (2 - depth) * 22,
+                bottom: depth * 16,
+                transform: [{ rotate: depth === 2 ? '-3deg' : depth === 1 ? '2deg' : '0deg' }],
+              }}
+            >
+              <Pressable
+                onPress={() => {
+                  if (isFront) return pick(topic);
+                  haptic.tick();
+                  setOrder((cur) => [idx, ...cur.filter((x) => x !== idx)]);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t(topic.title)}
+                style={{ flex: 1, borderRadius: 28, backgroundColor: isDark ? topic.dark : topic.light, padding: 18, boxShadow: isFront ? '0px 14px 30px rgba(0,0,0,0.10)' : undefined }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, overflow: 'hidden', backgroundColor: '#FFFFFF' }}>
+                    <HabitArt artId={topic.art} mode="thumb" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Txt variant="h3" color={ink} numberOfLines={1}>
+                      {t(topic.title)}
+                    </Txt>
+                    <Txt variant="small" color={isDark ? 'rgba(255,255,255,0.7)' : '#5F6B64'} numberOfLines={1}>
+                      {t(topic.sub)}
+                    </Txt>
+                  </View>
+                </View>
+                {isFront && (
+                  <Animated.View entering={FadeIn} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 150, height: 150, borderRadius: 75, overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: 4, borderColor: 'rgba(255,255,255,0.7)' }}>
+                      <HabitArt artId={topic.art} mode="thumb" />
+                    </View>
+                    <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 32, borderRadius: 16, backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.75)' }}>
+                      <Bot size={14} color={ACCENT} strokeWidth={2.2} />
+                      <Txt variant="label" color={ink}>
+                        {topic.key === 'insight' || unlocked ? t('Tap to ask') : t('Pro')}
+                      </Txt>
+                    </View>
+                  </Animated.View>
+                )}
+              </Pressable>
+            </Animated.View>
+          );
+        })}
+      </View>
+      {!unlocked && (
+        <Txt variant="small" color="secondary" style={{ textAlign: 'center' }}>
+          {t('Free plan: one insight a week. Pro: ask your coach anything.')}
+        </Txt>
+      )}
+    </View>
+  );
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.screenBase }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <LinearGradient colors={[...VIOLET]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        {header}
-      </LinearGradient>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.screenBase }} behavior="padding">
+      {header}
 
       <FlatList
         ref={list}
         data={messages}
         keyExtractor={(m) => m.id}
-        contentContainerStyle={{ padding: 16, gap: 10, flexGrow: 1 }}
-        onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })}
-        ListHeaderComponent={
-          <View style={{ gap: 10, marginBottom: 6 }}>
-            {/* Weekly insight: every plan gets one a week */}
-            <PressableScale onPress={getWeekly} scaleTo={0.98} accessibilityLabel={t('This week’s insight')}>
-              <View style={{ padding: 14, borderRadius: 20, gap: 6, backgroundColor: hexToRgba(VIOLET[0], isDark ? 0.22 : 0.08) }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <MessageCircleHeart size={18} color={VIOLET[0]} strokeWidth={2.2} />
-                  <Txt variant="label" color={VIOLET[0]}>
-                    {t('This week’s insight')}
-                  </Txt>
-                  {busy === 'weekly' && <ActivityIndicator size="small" color={VIOLET[0]} />}
-                </View>
-                <Txt variant="bodyRegular" color={weekly ? 'primary' : 'secondary'}>
-                  {weekly?.text ?? t('Tap to see one pattern from your week and one small idea for the next.')}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 16, gap: 14, flexGrow: 1 }}
+        onContentSizeChange={() => !empty && list.current?.scrollToEnd({ animated: false })}
+        ListHeaderComponent={empty ? greeting : null}
+        renderItem={({ item: m }) =>
+          m.role === 'user' ? (
+            <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'flex-end' }}>
+              <View style={{ maxWidth: '84%', paddingHorizontal: 16, paddingVertical: 11, borderRadius: 22, borderBottomRightRadius: 6, backgroundColor: isDark ? '#3A4A41' : INK }}>
+                <Txt variant="bodyRegular" color="#FFFFFF">
+                  {m.text}
                 </Txt>
               </View>
-            </PressableScale>
-            {!unlocked && (
-              <PressableScale onPress={() => navigation.navigate('Paywall')} scaleTo={0.98}>
-                <View style={{ padding: 14, borderRadius: 20, backgroundColor: VIOLET[0], gap: 2 }}>
-                  <Txt variant="label" color="white">
-                    {t('Chat with your coach with Pro')}
-                  </Txt>
-                  <Txt variant="small" color="rgba(255,255,255,0.88)">
-                    {t('Ask anything about your habits, any time. Tap to see plans.')}
-                  </Txt>
-                </View>
-              </PressableScale>
-            )}
-          </View>
-        }
-        ListEmptyComponent={
-          unlocked ? (
-            <View style={{ gap: 8, marginTop: 8 }}>
-              <Txt variant="small" color="secondary">
-                {t('Try asking')}
-              </Txt>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {PROMPTS.map((p) => (
-                  <PressableScale key={p} onPress={() => send(t(p))}>
-                    <View style={{ paddingHorizontal: 14, paddingVertical: 9, borderRadius: 18, backgroundColor: bubbleBg, borderWidth: 1, borderColor: theme.hairline }}>
-                      <Txt variant="label">{t(p)}</Txt>
-                    </View>
-                  </PressableScale>
-                ))}
+            </Animated.View>
+          ) : (
+            <Animated.View entering={FadeIn.duration(260)} style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#2B3A32' : '#E3EEE6' }}>
+                <Bot size={16} color={ACCENT} strokeWidth={2.2} />
               </View>
-            </View>
-          ) : null
-        }
-        renderItem={({ item: m }) => {
-          const mine = m.role === 'user';
-          return (
-            <View style={{ alignItems: mine ? 'flex-end' : 'flex-start' }}>
-              <Pressable onLongPress={mine ? undefined : () => report(m)} delayLongPress={350} style={{ maxWidth: '86%' }}>
-                <View
-                  style={{
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                    borderRadius: 20,
-                    borderBottomRightRadius: mine ? 6 : 20,
-                    borderBottomLeftRadius: mine ? 20 : 6,
-                    backgroundColor: mine ? VIOLET[0] : bubbleBg,
-                    borderWidth: mine ? 0 : 1,
-                    borderColor: theme.hairline,
-                  }}
-                >
-                  <Txt variant="bodyRegular" color={mine ? 'white' : 'primary'}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Pressable onLongPress={() => report(m)} delayLongPress={350}>
+                  <Txt variant="bodyRegular" color={ink} style={{ lineHeight: 23 }}>
                     {m.text}
                   </Txt>
-                </View>
-              </Pressable>
-              {!mine && (
-                <PressableScale onPress={() => report(m)} accessibilityLabel={t('Report this reply')} style={{ padding: 6 }}>
+                </Pressable>
+                <PressableScale onPress={() => report(m)} accessibilityLabel={t('Report this reply')} style={{ alignSelf: 'flex-start', paddingVertical: 2 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Flag size={12} color={theme.textTertiary} strokeWidth={2} />
+                    <Flag size={11} color={theme.textTertiary} strokeWidth={2} />
                     <Txt variant="small" color="tertiary" style={{ fontSize: 11 }}>
                       {t('Report')}
                     </Txt>
                   </View>
                 </PressableScale>
-              )}
-            </View>
-          );
-        }}
+              </View>
+            </Animated.View>
+          )
+        }
         ListFooterComponent={
-          <View style={{ gap: 8 }}>
-            {busy === 'chat' && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <ActivityIndicator size="small" color={VIOLET[0]} />
+          <View style={{ gap: 10 }}>
+            {busy && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#2B3A32' : '#E3EEE6' }}>
+                  <Bot size={16} color={ACCENT} strokeWidth={2.2} />
+                </View>
+                <ActivityIndicator size="small" color={ACCENT} />
                 <Txt variant="small" color="secondary">
                   {t('Thinking…')}
                 </Txt>
               </View>
             )}
             {note && (
-              <View style={{ padding: 12, borderRadius: 16, backgroundColor: hexToRgba('#FFB020', isDark ? 0.16 : 0.12) }}>
+              <View style={{ padding: 12, borderRadius: 16, backgroundColor: isDark ? 'rgba(255,176,32,0.16)' : '#FFF4DE' }}>
                 <Txt variant="small">{note}</Txt>
               </View>
-            )}
-            {messages.length > 0 && (
-              <Txt variant="small" color="tertiary" style={{ textAlign: 'center', fontSize: 11 }}>
-                {t('AI can make mistakes. Not medical advice.')}
-              </Txt>
             )}
           </View>
         }
       />
 
-      {unlocked && (
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 14, paddingTop: 8, paddingBottom: insets.bottom + 10, borderTopWidth: 1, borderTopColor: theme.hairline, backgroundColor: theme.screenBase }}>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder={t('Ask your coach…')}
-            placeholderTextColor={theme.textTertiary}
-            multiline
-            maxLength={600}
-            style={{ flex: 1, minHeight: 46, maxHeight: 120, borderRadius: 23, paddingHorizontal: 18, paddingTop: 12, paddingBottom: 12, backgroundColor: theme.inputBg, color: theme.textPrimary, fontFamily: fonts.medium, fontSize: 15.5 }}
-          />
-          <PressableScale onPress={() => send(text)} disabled={!text.trim() || !!busy} accessibilityLabel={t('Send')}>
-            <View style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: text.trim() && !busy ? VIOLET[0] : theme.inputBg }}>
-              <ArrowUp size={22} color={text.trim() && !busy ? '#FFFFFF' : theme.textTertiary} strokeWidth={2.4} />
+      {/* Input card */}
+      <View style={{ paddingHorizontal: 14, paddingTop: 6, paddingBottom: kbOpen ? 10 : insets.bottom + 10, gap: 8 }}>
+        {unlocked ? (
+          <View
+            style={{
+              borderRadius: 24,
+              paddingHorizontal: 16,
+              paddingTop: 12,
+              paddingBottom: 10,
+              gap: 8,
+              backgroundColor: isDark ? theme.cardElevated : '#FFFFFF',
+              borderWidth: 1,
+              borderColor: theme.hairline,
+              boxShadow: '0px 6px 18px rgba(0,0,0,0.06)',
+            }}
+          >
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder={t('Message your coach…')}
+              placeholderTextColor={theme.textTertiary}
+              multiline
+              maxLength={600}
+              maxFontSizeMultiplier={1.3}
+              style={{ minHeight: 24, maxHeight: 110, padding: 0, color: theme.textPrimary, fontFamily: fonts.medium, fontSize: 16, textAlignVertical: 'top' }}
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+              {text.trim() ? (
+                <PressableScale onPress={() => send(text)} disabled={busy} accessibilityLabel={t('Send')}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: busy ? theme.inputBg : ACCENT }}>
+                    <ArrowUp size={19} color={busy ? theme.textTertiary : '#FFFFFF'} strokeWidth={2.5} />
+                  </View>
+                </PressableScale>
+              ) : (
+                <PressableScale onPress={listen} accessibilityLabel={t('Speak your question')}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}>
+                    <Mic size={20} color={ink} strokeWidth={2} />
+                  </View>
+                </PressableScale>
+              )}
             </View>
-          </PressableScale>
-        </View>
-      )}
+          </View>
+        ) : (
+          <Button label={t('Chat with your coach with Pro')} color={ACCENT} onPress={() => navigation.navigate('Paywall')} />
+        )}
+        {!kbOpen && (
+          <Txt variant="small" color="tertiary" style={{ textAlign: 'center', fontSize: 11.5 }}>
+            {t('Your coach can make mistakes, so double-check it. Not medical advice.')}
+          </Txt>
+        )}
+      </View>
     </KeyboardAvoidingView>
   );
 }

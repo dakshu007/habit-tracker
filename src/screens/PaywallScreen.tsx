@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Txt } from '@/components/ui/Txt';
 import { Button, GlassButton, PressableScale } from '@/components/ui/Glass';
 import { CheckIcon, CloseIcon } from '@/components/ui/icons';
-import { Activity, FileText, Footprints, Gift, Mic, MoonStar, Sparkles, Trophy, type LucideIcon } from '@/components/ui/lucide';
+import { Activity, Bot, FileText, Footprints, Gift, Mic, MoonStar, Sparkles, Trophy, type LucideIcon } from '@/components/ui/lucide';
 import { HabitArt } from '@/components/art/HabitArt';
 import { useTheme } from '@/theme/ThemeContext';
 import { hexToRgba } from '@/theme/color';
@@ -23,7 +23,7 @@ const GOLD = '#F5A623';
 const PERKS: { Icon: LucideIcon; title: string; body: string }[] = [
   { Icon: Sparkles, title: 'Unlimited habits', body: 'The free plan keeps 5. Pro has no limit, plus every widget.' },
   { Icon: Activity, title: 'Auto-tracking', body: 'Steps, workouts, floors and sleep fill in by themselves.' },
-  { Icon: Sparkles, title: 'Your AI coach', body: 'Ask anything about your habits. It knows your streaks and history.' },
+  { Icon: Bot, title: 'Your AI coach', body: 'Ask anything about your habits. It knows your streaks and history.' },
   { Icon: Footprints, title: 'GPS runs with a live map', body: 'Distance, pace and splits, logged to your habit.' },
   { Icon: MoonStar, title: 'Sleep from phone use', body: 'No watch needed.' },
   { Icon: Mic, title: 'Voice logging', body: '“2 glasses of water”. Done.' },

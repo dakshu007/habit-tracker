@@ -54,10 +54,10 @@ function DayCell({ index, day, scrollX, completion }: DayCellProps) {
 
   return (
     <Animated.View style={[{ width: ITEM_WIDTH, alignItems: 'center', gap: 3 }, style]}>
-      <Txt variant="weekday" color="white" style={{ opacity: day.isFuture ? 0.7 : 1 }}>
+      <Txt variant="weekday" color="white" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ opacity: day.isFuture ? 0.7 : 1, maxWidth: ITEM_WIDTH }}>
         {day.isToday ? t('Today') : t(day.label)}
       </Txt>
-      <Txt variant="weekday" color="white" style={{ opacity: day.isFuture ? 0.7 : 1 }}>
+      <Txt variant="weekday" color="white" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ opacity: day.isFuture ? 0.7 : 1, maxWidth: ITEM_WIDTH }}>
         {day.dayOfMonth}
       </Txt>
       <View

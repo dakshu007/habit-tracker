@@ -206,12 +206,13 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
   }
 
   const empty = messages.length === 0;
+  const firstName = name.trim().split(/\s+/)[0] ?? '';
 
   const greeting = (
     <View style={{ gap: 26, paddingTop: 10 }}>
       <Animated.View entering={FadeInDown.duration(380)}>
-        <Txt variant="display" color={ink} style={{ fontSize: 38, lineHeight: 44, letterSpacing: -1.2 }}>
-          {name ? t('Hi {name}, how can I help you?', { name }) : t('Hi, how can I help you?')}
+        <Txt variant="display" color={ink} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7} style={{ fontSize: 34, lineHeight: 40, letterSpacing: -1 }}>
+          {firstName ? t('Hi {name}, how can I help you?', { name: firstName }) : t('Hi, how can I help you?')}
         </Txt>
       </Animated.View>
 
@@ -244,7 +245,8 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
                 accessibilityLabel={t(topic.title)}
                 style={{ flex: 1, borderRadius: 28, backgroundColor: isDark ? topic.dark : topic.light, padding: 18, boxShadow: isFront ? '0px 14px 30px rgba(0,0,0,0.10)' : undefined }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                {/* Cards behind show only their colour; text on them would be cut off. */}
+                {isFront && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ width: 40, height: 40, borderRadius: 20, overflow: 'hidden', backgroundColor: '#FFFFFF' }}>
                     <HabitArt artId={topic.art} mode="thumb" />
                   </View>
@@ -256,7 +258,7 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
                       {t(topic.sub)}
                     </Txt>
                   </View>
-                </View>
+                </View>}
                 {isFront && (
                   <Animated.View entering={FadeIn} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                     <View style={{ width: 150, height: 150, borderRadius: 75, overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: 4, borderColor: 'rgba(255,255,255,0.7)' }}>
@@ -274,6 +276,14 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
             </Animated.View>
           );
         })}
+      </View>
+      {/* Which card is in front; tap a card behind to bring it forward. */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: -10 }}>
+        {TOPICS.map((tp, i) => (
+          <PressableScale key={tp.key} onPress={() => setOrder((cur) => [i, ...cur.filter((x) => x !== i)])} accessibilityLabel={t(tp.title)} style={{ padding: 4 }}>
+            <View style={{ width: order[0] === i ? 18 : 7, height: 7, borderRadius: 4, backgroundColor: order[0] === i ? ACCENT : theme.hairline }} />
+          </PressableScale>
+        ))}
       </View>
       {!unlocked && (
         <Txt variant="small" color="secondary" style={{ textAlign: 'center' }}>

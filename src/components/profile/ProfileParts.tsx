@@ -332,7 +332,7 @@ export function AchievementsGrid() {
         {list.map((a) => (
           <PressableScale key={a.id} silent onPress={() => (haptic.light(), overlay.open(<BadgeSheet a={a} />))} style={{ width: '25%', alignItems: 'center', gap: 6 }}>
             <Badge a={a} size={58} />
-            <Txt variant="small" color={a.unlocked ? 'primary' : 'secondary'} numberOfLines={1} style={{ fontSize: 11.5 }}>
+            <Txt variant="small" color={a.unlocked ? 'primary' : 'secondary'} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ fontSize: 11.5, width: '100%', paddingHorizontal: 2, textAlign: 'center' }}>
               {t(a.title)}
             </Txt>
           </PressableScale>

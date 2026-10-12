@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -64,13 +64,16 @@ export function GlassTabBar({ tabs, active, onChange }: GlassTabBarProps) {
     if (m.pop) stretch.value = withSequence(withTiming(1.16, { duration: 110 }), withSpring(1, m.release));
   }, [index, idx, stretch, hovered, dragging, m]);
 
+  // Gesture callbacks can hold a `select` from an earlier render, so read the
+  // current tab from a ref. (Comparing with a stale `active` ignored the tap:
+  // the lens moved but the screen stayed on the old tab.)
+  const activeRef = useRef(active);
+  activeRef.current = active;
   const select = (i: number) => {
     const t = tabs[i];
     if (!t) return;
-    if (t !== active) {
-      haptic.tick();
-      onChange(t);
-    }
+    if (t !== activeRef.current) haptic.tick();
+    onChange(t); // a no-op when it's already the active tab
   };
   const tick = () => haptic.tick();
   const pickUp = () => haptic.medium();

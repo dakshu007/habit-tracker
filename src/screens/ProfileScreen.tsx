@@ -146,7 +146,7 @@ export function ProfileScreen() {
           icon={<FaceSlightlySmiling size={19} color="#34C7A0" strokeWidth={2} />}
           iconBg="#34C7A0"
           title={t('Mood check-ins')}
-          subtitle={t('Ask how you feel after completing a habit')}
+          subtitle={t('Ask how you feel once all of today’s habits are done')}
           right={<Toggle value={settings.moodPrompt} onChange={(v) => updateSettings({ moodPrompt: v })} />}
         />
         <Row

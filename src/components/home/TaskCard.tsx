@@ -14,7 +14,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { useHabitStore } from '@/store/useHabitStore';
 import { getTheme } from '@/data/themes';
 import { daysClean, isRestDay, moneySaved, valueOn, weekSessions } from '@/logic/habits';
-import { askMood } from '@/components/mood/Mood';
+import { askMoodIfDayDone } from '@/components/mood/Mood';
 import { t } from '@/i18n';
 import { fmtNumber, qty } from '@/utils/format';
 import type { Habit } from '@/data/types';
@@ -164,7 +164,7 @@ export const TaskCard = memo(function TaskCard({ habit, width, tiltX, tiltY, day
             doneLabel={quit ? t('Clean day logged. Proud of you.') : habit.doneLabel}
             onComplete={() => {
               complete(habit.id, day);
-              if (askMoodOnComplete) askMood(habit, day);
+              if (askMoodOnComplete) askMoodIfDayDone(day);
               onCompleted?.();
             }}
           />

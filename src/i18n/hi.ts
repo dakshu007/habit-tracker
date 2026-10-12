@@ -776,4 +776,10 @@ export const hi: Record<string, string> = {
   'Your Google Drive has a newer backup, maybe from another phone. Replace it with this phone’s data?': 'आपकी Google Drive में नया बैकअप है, शायद किसी दूसरे फ़ोन से। क्या उसे इस फ़ोन के डेटा से बदलें?',
   'Google needs you to allow access again. Tap the backup row to reconnect.': 'Google चाहता है कि आप फिर से अनुमति दें। दोबारा जोड़ने के लिए बैकअप वाली पंक्ति पर टैप करें।',
   'Your current data on this phone will be replaced.': 'इस फ़ोन का मौजूदा डेटा बदल जाएगा।',
+
+  // ── Daily mood check-in, onboarding ──────────────────────────────
+  'All done for today! How do you feel?': 'आज का सब पूरा! आप कैसा महसूस कर रहे हैं?',
+  'A quick check-in helps you spot what lifts your mood.': 'छोटी सी जाँच से पता चलता है कि आपका मूड किससे अच्छा होता है।',
+  'Ask how you feel once all of today’s habits are done': 'आज की सभी आदतें पूरी होने पर मूड पूछें',
+  'Tap the habits you want to build': 'जो आदतें बनानी हैं, उन पर टैप करें',
 };

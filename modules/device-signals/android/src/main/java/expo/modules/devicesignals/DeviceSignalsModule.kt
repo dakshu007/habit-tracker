@@ -210,6 +210,13 @@ class DeviceSignalsModule : Module() {
         .addOnFailureListener { e -> promise.reject("ERR_DRIVE", e.message ?: "Google authorization failed.", e) }
     }
 
+    // 32 random bytes as hex (secure), e.g. the restore key for invite rewards.
+    Function("randomKey") {
+      val bytes = ByteArray(32)
+      java.security.SecureRandom().nextBytes(bytes)
+      bytes.joinToString("") { "%02x".format(it) }
+    }
+
     // Forget this app's Drive access for the account (the backup file stays in Drive).
     AsyncFunction("revokeDrive") { email: String, promise: Promise ->
       val ctx = appContext.currentActivity ?: appContext.reactContext

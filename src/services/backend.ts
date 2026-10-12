@@ -14,6 +14,8 @@ import { dayKey } from '@/utils/date';
 
 const SESSION_KEY = 'backend-session';
 const FLAGS_KEY = 'backend-flags';
+/** Secret that lets a Google Drive restore reclaim this install's invites and rewards. */
+const RESTORE_KEY = 'backend-restore-key';
 
 interface Session {
   access_token: string;
@@ -30,6 +32,10 @@ interface Flags {
   activeDay?: string;
   /** Told the backend this invited install bought Pro. */
   paidReported?: boolean;
+  /** The restore key's hash is on the server. */
+  restoreKeySet?: boolean;
+  /** A restored backup's key still has to be claimed (we were offline). */
+  adoptPending?: boolean;
 }
 
 let session: Session | null = null;
@@ -153,12 +159,46 @@ function applyReward(until: string | null | undefined) {
   useLicense.getState().setRewardUntil(Number.isFinite(ms) ? ms : null);
 }
 
+/** This install's restore key (created on first use). Goes into the Drive backup. */
+export async function getRestoreKey(): Promise<string | null> {
+  try {
+    const have = await AsyncStorage.getItem(RESTORE_KEY);
+    if (have) return have;
+    const key = DeviceSignals?.randomKey();
+    if (!key) return null;
+    await AsyncStorage.setItem(RESTORE_KEY, key);
+    return key;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * After restoring a Google Drive backup: take over the old install's invite
+ * code, invited friends and earned Pro time. Retried on launch if offline.
+ */
+export async function adoptRestoredAccount(key: string): Promise<void> {
+  const flags = (await readJson<Flags>(FLAGS_KEY)) ?? {};
+  await AsyncStorage.setItem(RESTORE_KEY, key).catch(() => {});
+  flags.adoptPending = true;
+  flags.restoreKeySet = true; // the server already has this key's hash
+  await AsyncStorage.setItem(FLAGS_KEY, JSON.stringify(flags)).catch(() => {});
+  if (backendEnabled()) await startBackend();
+}
+
 /**
  * On launch: make sure this install has a profile, claim the invite it came
  * from (once), count today as an active day, report a purchase by an invited
  * friend, and pick up Pro time earned from invites.
  */
-export async function startBackend() {
+let backendRun: Promise<void> = Promise.resolve();
+export function startBackend(): Promise<void> {
+  // One at a time, so two runs never overwrite each other's flags.
+  backendRun = backendRun.then(runBackend, runBackend);
+  return backendRun;
+}
+
+async function runBackend() {
   if (!backendEnabled() || Platform.OS !== 'android') return;
   try {
     const flags = (await readJson<Flags>(FLAGS_KEY)) ?? {};
@@ -177,6 +217,24 @@ export async function startBackend() {
       }).catch(() => null);
       const ms = started ? Date.parse(started) : NaN;
       if (Number.isFinite(ms) && ms < (useLicense.getState().trialStart ?? Infinity)) useLicense.getState().setTrialStart(ms);
+    }
+
+    // A restored backup: reclaim the old install's invites and rewards.
+    if (flags.adoptPending) {
+      const key = await AsyncStorage.getItem(RESTORE_KEY).catch(() => null);
+      const r = key ? await rpc<string>('adopt_profile', { p_key: key }).catch(() => null) : 'none';
+      // Retry only on network errors; 'unknown' etc. are final.
+      if (r != null) {
+        flags.adoptPending = false;
+        flags.referrerChecked = true; // a returning user isn't a new invite
+      }
+    }
+    if (!flags.restoreKeySet) {
+      const key = await getRestoreKey();
+      if (key) {
+        const ok = await rpc('set_restore_key', { p_key: key }).then(() => true, () => false);
+        if (ok) flags.restoreKeySet = true;
+      }
     }
 
     if (!flags.referrerChecked) {

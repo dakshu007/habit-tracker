@@ -67,15 +67,40 @@ async function userFrom(req: Request): Promise<string | null> {
   return typeof user?.id === "string" ? user.id : null;
 }
 
-async function used(userId: string, period: string): Promise<number> {
-  const res = await fetch(`${URL}/rest/v1/ai_usage?select=replies&user_id=eq.${userId}&period=eq.${encodeURIComponent(period)}`, { headers: serviceHeaders() });
-  if (!res.ok) return 0;
+/**
+ * Replies are counted per phone (the profile's hashed device id), so clearing
+ * the app's data or reinstalling doesn't reset them. Falls back to the
+ * anonymous user when the phone is unknown or the per-phone table is missing.
+ */
+interface Counter {
+  table: "ai_device_usage" | "ai_usage";
+  column: "device_hash" | "user_id";
+  key: string;
+  bumpFn: "ai_bump_device" | "ai_bump";
+  bumpArg: "p_device_hash" | "p_user";
+}
+
+async function counterFor(userId: string): Promise<Counter> {
+  const byUser: Counter = { table: "ai_usage", column: "user_id", key: userId, bumpFn: "ai_bump", bumpArg: "p_user" };
+  const res = await fetch(`${URL}/rest/v1/profiles?select=device_hash&id=eq.${userId}`, { headers: serviceHeaders() });
+  if (!res.ok) return byUser;
+  const hash = (await res.json())?.[0]?.device_hash;
+  if (typeof hash !== "string" || !hash) return byUser;
+  // Make sure the per-phone table exists (supabase/trial.sql) before relying on it.
+  const probe = await fetch(`${URL}/rest/v1/ai_device_usage?select=replies&limit=1`, { headers: serviceHeaders() });
+  if (!probe.ok) return byUser;
+  return { table: "ai_device_usage", column: "device_hash", key: hash, bumpFn: "ai_bump_device", bumpArg: "p_device_hash" };
+}
+
+async function used(c: Counter, period: string): Promise<number> {
+  const res = await fetch(`${URL}/rest/v1/${c.table}?select=replies&${c.column}=eq.${encodeURIComponent(c.key)}&period=eq.${encodeURIComponent(period)}`, { headers: serviceHeaders() });
+  if (!res.ok) throw new Error(`usage ${res.status}`);
   const rows = await res.json();
   return rows?.[0]?.replies ?? 0;
 }
 
-async function bump(userId: string, period: string): Promise<void> {
-  await fetch(`${URL}/rest/v1/rpc/ai_bump`, { method: "POST", headers: serviceHeaders(), body: JSON.stringify({ p_user: userId, p_period: period }) });
+async function bump(c: Counter, period: string): Promise<void> {
+  await fetch(`${URL}/rest/v1/rpc/${c.bumpFn}`, { method: "POST", headers: serviceHeaders(), body: JSON.stringify({ [c.bumpArg]: c.key, p_period: period }) });
 }
 
 const SYSTEM = `You are the coach inside Habit Tracker, a habit app. You help one person build and keep good habits.
@@ -111,7 +136,7 @@ Deno.serve(async (req) => {
   const userId = await userFrom(req);
   if (!userId) return json({ error: "auth" }, 401);
 
-  let body: { mode?: Mode; plan?: Plan; lang?: string; context?: string; messages?: { role: string; content: string }[] };
+  let body: { mode?: Mode; plan?: Plan; lang?: string; context?: string; status?: boolean; messages?: { role: string; content: string }[] };
   try {
     body = await req.json();
   } catch {
@@ -120,7 +145,15 @@ Deno.serve(async (req) => {
   const mode: Mode = body.mode === "weekly" ? "weekly" : "chat";
   const plan: Plan = (["subscription", "lifetime", "trial", "free"] as const).includes(body.plan as Plan) ? (body.plan as Plan) : "free";
   const { period, limit } = allowance(plan, mode, new Date());
-  const count = await used(userId, period);
+  const counter = await counterFor(userId);
+  let count: number;
+  try {
+    count = await used(counter, period);
+  } catch {
+    return json({ error: "usage" }, 503);
+  }
+  // Just "how many replies are left?" (coach screen opening), no AI call.
+  if (body.status) return json({ limit, remaining: Math.max(0, limit - count) });
   if (count >= limit) return json({ error: "limit", limit, remaining: 0 }, 429);
 
   const context = String(body.context ?? "").slice(0, 6000);
@@ -149,7 +182,7 @@ Deno.serve(async (req) => {
     }
     const reply = res.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("\n").trim();
     if (!reply) return json({ error: "empty_reply" }, 502);
-    await bump(userId, period);
+    await bump(counter, period);
     return json({ reply, limit, remaining: Math.max(0, limit - count - 1) });
   } catch (e) {
     console.error("coach error", e instanceof Error ? e.message : e);

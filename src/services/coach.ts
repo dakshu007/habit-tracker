@@ -35,6 +35,16 @@ async function ask(mode: 'chat' | 'weekly', messages: { role: string; content: s
   }
 }
 
+/** Ask the server how many chat replies are left (no AI call). */
+export async function refreshRemaining(): Promise<void> {
+  try {
+    const { status, data } = await callFunction<{ remaining?: number }>('coach', { mode: 'chat', plan: aiPlan(), status: true });
+    if (status === 200 && typeof data?.remaining === 'number') useCoachStore.getState().setRemaining(data.remaining);
+  } catch {
+    // Offline: keep the last known number.
+  }
+}
+
 /** Send a chat message; stores both sides on the phone. */
 export async function sendToCoach(text: string): Promise<CoachResult> {
   const store = useCoachStore.getState();

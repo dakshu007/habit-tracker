@@ -11,7 +11,8 @@ import { useTheme } from '@/theme/ThemeContext';
 import { hexToRgba } from '@/theme/color';
 import { t } from '@/i18n';
 import { haptic } from '@/utils/haptics';
-import type { Habit } from '@/data/types';
+import { createdKey, dueOn, isDoneOn } from '@/logic/habits';
+import { canLogHabit } from '@/store/useLicense';
 
 export type MoodValue = 1 | 2 | 3 | 4;
 
@@ -33,24 +34,30 @@ export function MoodDot({ value, size = 18 }: { value?: number; size?: number })
   return <m.Icon size={size} color={m.color} strokeWidth={2} />;
 }
 
-/** "How do you feel?" — shown right after a habit is completed. */
-export function MoodSheet({ habit, day }: { habit: Habit; day: string }) {
+/** "How do you feel?" once a day, after the last habit of the day is done. */
+export function MoodSheet({ day }: { day: string }) {
   const { theme } = useTheme();
   const setMood = useHabitStore((s) => s.setMood);
   const [mood, setMoodLocal] = useState<MoodValue | null>(null);
   const [note, setNote] = useState('');
 
   const save = () => {
-    if (mood) setMood(habit.id, day, mood, note);
+    if (mood) {
+      // The day's mood goes on every habit done that day; the note on the first.
+      const { habits, logs } = useHabitStore.getState();
+      habits
+        .filter((h) => isDoneOn(h, logs, day))
+        .forEach((h, i) => setMood(h.id, day, mood, i === 0 ? note : undefined));
+    }
     overlay.close();
   };
 
   return (
     <View style={{ padding: 22, gap: 18 }}>
       <View style={{ gap: 4 }}>
-        <Txt variant="h2">{t('How do you feel?')}</Txt>
+        <Txt variant="h2">{t('All done for today! How do you feel?')}</Txt>
         <Txt variant="small" color="secondary">
-          {t('{habit} is done. A quick check-in helps you spot what lifts your mood.', { habit: habit.title })}
+          {t('A quick check-in helps you spot what lifts your mood.')}
         </Txt>
       </View>
 
@@ -100,8 +107,20 @@ export function MoodSheet({ habit, day }: { habit: Habit; day: string }) {
   );
 }
 
-/** Opens the mood sheet if the user has check-ins turned on. */
-export function askMood(habit: Habit, day: string) {
-  if (!useHabitStore.getState().settings.moodPrompt) return;
-  setTimeout(() => overlay.open(<MoodSheet habit={habit} day={day} />), 750);
+/** Days the check-in was already offered this session (so Skip isn't asked again). */
+const offered = new Set<string>();
+
+/**
+ * Opens the mood sheet once the last habit due that day is done (if check-ins
+ * are on and the day has no mood yet). Called after each completion.
+ */
+export function askMoodIfDayDone(day: string) {
+  const { settings, habits, logs } = useHabitStore.getState();
+  if (!settings.moodPrompt || offered.has(day)) return;
+  const due = dueOn(habits, day).filter((h) => canLogHabit(habits, h.id) && (day >= createdKey(h) || logs[day]?.[h.id]));
+  if (!due.length || !due.every((h) => isDoneOn(h, logs, day))) return;
+  if (Object.values(logs[day] ?? {}).some((e) => e.mood)) return;
+  offered.add(day);
+  // After the slide and the card's done animation have settled.
+  setTimeout(() => overlay.open(<MoodSheet day={day} />), 1200);
 }

@@ -181,7 +181,7 @@ export function backupNow({ interactive = false, force = false } = {}): Promise<
         return false;
       }
       const sig = signature();
-      const saved = await upload(tok, await buildBackup(), remote?.id ?? null, summary());
+      const saved = await upload(tok, await buildBackup({ private: true }), remote?.id ?? null, summary());
       useDriveBackup.getState().set({ lastAt: Date.now(), lastSig: sig, remoteTime: saved.modifiedTime, needsReconnect: false, newerInDrive: false });
       return true;
     } finally {

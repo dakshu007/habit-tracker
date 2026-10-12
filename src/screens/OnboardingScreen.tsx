@@ -23,7 +23,7 @@ import { CheckIcon } from '@/components/ui/icons';
 import { HabitArt } from '@/components/art/HabitArt';
 import { useHabitStore } from '@/store/useHabitStore';
 import { getTheme } from '@/data/themes';
-import { DEFAULT_TEMPLATE_KEYS, habitFromTemplate, templates } from '@/data/templates';
+import { habitFromTemplate, templates } from '@/data/templates';
 import { ensurePermission } from '@/services/notifications';
 import { spacing } from '@/theme/tokens';
 import { haptic } from '@/utils/haptics';
@@ -42,7 +42,8 @@ export function OnboardingScreen() {
   const updateSettings = useHabitStore((s) => s.updateSettings);
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
-  const [picked, setPicked] = useState<string[]>(DEFAULT_TEMPLATE_KEYS);
+  // Nothing pre-selected: people pick what they actually do.
+  const [picked, setPicked] = useState<string[]>([]);
   const m = useMotion();
 
   const pos = useSharedValue(0);
@@ -269,7 +270,7 @@ function PickHabits({ picked, setPicked, onNext }: { picked: string[]; setPicked
         })}
       </ScrollView>
       <View style={{ paddingHorizontal: spacing.screenX + 4, paddingTop: 8 }}>
-        <Button label={picked.length ? t('Continue with {n}', { n: picked.length }) : t('Start with an empty slate')} onPress={onNext} />
+        <Button label={picked.length ? t('Continue with {n}', { n: picked.length }) : t('Tap the habits you want to build')} onPress={onNext} disabled={!picked.length} />
       </View>
     </View>
   );

@@ -14,7 +14,7 @@ import { fonts } from '@/theme/tokens';
 import { useCoachStore, type CoachMessage } from '@/store/useCoachStore';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useUnlocked } from '@/store/useLicense';
-import { reportReply, sendToCoach, weeklyInsight, type CoachResult } from '@/services/coach';
+import { refreshRemaining, reportReply, sendToCoach, weeklyInsight, type CoachResult } from '@/services/coach';
 import { backendEnabled } from '@/config/backend';
 import { haptic } from '@/utils/haptics';
 import { getLang } from '@/i18n/core';
@@ -60,6 +60,11 @@ export function CoachScreen({ navigation }: RootScreenProps<'Coach'>) {
   const [order, setOrder] = useState<number[]>([0, 1, 2]);
   const [kbOpen, setKbOpen] = useState(false);
   const list = useRef<FlatList<CoachMessage>>(null);
+
+  // Show the real replies-left count from the server as soon as the screen opens.
+  useEffect(() => {
+    if (unlocked && consent) refreshRemaining();
+  }, [unlocked, consent]);
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => {

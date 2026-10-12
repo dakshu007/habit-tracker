@@ -34,7 +34,7 @@ import { connectDrive, driveBackupAvailable, useDriveBackup } from '@/services/d
 import { t } from '@/i18n';
 import { scheduleLabel } from '@/logic/habits';
 
-const STEP_COLORS = [getTheme('sky').bgTop, getTheme('lavender').bgTop, getTheme('mint').bgTop, getTheme('sunset').bgTop];
+const STEP_COLORS = [getTheme('sky').accent, getTheme('lavender').accent, getTheme('mint').accent, getTheme('sunset').accent];
 
 export function OnboardingScreen() {
   const insets = useSafeAreaInsets();
@@ -77,7 +77,7 @@ export function OnboardingScreen() {
   };
 
   return (
-    <GradientBackground colors={STEP_COLORS} pos={pos}>
+    <GradientBackground colors={STEP_COLORS} pos={pos} full>
       {/* KeyboardAvoidingView owns paddingBottom, so the safe-area padding lives on an inner view. */}
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 16) + 12 }}>

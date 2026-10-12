@@ -1,6 +1,6 @@
 # Privacy Policy: Habit Tracker
 
-_Last updated: 11 October 2026_
+_Last updated: 12 October 2026_
 
 ## The short version
 
@@ -48,7 +48,7 @@ Reminders, the evening nudge, focus timers and the weekly review are scheduled l
 
 ## Backups
 
-Android may back up the app’s data to your own Google account (Android Auto Backup), so it can be restored on a new phone. This is handled by Google under your account settings. Manual backup files you export stay wherever you save them.
+If you turn on Google Drive backup (Profile → Google Drive backup), the app saves a copy of your data (habits, history, streaks, settings, profile and runs, including run routes) to a hidden app folder in your own Google Drive. It goes straight from your phone to your Google account: we never receive it or see it, and only this app can open that folder. The app asks Google only for access to its own folder, not the rest of your Drive. You can turn it off any time; to delete the backup itself, open Google Drive → Settings → Manage apps → Habit Tracker → Delete hidden app data. Android may also back up the app’s data to your Google account (Android Auto Backup). Manual backup files you export stay wherever you save them.
 
 ## Crash reports
 

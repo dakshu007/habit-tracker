@@ -16,6 +16,11 @@ import android.provider.Settings
 import android.speech.RecognizerIntent
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
+import android.accounts.Account
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.RevokeAccessRequest
+import com.google.android.gms.common.api.Scope
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -27,6 +32,7 @@ import expo.modules.kotlin.modules.ModuleDefinition
  */
 class DeviceSignalsModule : Module() {
   private var speechPromise: Promise? = null
+  private var drivePromise: Promise? = null
 
   override fun definition() = ModuleDefinition {
     Name("DeviceSignals")
@@ -170,7 +176,71 @@ class DeviceSignalsModule : Module() {
       true
     }
 
-    OnActivityResult { _, payload ->
+    // Google Drive backup: an access token for the app's hidden Drive folder
+    // (drive.appdata). No sign-in to the app itself. With interactive = false
+    // it never shows UI and resolves null if the user has to choose or consent.
+    AsyncFunction("authorizeDrive") { email: String?, interactive: Boolean, promise: Promise ->
+      // Silent calls also run while the app is closing (backup on leaving the app).
+      val activity = appContext.currentActivity
+      val ctx: Context? = activity ?: appContext.reactContext
+      if (ctx == null) {
+        promise.resolve(null)
+        return@AsyncFunction
+      }
+      val builder = AuthorizationRequest.builder().setRequestedScopes(listOf(Scope(DRIVE_SCOPE)))
+      if (!email.isNullOrEmpty()) builder.setAccount(Account(email, "com.google"))
+      Identity.getAuthorizationClient(ctx).authorize(builder.build())
+        .addOnSuccessListener { result ->
+          val pending = result.pendingIntent
+          if (!result.hasResolution() || pending == null) {
+            promise.resolve(result.accessToken)
+          } else if (!interactive || activity == null) {
+            promise.resolve(null)
+          } else {
+            try {
+              drivePromise?.resolve(null)
+              drivePromise = promise
+              activity.startIntentSenderForResult(pending.intentSender, DRIVE_REQUEST, null, 0, 0, 0, null)
+            } catch (e: Exception) {
+              drivePromise = null
+              promise.reject("ERR_DRIVE", e.message ?: "Couldn't open Google sign-in.", e)
+            }
+          }
+        }
+        .addOnFailureListener { e -> promise.reject("ERR_DRIVE", e.message ?: "Google authorization failed.", e) }
+    }
+
+    // Forget this app's Drive access for the account (the backup file stays in Drive).
+    AsyncFunction("revokeDrive") { email: String, promise: Promise ->
+      val ctx = appContext.currentActivity ?: appContext.reactContext
+      if (ctx == null) {
+        promise.resolve(false)
+        return@AsyncFunction
+      }
+      val request = RevokeAccessRequest.builder()
+        .setAccount(Account(email, "com.google"))
+        .setScopes(listOf(Scope(DRIVE_SCOPE)))
+        .build()
+      Identity.getAuthorizationClient(ctx).revokeAccess(request)
+        .addOnSuccessListener { promise.resolve(true) }
+        .addOnFailureListener { promise.resolve(false) }
+    }
+
+    OnActivityResult { activity, payload ->
+      if (payload.requestCode == DRIVE_REQUEST) {
+        val p = drivePromise ?: return@OnActivityResult
+        drivePromise = null
+        if (payload.resultCode != Activity.RESULT_OK) {
+          p.resolve(null) // the user backed out
+          return@OnActivityResult
+        }
+        try {
+          p.resolve(Identity.getAuthorizationClient(activity).getAuthorizationResultFromIntent(payload.data).accessToken)
+        } catch (e: Exception) {
+          p.reject("ERR_DRIVE", e.message ?: "Google authorization failed.", e)
+        }
+        return@OnActivityResult
+      }
       if (payload.requestCode != SPEECH_REQUEST) return@OnActivityResult
       val p = speechPromise ?: return@OnActivityResult
       speechPromise = null
@@ -215,6 +285,8 @@ class DeviceSignalsModule : Module() {
 
   companion object {
     private const val SPEECH_REQUEST = 7311
+    private const val DRIVE_REQUEST = 7312
+    private const val DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata"
     private const val DEFAULT_ICON = "sage"
     private val ICONS = listOf("sage", "ink", "midnight", "sand")
   }

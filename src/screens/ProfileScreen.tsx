@@ -10,7 +10,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ArchiveIcon, CheckIcon, ChevronRight, DownloadIcon, MotionIcon, PlusIcon, RefreshIcon, ShareIcon, VibrateIcon, CalendarSmallIcon, WidgetIcon } from '@/components/ui/icons';
 import { useHabitStore } from '@/store/useHabitStore';
 import { useTheme, type ThemeMode } from '@/theme/ThemeContext';
-import { exportBackup, pickBackup } from '@/services/backup';
+import { applyBackup, exportBackup, pickBackup } from '@/services/backup';
 import { AchievementsGrid, IdentityCard } from '@/components/profile/ProfileParts';
 import { SwipeToggle } from '@/components/ui/SwipeToggle';
 import { MotionPicker } from '@/components/ui/MotionPicker';
@@ -18,7 +18,7 @@ import { requestPinWidget } from 'react-native-android-widget';
 import { CARD_WIDGET, LIST_WIDGET } from '@/widget/TodayWidget';
 import { MINI_WIDGET, SLEEP_WIDGET, STREAK_WIDGET } from '@/widget/MoreWidgets';
 import { getProfileStyle } from '@/data/profileStyles';
-import { CalendarCheck, CloudUpload, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, ShieldCheck, Bot, Users } from '@/components/ui/lucide';
+import { CalendarCheck, FaceSlightlySmiling, FileText, Footprints, Gem, HeartHandshake, Languages, Bot, Users } from '@/components/ui/lucide';
 import { ReportSheet } from '@/components/profile/ReportSheet';
 import { AppIconPicker } from '@/components/profile/AppIconPicker';
 import { ProCard } from '@/components/profile/ProCard';
@@ -32,6 +32,8 @@ import { haptic } from '@/utils/haptics';
 import type { RootNav } from '@/navigation/types';
 import { isUnlocked } from '@/store/useLicense';
 import { ReferralCard } from '@/components/profile/ReferralCard';
+import { DriveBackupRow } from '@/components/profile/DriveBackup';
+import { useDriveBackup } from '@/services/driveBackup';
 import { backendEnabled } from '@/config/backend';
 
 const toast = (msg: string) => ToastAndroid.show(msg, ToastAndroid.SHORT);
@@ -45,12 +47,12 @@ export function ProfileScreen() {
   const settings = useHabitStore((s) => s.settings);
   const buddy = useHabitStore((s) => s.extras.buddy);
   const updateSettings = useHabitStore((s) => s.updateSettings);
-  const importSnapshot = useHabitStore((s) => s.importSnapshot);
   const resetAll = useHabitStore((s) => s.resetAll);
 
   const activeCount = habits.filter((h) => !h.archived).length;
   const archivedCount = habits.length - activeCount;
   const runs = useRunStore((s) => s.runs);
+  const driveOn = useDriveBackup((s) => s.email != null);
   const runCount = runs.length;
   const runKm = runs.reduce((m, r) => m + r.distance, 0);
 
@@ -64,8 +66,7 @@ export function ProfileScreen() {
           text: t('Restore'),
           style: 'destructive',
           onPress: () => {
-            importSnapshot(snap);
-            if (snap.runs) useRunStore.getState().replaceRuns(snap.runs);
+            applyBackup(snap);
             haptic.success();
             toast(t('Backup restored'));
           },
@@ -264,6 +265,7 @@ export function ProfileScreen() {
 
       <SectionTitle>{t('Your data')}</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
+        <DriveBackupRow />
         <Row
           icon={<ShareIcon size={19} color="#4C8DF6" />}
           iconBg="#4C8DF6"
@@ -288,19 +290,6 @@ export function ProfileScreen() {
           right={<ChevronRight size={18} color={theme.textTertiary} />}
         />
         <Row
-          icon={<CloudUpload size={19} color="#3BA4E6" strokeWidth={2} />}
-          iconBg="#3BA4E6"
-          title={t('Google backup')}
-          subtitle={t('Automatic: Android backs up to your Google account')}
-          onPress={() =>
-            Alert.alert(
-              t('Automatic Google backup'),
-              t('Android backs up this app’s data to your Google account about once a day (on Wi-Fi, while charging). When you set up a new phone with the same Google account and reinstall the app, your habits come back. Check it in Android Settings → Google → Backup.'),
-            )
-          }
-          right={<ShieldCheck size={18} color="#34C759" strokeWidth={2} />}
-        />
-        <Row
           icon={<FileText size={19} color="#8A8F98" strokeWidth={2} />}
           iconBg="#8A8F98"
           title={t('Privacy policy')}
@@ -315,7 +304,7 @@ export function ProfileScreen() {
           {t('Version {v}', { v: Constants.expoConfig?.version ?? '1.0.0' })}
         </Txt>
         <Txt variant="small" color="tertiary" style={{ textAlign: 'center' }}>
-          {t('Offline-first · your data never leaves this phone')}
+          {driveOn ? t('Offline-first · backed up to your own Google Drive') : t('Offline-first · your data never leaves this phone')}
         </Txt>
       </View>
     </Screen>

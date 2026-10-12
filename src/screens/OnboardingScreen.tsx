@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BackHandler, KeyboardAvoidingView, ScrollView, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, BackHandler, KeyboardAvoidingView, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Easing,
@@ -29,7 +29,8 @@ import { spacing } from '@/theme/tokens';
 import { haptic } from '@/utils/haptics';
 import { qty } from '@/utils/format';
 import { useMotion } from '@/theme/motion';
-import { BellRing } from '@/components/ui/lucide';
+import { BellRing, CloudDownload } from '@/components/ui/lucide';
+import { connectDrive, driveBackupAvailable, useDriveBackup } from '@/services/driveBackup';
 import { t } from '@/i18n';
 import { scheduleLabel } from '@/logic/habits';
 
@@ -129,6 +130,7 @@ export function OnboardingScreen() {
 
 function Welcome({ onNext }: { onNext: () => void }) {
   const { width } = useWindowDimensions();
+  const restoring = useDriveBackup((st) => st.busy);
   const w = Math.min(230, width * 0.56);
   const float = useSharedValue(0);
   useEffect(() => {
@@ -149,6 +151,16 @@ function Welcome({ onNext }: { onNext: () => void }) {
           {t('Swipe through beautiful cards, slide to complete, and watch your streaks grow. All private, all on your phone.')}
         </Txt>
         <Button label={t('Get started')} onPress={onNext} style={{ marginTop: 10 }} />
+        {driveBackupAvailable() && (
+          <Button
+            label={restoring ? t('Looking for your backup…') : t('Restore from Google Drive')}
+            variant="ghost"
+            color="#FFFFFF"
+            disabled={restoring}
+            icon={restoring ? <ActivityIndicator size="small" color="#FFFFFF" /> : <CloudDownload size={18} color="#FFFFFF" strokeWidth={2} />}
+            onPress={() => connectDrive({ onboarding: true }).catch(() => {})}
+          />
+        )}
       </Animated.View>
     </View>
   );

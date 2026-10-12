@@ -22,6 +22,9 @@ interface DeviceSignalsModule {
   getDeviceId(): string | null;
   /** Referrer string of the Play Store link this install came from, '' if none. */
   getInstallReferrer(): Promise<string>;
+  /** Access token for the app's hidden Google Drive folder, or null if the user cancelled (or, when not interactive, if they'd have to choose or consent). */
+  authorizeDrive(email: string | null, interactive: boolean): Promise<string | null>;
+  revokeDrive(email: string): Promise<boolean>;
 }
 
 export type AppIconId = 'sage' | 'ink' | 'midnight' | 'sand';

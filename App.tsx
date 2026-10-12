@@ -29,6 +29,7 @@ import { useLiveRun } from '@/store/useRunStore';
 import { startPhoneSleepSync } from '@/services/phoneSleep';
 import { startBilling } from '@/services/billing';
 import { startBackend } from '@/services/backend';
+import { startDriveBackup } from '@/services/driveBackup';
 import { offerCrashReport } from '@/services/crashLog';
 import { useLicense } from '@/store/useLicense';
 import { setLang, useLang } from '@/i18n';
@@ -137,6 +138,7 @@ function App() {
     const stopHealth = startHealthSync();
     const stopSleep = startPhoneSleepSync();
     const stopBilling = startBilling();
+    const stopDrive = startDriveBackup();
     // People who started before the paywall existed get their free week from now.
     if (useHabitStore.getState().profile.onboarded) useLicense.getState().startTrial();
     useHabitStore.getState().applyFreezes();
@@ -151,6 +153,7 @@ function App() {
       stopHealth();
       stopSleep();
       stopBilling();
+      stopDrive();
     };
   }, [hydrated]);
 

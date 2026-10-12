@@ -34,7 +34,7 @@ export const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Invites and your anonymous ID',
-    body: 'To run invites, the app creates an anonymous ID on our server (Supabase, hosted in India) the first time it opens. No name, email or phone number is attached. The server keeps your invite code, who invited you (if anyone), the days an invited install was opened (to check it was really used), a one-way hash of your device ID (so one phone can\'t count as many friends), and any Pro time you earned from invites. When you install from a friend\'s link, Google Play passes their invite code to the app.',
+    body: 'To run invites, the app creates an anonymous ID on our server (Supabase, hosted in India) the first time it opens. No name, email or phone number is attached. The server keeps your invite code, who invited you (if anyone), the days an invited install was opened (to check it was really used), a one-way hash of your device ID with the date that phone\'s free trial began (so one phone can\'t count as many friends, and reinstalling doesn\'t restart the trial), and any Pro time you earned from invites. When you install from a friend\'s link, Google Play passes their invite code to the app.',
   },
   {
     title: 'AI coach',

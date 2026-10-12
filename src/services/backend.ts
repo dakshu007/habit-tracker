@@ -167,6 +167,18 @@ export async function startBackend() {
     });
     applyReward(profile?.reward_until);
 
+    // One trial per phone: the server remembers when this phone's trial began,
+    // so uninstalling and reinstalling doesn't start a new one.
+    const lic0 = useLicense.getState();
+    if (lic0.trialStart != null) {
+      const started = await rpc<string | null>('trial_start', {
+        p_device: DeviceSignals?.getDeviceId() ?? '',
+        p_local: new Date(lic0.trialStart).toISOString(),
+      }).catch(() => null);
+      const ms = started ? Date.parse(started) : NaN;
+      if (Number.isFinite(ms) && ms < (useLicense.getState().trialStart ?? Infinity)) useLicense.getState().setTrialStart(ms);
+    }
+
     if (!flags.referrerChecked) {
       const referrer = DeviceSignals ? await withTimeout(DeviceSignals.getInstallReferrer(), 6000, '') : '';
       const code = codeFromReferrer(referrer);

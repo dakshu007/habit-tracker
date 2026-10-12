@@ -69,6 +69,8 @@ interface LicenseState {
   /** Length of this install's free trial (longer when invited by a friend). */
   trialDays: number;
   setRewardUntil: (ms: number | null) => void;
+  /** Use an earlier trial start (from the server, after a reinstall). */
+  setTrialStart: (ms: number) => void;
   setTrialDays: (days: number) => void;
   /** Returns true when the code is valid (and unlocks Pro). */
   redeemCode: (code: string) => boolean;
@@ -88,6 +90,7 @@ export const useLicense = create<LicenseState>()(
       rewardUntil: null,
       trialDays: TRIAL_DAYS,
       setRewardUntil: (ms) => set({ rewardUntil: ms }),
+      setTrialStart: (ms) => set((s) => ({ trialStart: s.trialStart == null ? ms : Math.min(s.trialStart, ms) })),
       setTrialDays: (days) => set({ trialDays: days }),
       redeemCode: (code) => {
         const ok = ACCESS_CODES.some((c) => normalize(c) === normalize(code));

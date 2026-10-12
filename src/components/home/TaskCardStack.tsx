@@ -56,8 +56,15 @@ function CarouselCard({ habit, index, len, pos, pressScale, tiltX, tiltY, step, 
     const rel = ((((index - pos.value + half) % len) + len) % len) - half;
     return Math.max(0, 1 - Math.abs(rel));
   });
-  const wTiltX = useDerivedValue(() => tiltX.value * weight.value);
-  const wTiltY = useDerivedValue(() => tiltY.value * weight.value);
+  // Never let a bad sensor value (NaN) reach a transform: the card would vanish.
+  const wTiltX = useDerivedValue(() => {
+    const v = tiltX.value * weight.value;
+    return Number.isFinite(v) ? v : 0;
+  });
+  const wTiltY = useDerivedValue(() => {
+    const v = tiltY.value * weight.value;
+    return Number.isFinite(v) ? v : 0;
+  });
 
   const style = useAnimatedStyle(() => {
     const half = len / 2;

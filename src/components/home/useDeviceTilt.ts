@@ -37,7 +37,7 @@ export function useDeviceTilt(enabled = true): DeviceTilt {
     let origin: { beta: number; gamma: number } | null = null;
     let sub: { remove: () => void } | null = null;
 
-    const clamp = (v: number) => (v < -1 ? -1 : v > 1 ? 1 : v);
+    const clamp = (v: number) => (!Number.isFinite(v) ? 0 : v < -1 ? -1 : v > 1 ? 1 : v);
 
     (async () => {
       try {
@@ -57,7 +57,10 @@ export function useDeviceTilt(enabled = true): DeviceTilt {
           const rot = data?.rotation;
           if (!rot) return;
           const { beta, gamma } = rot; // radians: beta = front-back, gamma = left-right
-          if (origin === null) {
+          // Some sensors (and emulators) send NaN now and then. One bad sample
+          // would poison the origin and hide the tilting card layers for good.
+          if (!Number.isFinite(beta) || !Number.isFinite(gamma)) return;
+          if (origin === null || !Number.isFinite(origin.beta) || !Number.isFinite(origin.gamma)) {
             origin = { beta, gamma };
             return;
           }

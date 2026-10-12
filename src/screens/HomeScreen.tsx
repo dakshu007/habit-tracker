@@ -18,6 +18,7 @@ import { useTabFocused } from '@/navigation/MainTabs';
 import { bestCurrentStreak, dueOn, isDoneOn } from '@/logic/habits';
 import { NotToday } from '@/components/home/NotToday';
 import { CoachPill } from '@/components/home/CoachPill';
+import { backendEnabled } from '@/config/backend';
 import { getTheme } from '@/data/themes';
 import { spacing } from '@/theme/tokens';
 import { overlay } from '@/components/ui/Overlay';
@@ -93,6 +94,7 @@ export function HomeScreen() {
   const due = useMemo(() => dueOn(habits, day), [habits, day]);
   const done = due.filter((h) => isDoneOn(h, logs, day)).length;
   const streak = useMemo(() => bestCurrentStreak(habits, logs, today, weekStart), [habits, logs, today, weekStart]);
+  const showStreak = (streak != null && streak.streak.current > 0) || freezes > 0;
 
   const colors = useMemo(
     () => (visible.length ? visible.map((h) => getTheme(h.themeId).bgTop) : [getTheme('sky').bgTop]),
@@ -109,54 +111,59 @@ export function HomeScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 120, gap: 22 }}
         >
-          {/* Header */}
-          <Animated.View
-            entering={enter(0)}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.screenX, gap: 10 }}
-          >
-            <View style={{ flex: 1 }}>
-              <Txt variant="small" color="rgba(255,255,255,0.85)">
-                {t(greeting())}
-                {name ? ',' : ''}
-              </Txt>
-              <Txt variant="title" color="white" numberOfLines={1}>
-                {name || t('Ready to grow?')}
-              </Txt>
-              <CoachPill />
+          {/* Header: name and actions, then the AI coach pill and the streak on their own row. */}
+          <Animated.View entering={enter(0)} style={{ paddingHorizontal: spacing.screenX, gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Txt variant="small" color="rgba(255,255,255,0.85)">
+                  {t(greeting())}
+                  {name ? ',' : ''}
+                </Txt>
+                <Txt variant="title" color="white" numberOfLines={1}>
+                  {name || t('Ready to grow?')}
+                </Txt>
+              </View>
+              <GlassButton size={42} accessibilityLabel={t('Start a run')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('Run')}>
+                <Footprints size={20} color="#FFFFFF" strokeWidth={2.2} />
+              </GlassButton>
+              <GlassButton size={42} accessibilityLabel={t('Routines')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('Routines')}>
+                <Play size={19} color="#FFFFFF" fill="#FFFFFF" />
+              </GlassButton>
+              <GlassButton size={42} accessibilityLabel={t('New habit')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('HabitEditor')}>
+                <PlusIcon color="#FFFFFF" size={22} strokeWidth={2.4} />
+              </GlassButton>
             </View>
-            {((streak && streak.streak.current > 0) || freezes > 0) && (
-              <PressableScale silent onPress={() => overlay.open(<StreakInfo />)} accessibilityLabel={t('Streak and freezes')}>
-                <GlassSurface radius={22} fill="rgba(255,255,255,0.25)">
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: 44, paddingHorizontal: 14 }}>
-                    {streak && streak.streak.current > 0 && (
-                      <>
-                        <FlameIcon size={20} />
-                        <Txt variant="statSmall" color="white">
-                          {streak.streak.current}
-                        </Txt>
-                      </>
-                    )}
-                    {freezes > 0 && (
-                      <>
-                        <Snowflake size={17} color="#FFFFFF" strokeWidth={2.2} style={{ marginLeft: 4 }} />
-                        <Txt variant="statSmall" color="white">
-                          {freezes}
-                        </Txt>
-                      </>
-                    )}
-                  </View>
-                </GlassSurface>
-              </PressableScale>
+            {(backendEnabled() || showStreak) && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ flex: 1, minWidth: 0, alignItems: 'flex-start' }}>
+                  <CoachPill />
+                </View>
+                {showStreak && (
+                  <PressableScale silent onPress={() => overlay.open(<StreakInfo />)} accessibilityLabel={t('Streak and freezes')}>
+                    <GlassSurface radius={16} fill="rgba(255,255,255,0.25)">
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 32, paddingHorizontal: 11 }}>
+                        {streak && streak.streak.current > 0 && (
+                          <>
+                            <FlameIcon size={16} />
+                            <Txt variant="label" color="white" style={{ fontSize: 14 }}>
+                              {streak.streak.current}
+                            </Txt>
+                          </>
+                        )}
+                        {freezes > 0 && (
+                          <>
+                            <Snowflake size={14} color="#FFFFFF" strokeWidth={2.2} style={{ marginLeft: 4 }} />
+                            <Txt variant="label" color="white" style={{ fontSize: 14 }}>
+                              {freezes}
+                            </Txt>
+                          </>
+                        )}
+                      </View>
+                    </GlassSurface>
+                  </PressableScale>
+                )}
+              </View>
             )}
-            <GlassButton size={42} accessibilityLabel={t('Start a run')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('Run')}>
-              <Footprints size={20} color="#FFFFFF" strokeWidth={2.2} />
-            </GlassButton>
-            <GlassButton size={42} accessibilityLabel={t('Routines')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('Routines')}>
-              <Play size={19} color="#FFFFFF" fill="#FFFFFF" />
-            </GlassButton>
-            <GlassButton size={42} accessibilityLabel={t('New habit')} fill="rgba(255,255,255,0.25)" onPress={() => navigation.navigate('HabitEditor')}>
-              <PlusIcon color="#FFFFFF" size={22} strokeWidth={2.4} />
-            </GlassButton>
           </Animated.View>
 
           {(liveRun || trialNudge != null) && (

@@ -36,7 +36,39 @@ interface Flags {
   restoreKeySet?: boolean;
   /** A restored backup's key still has to be claimed (we were offline). */
   adoptPending?: boolean;
+  /** Anonymous user the flags above belong to. */
+  userId?: string;
 }
+
+/**
+ * Why a call didn't reach the backend: the phone is offline, or the server is
+ * down, paused or too slow. Every request has a time limit, so a spinner never
+ * turns forever.
+ */
+export class BackendError extends Error {
+  constructor(readonly kind: 'offline' | 'down') {
+    super(kind);
+  }
+}
+
+const AUTH_TIMEOUT = 10_000;
+const RPC_TIMEOUT = 10_000;
+/** AI replies take a few seconds. */
+const FUNCTION_TIMEOUT = 30_000;
+
+async function request(url: string, init: RequestInit, ms: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } catch {
+    throw new BackendError(ctrl.signal.aborted ? 'down' : 'offline');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const serverTrouble = (status: number) => status >= 500 || status === 408 || status === 429;
 
 let session: Session | null = null;
 let pending: Promise<Session | null> | null = null;
@@ -57,10 +89,12 @@ function toSession(r: { access_token?: string; refresh_token?: string; expires_i
   return { access_token: r.access_token, refresh_token: r.refresh_token, expires_at: Date.now() + (r.expires_in ?? 3600) * 1000, user_id: r.user.id };
 }
 
-async function authRequest(path: string, body: unknown): Promise<Session | null> {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/${path}`, { method: 'POST', headers: base(), body: JSON.stringify(body) });
-  if (!res.ok) return null;
-  return toSession(await res.json());
+/** A session, or 'rejected' when the server refused it. Throws BackendError when the server can't be reached. */
+async function authRequest(path: string, body: unknown): Promise<Session | 'rejected'> {
+  const res = await request(`${SUPABASE_URL}/auth/v1/${path}`, { method: 'POST', headers: base(), body: JSON.stringify(body) }, AUTH_TIMEOUT);
+  if (serverTrouble(res.status)) throw new BackendError('down');
+  if (!res.ok) return 'rejected';
+  return toSession(await res.json().catch(() => null)) ?? 'rejected';
 }
 
 /** A valid session: stored, refreshed, or a new anonymous user. */
@@ -70,15 +104,16 @@ async function getSession(): Promise<Session | null> {
   if (pending) return pending;
   pending = (async () => {
     const stored = session ?? (await readJson<Session>(SESSION_KEY));
-    let next: Session | null = null;
+    let next: Session | 'rejected' | null = null;
     if (stored && stored.expires_at - 60_000 > Date.now()) next = stored;
     else if (stored) next = await authRequest('token?grant_type=refresh_token', { refresh_token: stored.refresh_token });
-    // Refresh failed (or first run): start a new anonymous user.
-    if (!next) next = await authRequest('signup', { data: {} });
-    if (next) {
-      session = next;
-      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next)).catch(() => {});
-    }
+    // First run, or the server no longer knows this user (a long-unused install
+    // is cleaned up after 90 days): start a new anonymous user. A server that
+    // is down throws above instead, so an outage never replaces the user.
+    if (!next || next === 'rejected') next = await authRequest('signup', { data: {} });
+    if (next === 'rejected') return null;
+    session = next;
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next)).catch(() => {});
     return next;
   })().finally(() => {
     pending = null;
@@ -89,26 +124,35 @@ async function getSession(): Promise<Session | null> {
 /** Call a database function (supabase/schema.sql). Throws on failure. */
 export async function rpc<T>(name: string, args: Record<string, unknown> = {}): Promise<T> {
   const s = await getSession();
-  if (!s) throw new Error('offline');
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
-    method: 'POST',
-    headers: { ...base(), Authorization: `Bearer ${s.access_token}` },
-    body: JSON.stringify(args),
-  });
+  if (!s) throw new BackendError('down');
+  const res = await request(
+    `${SUPABASE_URL}/rest/v1/rpc/${name}`,
+    { method: 'POST', headers: { ...base(), Authorization: `Bearer ${s.access_token}` }, body: JSON.stringify(args) },
+    RPC_TIMEOUT,
+  );
+  if (serverTrouble(res.status)) throw new BackendError('down');
   if (!res.ok) throw new Error(`rpc ${name} ${res.status}`);
   const text = await res.text();
   return (text ? JSON.parse(text) : null) as T;
 }
 
-/** Call an Edge Function. Resolves with the status and JSON body (never throws on HTTP errors). */
+/**
+ * Call an Edge Function. Resolves with the status and JSON body and never
+ * throws: status 0 means the phone is offline, 503 that the server is down.
+ */
 export async function callFunction<T>(name: string, body: unknown): Promise<{ status: number; data: T | null }> {
-  const s = await getSession();
-  if (!s) return { status: 0, data: null };
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
-    method: 'POST',
-    headers: { ...base(), Authorization: `Bearer ${s.access_token}` },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    const s = await getSession();
+    if (!s) return { status: 503, data: null };
+    res = await request(
+      `${SUPABASE_URL}/functions/v1/${name}`,
+      { method: 'POST', headers: { ...base(), Authorization: `Bearer ${s.access_token}` }, body: JSON.stringify(body) },
+      FUNCTION_TIMEOUT,
+    );
+  } catch (e) {
+    return { status: (e as Partial<BackendError>)?.kind === 'down' ? 503 : 0, data: null };
+  }
   let data: T | null = null;
   try {
     data = (await res.json()) as T;
@@ -206,6 +250,12 @@ async function runBackend() {
       p_device: DeviceSignals?.getDeviceId() ?? '',
     });
     applyReward(profile?.reward_until);
+
+    // A new anonymous user (this install was cleaned up after 90 unused days)
+    // doesn't have the restore key yet.
+    const uid = session?.user_id;
+    if (uid && flags.userId && flags.userId !== uid) flags.restoreKeySet = false;
+    if (uid) flags.userId = uid;
 
     // One trial per phone: the server remembers when this phone's trial began,
     // so uninstalling and reinstalling doesn't start a new one.

@@ -670,6 +670,7 @@ export const hi: Record<string, string> = {
   'Chatting with the coach is part of Pro.': 'कोच से चैट करना Pro का हिस्सा है।',
   'No connection. Check your internet and try again.': 'कनेक्शन नहीं है। इंटरनेट जाँचें और फिर कोशिश करें।',
   'The coach couldn’t answer just now. Please try again.': 'कोच अभी जवाब नहीं दे पाया। कृपया फिर कोशिश करें।',
+  'Your coach is offline right now. Your habits and streaks still work. Please try again in a little while.': 'आपका कोच अभी ऑफ़लाइन है। आपकी आदतें और स्ट्रीक पहले की तरह काम करती हैं। कृपया थोड़ी देर बाद फिर कोशिश करें।',
   'Report this reply?': 'इस जवाब की रिपोर्ट करें?',
   'Tell us what’s wrong. It helps keep the coach safe and useful.': 'बताएँ क्या गलत है। इससे कोच सुरक्षित और उपयोगी रहता है।',
   'Harmful or offensive': 'नुकसानदेह या आपत्तिजनक',

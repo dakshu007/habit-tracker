@@ -23,6 +23,8 @@ create table if not exists public.profiles (
 );
 -- A phone can be an invited friend only once.
 create unique index if not exists profiles_referred_device on public.profiles (device_hash) where referred_by is not null;
+-- Last day the app was opened (India time); old rows start from the day this was added.
+alter table public.profiles add column if not exists last_seen date not null default current_date;
 
 -- Days an invited friend opened the app (server date, India time).
 create table if not exists public.active_days (
@@ -105,6 +107,9 @@ begin
     insert into profiles (id, ref_code, device_hash)
     values (auth.uid(), new_ref_code(), case when p_device is null or p_device = '' then null else encode(digest(p_device, 'sha256'), 'hex') end)
     returning * into me;
+  end if;
+  if me.last_seen is distinct from (now() at time zone 'Asia/Kolkata')::date then
+    update profiles set last_seen = (now() at time zone 'Asia/Kolkata')::date where id = me.id;
   end if;
   return json_build_object('code', me.ref_code, 'referred', me.referred_by is not null, 'reward_until', me.reward_until);
 end $$;
@@ -297,3 +302,42 @@ begin
 end $$;
 grant execute on function public.set_restore_key(text) to authenticated;
 grant execute on function public.adopt_profile(text) to authenticated;
+
+-- Every install gets an anonymous user, so uninstalled phones would stay in
+-- the database forever. Each night, remove anonymous installs that haven't
+-- opened the app in 90 days and have nothing to keep: no invited friends, not
+-- an invited friend themselves (so invite counts never go down), and no Pro
+-- time left from invites. Users who verified an email are never anonymous, so
+-- they're never removed. Trials and AI allowances are kept per phone
+-- (device_trials, ai_device_usage), so a removed install that comes back
+-- doesn't get a new trial; the app just signs in again as a new user.
+create or replace function public.cleanup_stale_installs()
+returns int language plpgsql security definer set search_path = public, auth as $$
+declare
+  removed int;
+begin
+  with stale as (
+    select u.id
+      from auth.users u
+      left join public.profiles p on p.id = u.id
+     where u.is_anonymous
+       and u.created_at < now() - interval '90 days'
+       and (
+         p.id is null -- signed in once but never made a profile
+         or (p.last_seen < (now() at time zone 'Asia/Kolkata')::date - 90
+             and p.referred_by is null
+             and (p.reward_until is null or p.reward_until < now())
+             and not exists (select 1 from public.profiles f where f.referred_by = p.id))
+       )
+     limit 5000 -- a night's batch; the rest go the next night
+  )
+  delete from auth.users u using stale where u.id = stale.id;
+  get diagnostics removed = row_count;
+  return removed;
+end $$;
+revoke execute on function public.cleanup_stale_installs() from public, anon, authenticated;
+
+-- Run it every night at 3:00 India time (21:30 UTC). Scheduling again under
+-- the same name just updates the job.
+create extension if not exists pg_cron with schema pg_catalog;
+select cron.schedule('cleanup-stale-installs', '30 21 * * *', 'select public.cleanup_stale_installs()');

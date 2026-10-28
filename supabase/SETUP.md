@@ -53,6 +53,14 @@ Invites and the coach switch on automatically in that build.
 
 ---
 
+## Updating an existing project
+When `supabase/schema.sql` changes, run it again: **SQL Editor → New query** → paste **all** of it → **Run**. It's safe to run any number of times.
+
+**Build 53 update (cleanup of unused installs):** running it adds a "last opened" date to each install and a nightly job that removes anonymous installs nobody has opened for 90 days (only ones with no invited friends, not invited themselves, and no Pro time left). This keeps the free 500 MB database from filling up with uninstalled phones.
+- Check it's scheduled: **Integrations → Cron** (or **Database → Cron Jobs**) should list `cleanup-stale-installs`, daily at 21:30 UTC (3:00 AM India).
+- If the run says pg_cron isn't available: **Integrations → Cron → Enable**, then run the file again.
+- Nothing is removed for the first 90 days after you run it: existing installs count as opened on that day.
+
 ## Checking it works (after the build)
 - **Profile → Friends**: the orange "Invite 5 friends" card shows your invite progress.
 - **Stats → Your AI coach**: accept the 18+ note, ask "Which habit should I focus on?". A reply should arrive in 2 to 4 seconds.

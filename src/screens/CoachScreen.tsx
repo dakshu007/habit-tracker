@@ -39,7 +39,9 @@ const reasonText = (r: Exclude<CoachResult, { ok: true }>['reason']) =>
       ? t('Chatting with the coach is part of Pro.')
       : r === 'offline'
         ? t('No connection. Check your internet and try again.')
-        : t('The coach couldn’t answer just now. Please try again.');
+        : r === 'down'
+          ? t('Your coach is offline right now. Your habits and streaks still work. Please try again in a little while.')
+          : t('The coach couldn’t answer just now. Please try again.');
 
 /**
  * The AI coach. Empty chat: a big greeting and a stack of soft suggestion

@@ -13,10 +13,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A hidden draft release. The builds attach their files straight to it rather
+  # than passing them through workflow artifacts, which count against the
+  # account's Actions storage quota (a full quota stopped build 53).
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Create draft release
+        run: |
+          gh release view "build-${BUILD_NUMBER}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 ||
+          gh release create "build-${BUILD_NUMBER}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "Habit Tracker · build ${BUILD_NUMBER}" \
+            --target "${GITHUB_SHA}" \
+            --draft \
+            --prerelease \
+            --notes "Android test build ${BUILD_NUMBER} from ${GITHUB_SHA::7}. Download the APK below and open it on your phone (allow installs from your browser if asked). The .aab is for Google Play."
+
   # Two builds on separate machines, in parallel: one Gradle run each, so they
   # never fight over memory (two runs in one job used to stall for an hour).
   build:
     name: build (${{ matrix.target }})
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 50
     strategy:
@@ -101,6 +123,7 @@ jobs:
           name: gradle-reports-${{ matrix.target }}
           path: android/build/reports/
           if-no-files-found: ignore
+          retention-days: 7
 
       - name: Collect output
         if: steps.plan.outputs.run == 'true'
@@ -112,11 +135,11 @@ jobs:
             cp android/app/build/outputs/apk/release/app-release.apk "out/HabitTracker-build-${BUILD_NUMBER}.apk"
           fi
 
-      - uses: actions/upload-artifact@v4
+      - name: Attach to the draft release
         if: steps.plan.outputs.run == 'true'
-        with:
-          name: out-${{ matrix.target }}
-          path: out/*
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "build-${BUILD_NUMBER}" out/* --repo "${GITHUB_REPOSITORY}" --clobber
 
   release:
     needs: build
@@ -125,20 +148,9 @@ jobs:
     env:
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: out-*
-          merge-multiple: true
-          path: out
-
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ls -la out
-          gh release create "build-${BUILD_NUMBER}" out/* \
-            --repo "${GITHUB_REPOSITORY}" \
-            --title "Habit Tracker · build ${BUILD_NUMBER}" \
-            --target "${GITHUB_SHA}" \
-            --prerelease \
-            --notes "Android test build ${BUILD_NUMBER} from ${GITHUB_SHA::7}. Download the APK below and open it on your phone (allow installs from your browser if asked). The .aab is for Google Play."
+          gh release view "build-${BUILD_NUMBER}" --repo "${GITHUB_REPOSITORY}" --json assets --jq '.assets[].name'
+          gh release edit "build-${BUILD_NUMBER}" --repo "${GITHUB_REPOSITORY}" --draft=false

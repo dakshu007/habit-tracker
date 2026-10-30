@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
+import { Alert, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -107,9 +107,21 @@ export function PaywallScreen({ navigation }: RootScreenProps<'Paywall'>) {
     setBusy(null);
     if (r === 'purchased') haptic.success();
     else if (r === 'pending') setNote(t('Payment pending. The app unlocks by itself as soon as Google Play confirms it.'));
-    else if (r === 'unavailable')
-      setNote(PAYWALL_MODE === 'live' ? t('Google Play isn’t available right now. Check your connection and try again.') : t('Purchases work in the Play Store version. This test build never locks.'));
-    else if (r === 'error') setNote(t('Something went wrong with Google Play. You weren’t charged, so please try again.'));
+    else if (r === 'unavailable' && PAYWALL_MODE !== 'live') setNote(t('Purchases work in the Play Store version. This test build never locks.'));
+    else if (r === 'unavailable' || r === 'error') {
+      const msg =
+        r === 'unavailable'
+          ? t('Google Play isn’t available right now. Check your connection and try again.')
+          : t('Something went wrong with Google Play. You weren’t charged, so please try again.');
+      setNote(msg);
+      // A dialog, not just the note: the note can sit below the fold, which
+      // made the button look like it did nothing.
+      Alert.alert(t('Purchase not completed'), `${msg}\n\n${t('Have an access code? You can enter it instead.')}`, [
+        { text: t('Enter access code'), onPress: () => setCodeOpen(true) },
+        { text: t('Close'), style: 'cancel' },
+        { text: t('Try again'), onPress: () => purchase() },
+      ]);
+    }
   };
 
   const restore = async () => {

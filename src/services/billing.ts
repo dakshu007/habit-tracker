@@ -31,6 +31,20 @@ let waiter: ((r: BuyResult) => void) | null = null;
 /** Offer token per subscription (Play needs it to start a subscription). */
 const offerTokens: Partial<Record<string, string>> = {};
 
+/** Play couldn't be reached or couldn't sell right now (its own sheet may already have said so). */
+const UNAVAILABLE: string[] = [
+  ErrorCode.BillingUnavailable,
+  ErrorCode.ItemUnavailable,
+  ErrorCode.IapNotAvailable,
+  ErrorCode.NetworkError,
+  ErrorCode.ServiceError,
+  ErrorCode.ServiceTimeout,
+  ErrorCode.ServiceDisconnected,
+  ErrorCode.RemoteError,
+];
+const resultOf = (code: string | undefined): BuyResult =>
+  code === ErrorCode.UserCancelled ? 'cancelled' : code && UNAVAILABLE.includes(code) ? 'unavailable' : 'error';
+
 function settle(r: BuyResult) {
   waiter?.(r);
   waiter = null;
@@ -69,7 +83,7 @@ function connect(): Promise<boolean> {
       purchaseErrorListener((e) => {
         if (e.code === ErrorCode.UserCancelled) settle('cancelled');
         else if (e.code === ErrorCode.AlreadyOwned) refresh().then(() => settle('purchased'));
-        else settle('error');
+        else settle(resultOf(e.code));
       });
       return true;
     } catch {
@@ -135,8 +149,7 @@ export async function buy(plan: Plan): Promise<BuyResult> {
       await requestPurchase({ request: { google: { skus: [sku], subscriptionOffers: [{ sku, offerToken }] } }, type: 'subs' });
     }
   } catch (e) {
-    const code = (e as { code?: string })?.code;
-    settle(code === ErrorCode.UserCancelled ? 'cancelled' : code === ErrorCode.ItemUnavailable || code === ErrorCode.BillingUnavailable ? 'unavailable' : 'error');
+    settle(resultOf((e as { code?: string })?.code));
   }
   return result;
 }

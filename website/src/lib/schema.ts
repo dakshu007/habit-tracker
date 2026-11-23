@@ -1,4 +1,4 @@
-import { SITE } from '../config/site';
+import { SITE, AUTHOR } from '../config/site';
 
 export const faqSchema = (items: { q: string; a: string }[]) =>
   items.length
@@ -21,7 +21,15 @@ export const articleSchema = (o: { title: string; description: string; path: str
   datePublished: o.published.toISOString(),
   dateModified: (o.modified ?? o.published).toISOString(),
   inLanguage: 'en-IN',
-  author: { '@type': 'Organization', name: 'Habit Tracker team', url: SITE.url },
+  author: {
+    '@type': 'Person',
+    name: AUTHOR.name,
+    jobTitle: AUTHOR.short,
+    image: new URL(AUTHOR.photo, SITE.url).href,
+    worksFor: { '@id': `${SITE.url}/#org` },
+    url: `${SITE.url}/blog`,
+    sameAs: [AUTHOR.linkedin, AUTHOR.website].filter(Boolean),
+  },
   publisher: { '@id': `${SITE.url}/#org` },
 });
 

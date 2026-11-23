@@ -3,7 +3,7 @@ title: "How to Stop Procrastinating: 14 Techniques That Actually Work"
 seoTitle: "How to Stop Procrastinating: 14 Techniques That Work"
 description: "How to stop procrastinating when you know what to do but can't start: why it's about feelings, not laziness, plus 14 techniques and a fix for each type."
 keyword: "how to stop procrastinating"
-date: 2026-11-23
+date: 2026-11-22
 category: "Productivity"
 art: "coding"
 tint: "peach"

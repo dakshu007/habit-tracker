@@ -11,6 +11,22 @@ export const SITE = {
     'Build habits that stick with illustrated habit cards, slide-to-complete, streaks, an AI coach, GPS runs, sleep tracking and home-screen widgets. 7 days free on Android.',
 };
 
+/** Blog author. Leave a link empty to hide its button. */
+export const AUTHOR = {
+  name: 'Dakshesh',
+  role: 'Founder, MyKavo',
+  short: 'Founder',
+  photo: '/img/dakshesh.webp',
+  bio: 'I spent years building WooCommerce plugins used by hundreds of thousands of stores, and learned that small, boring improvements done every day beat big bursts of effort. I built Habit Tracker to make those small daily wins feel good enough to keep.',
+  credentials: [
+    'WooCommerce plugin developer, 100K+ stores',
+    'Maker of the free MyKavo plugin on WordPress.org',
+    'Founder @MyKavo, maker of Habit Tracker: Daily Routine',
+  ],
+  linkedin: '',
+  website: 'https://mykavo.app',
+};
+
 /** Play Store link tagged with where on the site the tap came from (shows up in Play Console acquisition reports). */
 export const playLink = (from: string) =>
   `${SITE.playUrl}&referrer=${encodeURIComponent(`utm_source=website&utm_medium=${from}`)}`;

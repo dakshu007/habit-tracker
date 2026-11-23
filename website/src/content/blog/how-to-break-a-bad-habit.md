@@ -3,7 +3,7 @@ title: "How to Break a Bad Habit: 9 Steps Built on the Habit Loop"
 seoTitle: "How to Break a Bad Habit: 9 Steps That Work"
 description: "How to break a bad habit in 9 steps: spot your triggers, swap the behaviour, add friction, track clean days and handle slips without giving up. With examples."
 keyword: "how to break a bad habit"
-date: 2026-11-23
+date: 2026-11-18
 category: "Habit science"
 art: "digital-detox"
 tint: "peach"

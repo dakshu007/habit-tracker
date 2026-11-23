@@ -3,7 +3,7 @@ title: "Night Routine: A Simple Bedtime Routine for Better Sleep and Easier Morn
 seoTitle: "Night Routine: A Bedtime Routine for Better Sleep"
 description: "Build a night routine that helps you sleep early and wake up easier. A 2-hour wind-down timeline, caffeine and screen tips, and sample bedtime routines."
 keyword: "night routine"
-date: 2026-11-23
+date: 2026-11-21
 category: "Routines"
 art: "sleep"
 tint: "lav"

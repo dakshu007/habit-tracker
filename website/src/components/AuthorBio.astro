@@ -1,0 +1,21 @@
+---
+import Icon from './Icon.astro';
+import { AUTHOR } from '../config/site';
+---
+<section class="author-card" aria-label="About the author">
+  <img class="author-photo" src={AUTHOR.photo} alt={AUTHOR.name} width="96" height="96" loading="lazy" />
+  <div class="author-body">
+    <p class="author-kicker">Written by</p>
+    <p class="author-name">{AUTHOR.name}</p>
+    <p class="author-role">{AUTHOR.role}</p>
+    <p class="author-bio">{AUTHOR.bio}</p>
+    <ul class="author-creds">
+      {AUTHOR.credentials.map((c) => <li><Icon name="BadgeCheck" size={20} />{c}</li>)}
+    </ul>
+    <div class="author-links">
+      {AUTHOR.linkedin && <a class="author-chip" href={AUTHOR.linkedin} rel="noopener me" target="_blank">LinkedIn</a>}
+      {AUTHOR.website && <a class="author-chip" href={AUTHOR.website} rel="noopener" target="_blank">Website</a>}
+      <a class="author-more" href="/blog">More from {AUTHOR.name}</a>
+    </div>
+  </div>
+</section>

@@ -3,7 +3,7 @@ title: "Atomic Habits Summary: The Key Ideas and How to Use Them"
 seoTitle: "Atomic Habits Summary: Key Ideas and How to Apply Them"
 description: "Atomic Habits summary in plain English: the 1% idea, identity, the four laws, habit stacking and the 2-minute rule, plus a 7-day plan to apply them."
 keyword: "atomic habits summary"
-date: 2026-11-23
+date: 2026-11-19
 category: "Habit science"
 art: "reading"
 tint: "lav"

@@ -3,7 +3,7 @@ title: "How Long Does It Take to Form a Habit? What the Research Says"
 seoTitle: "How Long Does It Take to Form a Habit? (Not 21 Days)"
 description: "How long does it take to form a habit? Not 21 days. The best-known study found a median of 66 days, with a big range. See what speeds it up, plus a 66-day plan."
 keyword: "how long does it take to form a habit"
-date: 2026-11-23
+date: 2026-11-17
 category: "Habit science"
 art: "staircase-climbing"
 tint: "sky"

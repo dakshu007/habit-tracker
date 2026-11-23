@@ -3,7 +3,7 @@ title: "How to Build Good Habits: 9 Steps That Actually Stick"
 seoTitle: "How to Build Good Habits: 9 Steps That Stick"
 description: "Learn how to build good habits that last: start tiny, stack habits, design your space, track streaks kindly and never miss twice. Includes an 8-week plan."
 keyword: "how to build good habits"
-date: 2026-11-23
+date: 2026-11-16
 category: "Habit science"
 art: "learning"
 tint: "mint"

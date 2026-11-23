@@ -3,7 +3,7 @@ title: "Morning Routine: How to Build One You'll Actually Keep (With Examples)"
 seoTitle: "Morning Routine: How to Build One You'll Actually Keep"
 description: "Build a morning routine that fits your real wake time. Includes 15, 30 and 60-minute plans, a student version, habit stacking and what to do on bad days."
 keyword: "morning routine"
-date: 2026-11-23
+date: 2026-11-20
 category: "Routines"
 art: "morning"
 tint: "peach"

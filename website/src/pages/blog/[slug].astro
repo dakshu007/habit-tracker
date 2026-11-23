@@ -2,11 +2,14 @@
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
+import PlayButton from '../../components/PlayButton.astro';
 import PostCard from '../../components/PostCard.astro';
 import CtaBand from '../../components/CtaBand.astro';
 import FaqList from '../../components/FaqList.astro';
+import AiSummarize from '../../components/AiSummarize.astro';
+import AuthorBio from '../../components/AuthorBio.astro';
 import { articleSchema, faqSchema, fmtDate, readingMinutes } from '../../lib/schema';
-import { playLink, TRIAL_DAYS } from '../../config/site';
+import { SITE, AUTHOR, playLink, TRIAL_DAYS } from '../../config/site';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -19,10 +22,11 @@ const { Content, headings } = await render(post);
 const toc = headings.filter((h) => h.depth === 2);
 const related = [
   ...d.related.map((id) => posts.find((p) => p.id === id)).filter(Boolean),
-  ...posts.filter((p) => p.id !== post.id && !d.related.includes(p.id)),
+  ...posts.filter((p) => p.id !== post.id && !d.related.includes(p.id)).sort((a, b) => +b.data.date - +a.data.date),
 ].slice(0, 3) as typeof posts;
 const path = `/blog/${post.id}`;
 const minutes = readingMinutes(post.body ?? '');
+const tags = [d.category, ...new Set(d.keyword.split(' ').length > 1 ? [d.keyword] : [])];
 ---
 <Base
   title={d.seoTitle ?? d.title}
@@ -35,26 +39,36 @@ const minutes = readingMinutes(post.body ?? '');
 >
   <header class="article-hero">
     <div class="container">
-      <ol class="crumbs"><li><a href="/">Home</a></li><li><a href="/blog">Blog</a></li><li>{d.category}</li></ol>
-      <h1>{d.title}</h1>
-      <p class="lede">{d.description}</p>
-      <p class="post-meta">
-        <span>By the Habit Tracker team</span>
-        <time datetime={d.date.toISOString()}>{fmtDate(d.date)}</time>
-        <span>{minutes} min read</span>
-      </p>
+      <a class="back-pill" href="/blog"><span><Icon name="ArrowLeft" size={18} /></span>All posts</a>
+      <div class="article-head">
+        <p class="cat-pill">{d.category}</p>
+        <h1>{d.title}</h1>
+        <p class="lede">{d.description}</p>
+        <div class="byline">
+          <img src={AUTHOR.photo} alt="" width="40" height="40" />
+          <span>By <strong>{AUTHOR.name}</strong>, {AUTHOR.short}</span>
+          <span class="sep" aria-hidden="true">·</span>
+          <time datetime={d.date.toISOString()}>{fmtDate(d.date)}</time>
+          <span class="sep" aria-hidden="true">·</span>
+          <span>{minutes} min read</span>
+        </div>
+        <ul class="tag-row">{tags.map((t) => <li>{t}</li>)}</ul>
+        <div class="top-cta">
+          <PlayButton from={`blog-top-${post.id}`} />
+          <span class="muted-note">{TRIAL_DAYS} days free · No account · No card</span>
+        </div>
+        <AiSummarize url={`${SITE.url}${path}`} title={d.title} />
+      </div>
     </div>
   </header>
 
   <div class="container">
-    <div class={`article-cover tint-${d.tint}`} aria-hidden="true"><img src={`/img/ill/${d.art}.webp`} alt="" width="320" height="320" loading="eager" /></div>
+    <div class={`article-cover tint-${d.tint}`} aria-hidden="true">
+      <img src={`/img/ill/${d.art}.webp`} alt="" width="320" height="352" loading="eager" />
+    </div>
     <div class="article-layout">
       <article class="prose">
         <Content />
-        <div class="card author-box">
-          <img src="/img/icon.webp" alt="" width="54" height="54" loading="lazy" />
-          <p><strong>Habit Tracker team.</strong> We build Habit Tracker, an Android app with illustrated habit cards, forgiving streaks and an AI coach. We write about the habit science we use every day.</p>
-        </div>
       </article>
       <aside class="article-aside">
         {toc.length > 0 && (
@@ -71,18 +85,20 @@ const minutes = readingMinutes(post.body ?? '');
         </div>
       </aside>
     </div>
+    <AuthorBio />
   </div>
 
   <FaqList items={d.faq} />
 
+  <CtaBand from={`blog-band-${post.id}`} />
+
   {related.length > 0 && (
-    <section class="section" style="padding-top:0">
+    <section class="section keep-reading" aria-labelledby="keep-reading">
       <div class="container">
-        <div class="section-head reveal"><h2>Keep reading</h2></div>
+        <div class="section-head reveal"><h2 id="keep-reading">Keep reading</h2></div>
         <div class="post-grid">{related.map((p) => <PostCard post={p} />)}</div>
+        <p style="text-align:center;margin-top:28px"><a class="btn btn-light" href="/blog">All posts <Icon name="ArrowRight" size={18} /></a></p>
       </div>
     </section>
   )}
-
-  <CtaBand from={`blog-band-${post.id}`} />
 </Base>

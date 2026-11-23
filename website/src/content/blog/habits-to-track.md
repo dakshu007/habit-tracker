@@ -3,7 +3,7 @@ title: "75 Habits to Track in 2026 (With a Starting Target for Each)"
 seoTitle: "75 Habits to Track in 2026, With Starter Targets"
 description: "75 habits to track in 2026, grouped by health, sleep, mind, money and more. Each has a one-line why and a small starting target, plus how to pick your first 3."
 keyword: "habits to track"
-date: 2026-11-23
+date: 2026-11-15
 category: "Habit science"
 art: "journal"
 tint: "sky"

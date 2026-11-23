@@ -1,0 +1,26 @@
+---
+import Icon from '../Icon.astro';
+import { HOME_FAQ } from '../../data/homeFaq';
+import { SITE } from '../../config/site';
+---
+<section id="faq" class="section faq" aria-labelledby="faq-title" data-astro-cid-hemr5th4="">
+  <div class="container grid" data-astro-cid-hemr5th4="">
+    <div class="side reveal" data-astro-cid-hemr5th4="">
+      <p class="eyebrow" data-astro-cid-hemr5th4=""><span class="dot" data-astro-cid-hemr5th4=""><Icon name="MessageCircle" size={14} stroke={2.4} /></span>FAQ</p>
+      <h2 id="faq-title" data-astro-cid-hemr5th4="">Questions, answered.</h2>
+      <p data-astro-cid-hemr5th4="">Can’t find what you’re looking for? We reply to every email.</p>
+      <a class="btn btn-light" href={`mailto:${SITE.email}`} data-astro-cid-hemr5th4=""><Icon name="Mail" size={18} /> {SITE.email}</a>
+    </div>
+    <div class="list" data-astro-cid-hemr5th4="">
+      {HOME_FAQ.map((f, i) => (
+        <details class="item reveal" style={`--d:${i * 40}ms`} data-astro-cid-hemr5th4="">
+          <summary data-astro-cid-hemr5th4="">
+            <h3 data-astro-cid-hemr5th4="">{f.q}</h3>
+            <span class="pm" aria-hidden="true" data-astro-cid-hemr5th4=""><Icon name="Plus" size={20} /></span>
+          </summary>
+          <p data-astro-cid-hemr5th4="">{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

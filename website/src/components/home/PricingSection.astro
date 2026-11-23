@@ -1,0 +1,56 @@
+---
+import Icon from '../Icon.astro';
+import PlayButton from '../PlayButton.astro';
+import { PLANS, PRO_FEATURES, TRIAL_DAYS, playLink } from '../../config/site';
+---
+<section id="pricing" class="section pricing" aria-labelledby="pricing-title" data-astro-cid-htruwgye="">
+  <div class="container" data-astro-cid-htruwgye="">
+    <div class="section-head reveal" data-astro-cid-htruwgye="">
+      <p class="eyebrow" data-astro-cid-htruwgye=""><span class="dot" data-astro-cid-htruwgye=""><Icon name="Crown" size={14} stroke={2.4} /></span>Habit Tracker Pro</p>
+      <h2 id="pricing-title" data-astro-cid-htruwgye="">Try everything free for {TRIAL_DAYS} days.</h2>
+      <p data-astro-cid-htruwgye="">No card needed to start. Then pick the plan that suits you, or keep 5 habits free forever. <a href="/pricing">Compare plans</a>.</p>
+    </div>
+    <div class="plans" data-astro-cid-htruwgye="">
+      {PLANS.map((p, i) => (
+        <article class={`plan reveal${p.badge ? ' featured' : ''}`} style={`--d:${i * 80}ms`} data-astro-cid-htruwgye="">
+          {p.badge && <span class="badge" data-astro-cid-htruwgye="">{p.badge}</span>}
+          <h3 data-astro-cid-htruwgye="">{p.name}</h3>
+          <p class="price" data-astro-cid-htruwgye=""><b data-astro-cid-htruwgye="">{p.price}</b><span data-astro-cid-htruwgye="">{p.period}</span></p>
+          <p class="note" data-astro-cid-htruwgye="">{p.note}</p>
+          <ul data-astro-cid-htruwgye="">
+            {PRO_FEATURES.slice(0, 6).map((f) => (
+              <li data-astro-cid-htruwgye=""><Icon name="Check" size={17} stroke={2.6} />{f}</li>
+            ))}
+          </ul>
+          <a class={`btn ${p.badge ? 'btn-light' : 'btn-dark'} plan-btn`} href={playLink(`home-plan-${p.id}`)} rel="noopener" data-download={`home-plan-${p.id}`}>
+            <Icon name="Download" size={18} /> Start free trial
+          </a>
+        </article>
+      ))}
+    </div>
+    <div class="buy reveal" data-astro-cid-htruwgye="">
+      <PlayButton from="home-pricing" />
+      <p data-astro-cid-htruwgye="">Billed through Google Play in INR. Subscriptions renew automatically. Cancel anytime in the Play Store.</p>
+    </div>
+    <div class="refer reveal" aria-labelledby="refer-title" data-astro-cid-htruwgye="">
+      <div class="refer-copy" data-astro-cid-htruwgye="">
+        <span class="soon live-now" data-astro-cid-htruwgye="">Live now</span>
+        <h3 id="refer-title" data-astro-cid-htruwgye="">Invite 5 friends. Get <span class="grad-text">3 months of Pro free.</span></h3>
+        <p data-astro-cid-htruwgye="">Share your invite link from Profile. You earn 14 days of Pro for every friend who uses the app on 3 days, plus a 20-day bonus at your 5th friend. Every friend you invite gets a 14-day trial instead of 7.</p>
+        <a class="btn btn-dark refer-btn" href="/invite-friends">How invites work <Icon name="ArrowRight" size={18} /></a>
+      </div>
+      <div class="refer-visual" aria-hidden="true" data-astro-cid-htruwgye="">
+        <div class="avs" data-astro-cid-htruwgye="">
+          {['running', 'self-care', 'dancing', 'coding', 'music'].map((a, i) => (
+            <span class={`av${i < 3 ? ' joined' : ''}`} data-astro-cid-htruwgye="">
+              <img src={`/img/ill/thumbs/${a}.webp`} alt="" loading="lazy" decoding="async" width="58" height="58" />
+              {i < 3 && <i data-astro-cid-htruwgye=""><Icon name="Check" size={12} stroke={3.4} /></i>}
+            </span>
+          ))}
+        </div>
+        <div class="bar" data-astro-cid-htruwgye=""><span style="width:60%" data-astro-cid-htruwgye=""></span></div>
+        <p data-astro-cid-htruwgye=""><b data-astro-cid-htruwgye="">3 of 5</b> friends joined · 2 to go</p>
+      </div>
+    </div>
+  </div>
+</section>

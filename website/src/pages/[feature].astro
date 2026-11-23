@@ -1,0 +1,145 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PlayButton from '../components/PlayButton.astro';
+import CtaBand from '../components/CtaBand.astro';
+import FaqList from '../components/FaqList.astro';
+import { faqSchema } from '../lib/schema';
+import { SITE } from '../config/site';
+
+export async function getStaticPaths() {
+  const all = await getCollection('features');
+  return all.map((entry) => ({ params: { feature: entry.id }, props: { entry, all } }));
+}
+
+const { entry, all } = Astro.props;
+const f = entry.data;
+const { Content } = await render(entry);
+const related = f.related.map((id) => all.find((e) => e.id === id)).filter(Boolean) as typeof all;
+const planLabel = f.plan === 'free' ? 'Free' : f.plan === 'pro' ? 'Pro' : 'Free + Pro';
+const app = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: f.title,
+  description: f.description,
+  about: { '@id': `${SITE.url}/#app` },
+};
+---
+<Base
+  title={f.title}
+  description={f.description}
+  crumbs={[{ name: 'Features', path: '/features' }, { name: f.name, path: `/${entry.id}` }]}
+  schema={[app, ...faqSchema(f.faq)]}
+>
+  <section class={`page-hero ${f.tint}`}>
+    <div class="container split">
+      <div>
+        <ol class="crumbs"><li><a href="/">Home</a></li><li><a href="/features">Features</a></li><li>{f.name}</li></ol>
+        <p class="eyebrow" style="margin-top:14px"><span class="dot"><Icon name={f.icon as any} size={14} stroke={2.4} /></span>{f.category} · {f.name}</p>
+        <h1>{f.headline}</h1>
+        <p class="lede">{f.lede}</p>
+        <p class="plan-line"><span class={f.plan === 'free' ? 'pill-free' : 'pill-pro'}>{planLabel}</span> {f.planNote}</p>
+        <div class="ctas">
+          <PlayButton from={`feature-${entry.id}`} />
+          <a class="btn btn-light" href="/pricing">See pricing <Icon name="ArrowRight" size={18} /></a>
+        </div>
+      </div>
+      <div class={`visual ${f.tint}`} aria-hidden="true">
+        {entry.id === 'ai-coach' ? (
+          <div class="coach-chat">
+            <div class="coach-msg me">Why do I keep skipping my evening walk?</div>
+            <div class="coach-msg ai"><span class="who"><Icon name="Bot" size={14} /> AI coach</span>You walked 5 of the last 7 weekdays but almost never on Saturdays. Try a 10-minute weekend walk right after breakfast so the streak stays alive.</div>
+            <div class="coach-msg me">Gym skip ho jata hai, kya karun?</div>
+            <div class="coach-msg ai"><span class="who"><Icon name="Bot" size={14} /> AI coach</span>Pehle sirf 15 minute ka goal rakho, aur gym bag raat ko hi pack kar do. Chhota start, roz ka habit.</div>
+          </div>
+        ) : entry.id === 'widgets' ? (
+          <div class="widget-visual">
+            <img src="/img/widgets/widget-card-preview.webp" alt="" width="210" height="245" loading="eager" />
+            <div>
+              <img src="/img/widgets/widget-preview.webp" alt="" width="240" height="165" loading="eager" />
+              <div class="wv-row">
+                <img src="/img/widgets/widget-streak-preview.webp" alt="" width="114" height="114" loading="eager" />
+                <img src="/img/widgets/widget-sleep-preview.webp" alt="" width="114" height="114" loading="eager" />
+              </div>
+            </div>
+          </div>
+        ) : entry.id === 'invite-friends' ? (
+          <div class="invite-visual">
+            <p class="iv-big">90 <small>days of Pro</small></p>
+            <div class="iv-row">
+              {['running', 'self-care', 'dancing', 'coding', 'music'].map((a, i) => (
+                <span class={`iv-av${i < 5 ? ' on' : ''}`}><img src={`/img/ill/thumbs/${a}.webp`} alt="" width="56" height="56" loading="lazy" /><i>+{i === 4 ? 34 : 14}</i></span>
+              ))}
+            </div>
+            <div class="iv-bar"><span></span></div>
+            <p class="iv-note">5 friends × 14 days + 20-day bonus = 3 months free</p>
+          </div>
+        ) : (
+          <>
+            <img class="art" src={`/img/ill/${f.art}.webp`} alt="" width="340" height="340" loading="eager" />
+            <span class="chip vchip vc1"><Icon name={f.highlights[0].icon as any} size={16} /> {f.highlights[0].title}</span>
+            <span class="chip vchip vc2"><Icon name={f.highlights[1].icon as any} size={16} /> {f.highlights[1].title}</span>
+          </>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:24px">
+    <div class="container">
+      <div class="grid-3">
+        {f.highlights.map((h, i) => (
+          <article class="card box reveal" style={`--d:${i * 60}ms`}>
+            <span class="ico"><Icon name={h.icon as any} size={22} /></span>
+            <h2 class="box-title">{h.title}</h2>
+            <p>{h.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="container split" style="align-items:start">
+      <div class="section-head left reveal">
+        <p class="eyebrow"><span class="dot"><Icon name="ListChecks" size={14} stroke={2.4} /></span>How it works</p>
+        <h2>{f.name} in {f.steps.length} steps</h2>
+      </div>
+      <ol class="step-list">
+        {f.steps.map((s) => (
+          <li class="card reveal"><h3>{s.title}</h3><p>{s.text}</p></li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <article class="prose feature-prose">
+        <Content />
+      </article>
+    </div>
+  </section>
+
+  {related.length > 0 && (
+    <section class="section" style="padding-top:0">
+      <div class="container">
+        <div class="section-head reveal"><h2>Works well with</h2></div>
+        <div class="grid-3">
+          {related.map((r) => (
+            <a class="card box link reveal" href={`/${r.id}`}>
+              <span class="ico"><Icon name={r.data.icon as any} size={22} /></span>
+              <h3>{r.data.name}</h3>
+              <p>{r.data.lede}</p>
+              <span class="more">Learn more <Icon name="ArrowRight" size={16} /></span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <FaqList items={f.faq} title={`${f.name}: common questions`} />
+  <CtaBand from={`feature-${entry.id}-band`} />
+</Base>

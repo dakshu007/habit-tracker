@@ -1,0 +1,144 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import PlayButton from '../../components/PlayButton.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import FaqList from '../../components/FaqList.astro';
+import { faqSchema } from '../../lib/schema';
+import { SITE, PLANS, TRIAL_DAYS } from '../../config/site';
+
+export async function getStaticPaths() {
+  const all = await getCollection('alternatives');
+  return all.map((entry) => ({ params: { slug: entry.id }, props: { entry, all } }));
+}
+
+const { entry, all } = Astro.props;
+const a = entry.data;
+const { Content } = await render(entry);
+const others = all.filter((e) => e.id !== entry.id).sort((x, y) => x.data.order - y.data.order).slice(0, 3);
+const path = `/alternatives/${entry.id}`;
+const mark = (v: string) => (/^yes\b/i.test(v) ? 'yes' : /^no\b/i.test(v) ? 'no' : '');
+const page = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: a.title,
+  description: a.description,
+  url: new URL(path, SITE.url).href,
+  about: [{ '@id': `${SITE.url}/#app` }, { '@type': 'SoftwareApplication', name: a.competitor }],
+};
+---
+<Base
+  title={a.title}
+  description={a.description}
+  crumbs={[{ name: 'Compare', path: '/alternatives' }, { name: `${a.competitor} alternative`, path }]}
+  schema={[page, ...faqSchema(a.faq)]}
+>
+  <section class="page-hero">
+    <div class="container split">
+      <div>
+        <ol class="crumbs"><li><a href="/">Home</a></li><li><a href="/alternatives">Compare</a></li><li>{a.competitor}</li></ol>
+        <p class="eyebrow" style="margin-top:14px"><span class="dot"><Icon name="Scale" size={14} stroke={2.4} /></span>Habit Tracker vs {a.competitor}</p>
+        <h1>{a.headline}</h1>
+        <p class="lede">{a.lede}</p>
+        <div class="ctas">
+          <PlayButton from={`compare-${entry.id}`} />
+          <a class="btn btn-light" href="#comparison">See the comparison <Icon name="ArrowDown" size={18} /></a>
+        </div>
+      </div>
+      <div class="card verdict reveal">
+        <h2>The short answer</h2>
+        <p>{a.verdict}</p>
+        <dl class="quick-facts">
+          <div><dt>{a.competitor} pricing</dt><dd>{a.theirPricing}</dd></div>
+          <div><dt>{a.competitor} platforms</dt><dd>{a.platforms}</dd></div>
+          <div><dt>Habit Tracker pricing</dt><dd>Free {TRIAL_DAYS}-day trial, 5 habits free forever. Pro {PLANS.map((p) => p.price + p.period.replace(' once', ' lifetime')).join(', ')}.</dd></div>
+          <div><dt>Habit Tracker platforms</dt><dd>Android</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="comparison" style="padding-top:16px">
+    <div class="container">
+      <div class="section-head reveal">
+        <h2>Habit Tracker vs {a.competitor} at a glance</h2>
+        <p>{a.summary}</p>
+      </div>
+      <div class="table-wrap reveal">
+        <table class="compare">
+          <thead><tr><th>Feature</th><th class="hi">Habit Tracker</th><th>{a.competitor}</th></tr></thead>
+          <tbody>
+            {a.table.map((r) => (
+              <tr>
+                <td>{r.feature}</td>
+                <td class={`hi ${mark(r.us)}`}>{r.us}</td>
+                <td class={mark(r.them)}>{r.them}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted-note" style="margin-top:12px">Last checked {a.lastChecked}. Competitor details come from their official website and app store listings; features and prices change, so check before you buy.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="section-head reveal"><h2>Why people switch from {a.competitor}</h2></div>
+      <div class="grid-2">
+        {a.reasons.map((r, i) => (
+          <article class="card box reveal" style={`--d:${i * 60}ms`}>
+            <span class="ico"><Icon name="ArrowRightLeft" size={22} /></span>
+            <h3>{r.title}</h3>
+            <p>{r.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="proscons">
+        <div class="card box good reveal">
+          <h2 class="box-title">What {a.competitor} does well</h2>
+          <ul>{a.theyDoWell.map((t) => <li><Icon name="ThumbsUp" size={18} />{t}</li>)}</ul>
+        </div>
+        <div class="card box bad reveal">
+          <h2 class="box-title">When {a.competitor} may suit you better</h2>
+          <ul>{a.considerations.map((t) => <li><Icon name="Info" size={18} />{t}</li>)}</ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <article class="prose feature-prose"><Content /></article>
+      <details class="sources">
+        <summary>Sources we checked</summary>
+        <ul>{a.sources.map((s) => <li><a href={s} rel="nofollow noopener" target="_blank">{s}</a></li>)}</ul>
+      </details>
+    </div>
+  </section>
+
+  <FaqList items={a.faq} />
+
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="section-head reveal"><h2>More comparisons</h2></div>
+      <div class="grid-3">
+        {others.map((o) => (
+          <a class="card box link reveal" href={`/alternatives/${o.id}`}>
+            <h3>{o.data.competitor} alternative</h3>
+            <p>{o.data.lede}</p>
+            <span class="more">Compare <Icon name="ArrowRight" size={16} /></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CtaBand from={`compare-band-${entry.id}`} title={`Try Habit Tracker free for ${TRIAL_DAYS} days.`} text="Recreate your habits from 21 templates in a couple of minutes. No account, no card, no ads." />
+</Base>

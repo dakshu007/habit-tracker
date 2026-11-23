@@ -1,0 +1,75 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/home/Hero.astro';
+import Gallery from '../components/home/Gallery.astro';
+import Statement from '../components/home/Statement.astro';
+import Features from '../components/home/Features.astro';
+import How from '../components/home/How.astro';
+import YearReview from '../components/home/YearReview.astro';
+import Privacy from '../components/home/Privacy.astro';
+import PricingSection from '../components/home/PricingSection.astro';
+import Faq from '../components/home/Faq.astro';
+import FinalCta from '../components/home/FinalCta.astro';
+import { SITE, PLANS } from '../config/site';
+import { HOME_FAQ } from '../data/homeFaq';
+
+const app = {
+  '@context': 'https://schema.org',
+  '@type': 'MobileApplication',
+  '@id': `${SITE.url}/#app`,
+  name: SITE.name,
+  alternateName: SITE.fullName,
+  description: SITE.defaultDescription,
+  operatingSystem: 'Android 8.0+',
+  applicationCategory: 'HealthApplication',
+  applicationSubCategory: 'Habit tracker',
+  url: SITE.url,
+  downloadUrl: SITE.playUrl,
+  installUrl: SITE.playUrl,
+  image: `${SITE.url}/og.png`,
+  inLanguage: ['en', 'hi'],
+  publisher: { '@id': `${SITE.url}/#org` },
+  featureList: [
+    'AI habit coach in English, Hindi and Hinglish',
+    'Illustrated habit cards with slide-to-complete',
+    'Streaks with automatic streak freezes and rest days',
+    'Health Connect auto-tracking for steps, runs and sleep',
+    'Sleep tracking from phone use, no watch needed',
+    'GPS run tracking with a live map, pace and km splits',
+    'Voice logging in English and Hindi',
+    'Five home-screen widgets and a Quick Settings tile',
+    'Insights, weekly review and Year in Review',
+    'Challenges with friends using share codes',
+    'Quit-a-bad-habit mode with days clean and money saved',
+    'Invite 5 friends to get 3 months of Pro free',
+  ],
+  offers: [
+    { '@type': 'Offer', name: 'Free plan', price: '0', priceCurrency: 'INR', url: SITE.playUrl },
+    ...PLANS.map((p) => ({
+      '@type': 'Offer',
+      name: `Habit Tracker Pro ${p.name}`,
+      price: String(p.amount),
+      priceCurrency: 'INR',
+      category: p.id === 'lifetime' ? 'purchase' : 'subscription',
+      url: SITE.playUrl,
+    })),
+  ],
+};
+const faq = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: HOME_FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+<Base title="Habit Tracker App for Android with AI Coach | Daily Routine" schema={[app, faq]}>
+  <Hero />
+  <Gallery />
+  <Statement />
+  <Features />
+  <How />
+  <YearReview />
+  <Privacy />
+  <PricingSection />
+  <Faq />
+  <FinalCta />
+</Base>

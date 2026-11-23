@@ -1,0 +1,8 @@
+# Netlify builds this folder when the site is linked to the GitHub repo
+# (base directory: website). Manual `netlify deploy --prod --dir=dist` also works.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"

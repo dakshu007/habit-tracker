@@ -1,0 +1,38 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import CtaBand from '../../components/CtaBand.astro';
+
+const alts = (await getCollection('alternatives')).sort((a, b) => a.data.order - b.data.order);
+---
+<Base
+  title="Habit Tracker Alternatives & Comparisons (2026)"
+  description="Honest comparisons of Habit Tracker with Habitica, Fabulous, Habitify, Loop, HabitNow, Productive and Streaks: features, prices and who each app suits best."
+  crumbs={[{ name: 'Compare', path: '/alternatives' }]}
+>
+  <section class="page-hero center">
+    <div class="container">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li>Compare</li></ol>
+      <h1>How Habit Tracker <span class="grad-text">compares.</span></h1>
+      <p class="lede">Fair, side-by-side comparisons with popular habit apps, including where they might suit you better. Pick the one that fits how you live.</p>
+    </div>
+  </section>
+  <section class="section" style="padding-top:8px">
+    <div class="container">
+      <div class="grid-3">
+        {alts.map((a) => (
+          <a class="card box link reveal" href={`/alternatives/${a.id}`}>
+            <span class="ico"><Icon name="Scale" size={22} /></span>
+            <h2 class="box-title">Habit Tracker vs {a.data.competitor}</h2>
+            <p>{a.data.summary}</p>
+            <p class="muted-note">{a.data.platforms} · {a.data.theirPricing}</p>
+            <span class="more">Read the comparison <Icon name="ArrowRight" size={16} /></span>
+          </a>
+        ))}
+      </div>
+      <p class="muted-note" style="text-align:center;margin-top:24px">Want the full roundup? Read <a href="/blog/best-habit-tracker-app-android">the best habit tracker apps for Android</a>.</p>
+    </div>
+  </section>
+  <CtaBand from="compare-index-band" />
+</Base>

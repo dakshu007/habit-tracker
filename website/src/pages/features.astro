@@ -1,0 +1,64 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PlayButton from '../components/PlayButton.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { SITE } from '../config/site';
+
+const features = (await getCollection('features')).sort((a, b) => a.data.order - b.data.order);
+const CATEGORIES = [
+  { name: 'Core', intro: 'The heart of the app: beautiful habit cards, an AI coach and streaks that forgive real life.' },
+  { name: 'Auto-tracking', intro: 'Let your phone do the logging: steps, runs, sleep and voice.' },
+  { name: 'Tools', intro: 'Widgets, reminders, timers and routines that keep habits in reach.' },
+  { name: 'Motivation', intro: 'Challenges, rewards and people who keep you going.' },
+  { name: 'Insights', intro: 'See your patterns: moods, stats, reviews and reports.' },
+  { name: 'Your data', intro: 'Private by design, with backups you control.' },
+];
+const groups = CATEGORIES.map((c) => ({ ...c, items: features.filter((f) => f.data.category === c.name) })).filter((g) => g.items.length);
+const list = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Habit Tracker features',
+  itemListElement: features.map((f, i) => ({ '@type': 'ListItem', position: i + 1, name: f.data.name, url: `${SITE.url}/${f.id}` })),
+};
+---
+<Base
+  title="Habit Tracker Features: AI Coach, Widgets, Sleep & Runs"
+  description="Every Habit Tracker feature in one place: AI habit coach, illustrated cards, streak freezes, Health Connect, sleep without a watch, GPS runs, widgets and more."
+  crumbs={[{ name: 'Features', path: '/features' }]}
+  schema={[list]}
+>
+  <section class="page-hero center">
+    <div class="container">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li>Features</li></ol>
+      <h1>Everything Habit Tracker <span class="grad-text">can do.</span></h1>
+      <p class="lede">{features.length} features that make showing up feel good and get out of your way the rest of the time. Most work offline, and many are free forever.</p>
+      <div class="ctas"><PlayButton from="features-hero" /><a class="btn btn-light" href="/pricing">Free vs Pro</a></div>
+    </div>
+  </section>
+
+  {groups.map((g) => (
+    <section class="section" style="padding-top:8px" id={g.name.toLowerCase().replace(/\s+/g, '-')}>
+      <div class="container">
+        <div class="section-head left reveal">
+          <h2>{g.name}</h2>
+          <p>{g.intro}</p>
+        </div>
+        <div class="grid-3">
+          {g.items.map((f) => (
+            <a class="card box link reveal" href={`/${f.id}`}>
+              <span class="ico"><Icon name={f.data.icon as any} size={22} /></span>
+              <h3>{f.data.name}</h3>
+              <p>{f.data.lede}</p>
+              <span class={f.data.plan === 'free' ? 'pill-free' : 'pill-pro'}>{f.data.plan === 'free' ? 'Free' : f.data.plan === 'pro' ? 'Pro' : 'Free + Pro'}</span>
+              <span class="more">Learn more <Icon name="ArrowRight" size={16} /></span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <CtaBand from="features-band" />
+</Base>

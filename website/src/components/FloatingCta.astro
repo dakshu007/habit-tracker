@@ -1,0 +1,9 @@
+---
+import PlayIcon from './PlayIcon.astro';
+import { playLink, TRIAL_DAYS } from '../config/site';
+---
+<!-- Shown once the visitor scrolls past the first screen; hidden again over the footer (see scripts/site.ts). -->
+<a class="float-cta" href={playLink('floating')} rel="noopener" data-download="floating" aria-label={`Download Habit Tracker on Google Play, ${TRIAL_DAYS} days free`}>
+  <span class="float-cta-icon"><PlayIcon size={20} /></span>
+  <span class="float-cta-text"><b>Download now</b><small>{TRIAL_DAYS} days free · No card</small></span>
+</a>

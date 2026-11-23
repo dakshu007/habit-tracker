@@ -1,0 +1,41 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { SITE } from '../../config/site';
+
+const posts = (await getCollection('blog')).sort((a, b) => Number(b.data.featured) - Number(a.data.featured) || +b.data.date - +a.data.date);
+const [lead, ...rest] = posts;
+const blog = {
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  name: 'Habit Tracker blog',
+  url: `${SITE.url}/blog`,
+  publisher: { '@id': `${SITE.url}/#org` },
+  blogPost: posts.map((p) => ({ '@type': 'BlogPosting', headline: p.data.title, url: `${SITE.url}/blog/${p.id}`, datePublished: p.data.date.toISOString() })),
+};
+---
+<Base
+  title="Habit Tracker Blog: Build Better Habits That Stick"
+  description="Practical, science-backed guides to building good habits, breaking bad ones, morning and night routines, beating procrastination and choosing a habit tracker app."
+  crumbs={[{ name: 'Blog', path: '/blog' }]}
+  schema={[blog]}
+>
+  <section class="page-hero center">
+    <div class="container">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li>Blog</li></ol>
+      <h1>Build habits that <span class="grad-text">stick.</span></h1>
+      <p class="lede">Practical guides on habits, routines and focus, grounded in research and written to be used today, not just read.</p>
+    </div>
+  </section>
+  <section class="section" style="padding-top:8px">
+    <div class="container">
+      <div class="post-grid">
+        {lead && <PostCard post={lead} featured heading="h2" />}
+        {rest.map((p) => <PostCard post={p} heading="h2" />)}
+      </div>
+    </div>
+  </section>
+  <CtaBand from="blog-index-band" title="Ready to put it into practice?" text="Habit Tracker turns these ideas into daily cards, forgiving streaks and an AI coach. 7 days free on Android." />
+</Base>

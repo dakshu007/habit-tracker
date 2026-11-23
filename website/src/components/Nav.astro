@@ -1,0 +1,36 @@
+---
+import Icon from './Icon.astro';
+import { playLink } from '../config/site';
+
+const links = [
+  { href: '/features', label: 'Features' },
+  { href: '/ai-coach', label: 'AI Coach' },
+  { href: '/pricing', label: 'Pricing' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/alternatives', label: 'Compare' },
+];
+const path = Astro.url.pathname.replace(/\.html$/, '');
+---
+<header class="nav-wrap" data-astro-cid-wpvy4v7s="">
+  <nav class="nav glass" aria-label="Main" data-astro-cid-wpvy4v7s="">
+    <a class="brand" href="/" aria-label="Habit Tracker home" data-astro-cid-wpvy4v7s="">
+      <img src="/img/icon.webp" alt="" width="36" height="36" class="brand-icon" loading="eager" decoding="async" />
+      <span data-astro-cid-wpvy4v7s="">Habit Tracker</span>
+    </a>
+    <ul class="links" id="nav-links" data-astro-cid-wpvy4v7s="">
+      {links.map((l) => (
+        <li data-astro-cid-wpvy4v7s="">
+          <a href={l.href} data-astro-cid-wpvy4v7s="" aria-current={path === l.href || path.startsWith(l.href + '/') ? 'page' : undefined}>{l.label}</a>
+        </li>
+      ))}
+    </ul>
+    <a class="btn btn-dark nav-cta" href={playLink('nav')} rel="noopener" data-download="nav" data-astro-cid-wpvy4v7s="">
+      <Icon name="Download" size={18} />
+      <span data-astro-cid-wpvy4v7s="">Get the app</span>
+    </a>
+    <button class="menu" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Open menu" data-astro-cid-wpvy4v7s="">
+      <Icon name="Menu" size={22} class="i-open" />
+      <Icon name="X" size={22} class="i-close" />
+    </button>
+  </nav>
+</header>

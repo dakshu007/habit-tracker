@@ -1,0 +1,141 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PlayIcon from '../components/PlayIcon.astro';
+import CtaBand from '../components/CtaBand.astro';
+import FaqList from '../components/FaqList.astro';
+import { faqSchema } from '../lib/schema';
+import { SITE, PLANS, PRO_FEATURES, FREE_FEATURES, TRIAL_DAYS, FREE_HABITS, playLink } from '../config/site';
+
+const [monthly, yearly, lifetime] = PLANS;
+
+const rows: [string, string | boolean, string | boolean, string?][] = [
+  ['Habits you can log', `${FREE_HABITS}`, 'Unlimited', '/habit-templates'],
+  ['Illustrated cards, slide to complete', true, true, '/habit-cards'],
+  ['Streaks, streak freezes and rest days', true, true, '/streaks'],
+  ['Reminders, nudges and alarms', true, true, '/reminders'],
+  ['Focus timer and routines', true, true, '/focus-timer'],
+  ['Challenges with friend codes', true, true, '/habit-challenges'],
+  ['Achievements, levels and themes', true, true, '/achievements'],
+  ['Calendar, stats and weekly review', true, true, '/weekly-review'],
+  ["Today's habits widget + Quick Settings tile", true, true, '/widgets'],
+  ['Google Drive and file backup', true, true, '/backup-and-restore'],
+  ['AI weekly insight', '1 per week', '1 per week', '/ai-coach'],
+  ['AI coach chat', false, '300 replies/month*', '/ai-coach'],
+  ['Health Connect auto-tracking', false, true, '/health-connect'],
+  ['Sleep tracking without a watch', false, true, '/sleep-tracking'],
+  ['GPS runs with a live map', 'History only', true, '/gps-run-tracker'],
+  ['Voice logging (English + Hindi)', false, true, '/voice-logging'],
+  ['Habit card, Mini, Streak and Sleep widgets', false, true, '/widgets'],
+  ['Insights and Year in Review', false, true, '/stats-and-insights'],
+  ['Monthly PDF and CSV reports', false, true, '/monthly-reports'],
+];
+
+const faq = [
+  { q: 'Do I need a card to start the free trial?', a: `No. The ${TRIAL_DAYS}-day trial starts when you finish setting up the app, with every feature unlocked and no payment details. If you don't buy anything, you simply move to the free plan.` },
+  { q: 'What happens when the trial ends?', a: `You keep ${FREE_HABITS} habits free forever, with streaks, reminders, challenges, the weekly review and backups. Your other habits stay visible with all their history; logging them needs Pro. Nothing is deleted.` },
+  { q: 'Which plan is the best value?', a: `Yearly. At ${yearly.price} a year it works out to about ₹42 a month, 58% less than paying monthly. Lifetime (${lifetime.price} once) is best if you plan to use the app for more than three years and dislike subscriptions.` },
+  { q: 'Can I get Pro for free?', a: 'Yes. Invite friends from Profile: you get 14 days of Pro for each friend who uses the app on 3 different days, plus a 20-day bonus at your 5th friend. Five friends add up to 3 months of Pro free.' },
+  { q: 'How many AI coach replies do I get?', a: 'Pro subscribers get 300 coach replies a month, lifetime members 100 a month, and the free trial includes 10 a day. Everyone, including the free plan, gets one AI weekly insight every week.' },
+  { q: 'How do I cancel?', a: 'Subscriptions are billed and managed by Google Play. Open the Play Store, go to Payments & subscriptions, then Subscriptions, and cancel Habit Tracker. Pro stays active until the end of the period you paid for.' },
+  { q: 'Are prices the same in every country?', a: `The prices here are for India (INR). Google Play shows the price for your country before you pay, roughly $3.99 a month, $24.99 a year or $59.99 lifetime in the US.` },
+];
+
+const product = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: 'Habit Tracker Pro',
+  description: 'Unlock unlimited habits, the AI coach, auto-tracking, sleep, runs, voice logging, all widgets and reports in Habit Tracker for Android.',
+  brand: { '@type': 'Brand', name: SITE.name },
+  image: `${SITE.url}/og.png`,
+  offers: PLANS.map((p) => ({ '@type': 'Offer', name: p.name, price: String(p.amount), priceCurrency: 'INR', availability: 'https://schema.org/InStock', url: SITE.playUrl })),
+};
+---
+<Base
+  title="Habit Tracker Pricing: Free Plan, Pro from ₹99/month"
+  description={`Habit Tracker is free to start: ${TRIAL_DAYS}-day trial with no card, ${FREE_HABITS} habits free forever. Pro is ${monthly.price}/month, ${yearly.price}/year or ${lifetime.price} lifetime via Google Play.`}
+  crumbs={[{ name: 'Pricing', path: '/pricing' }]}
+  schema={[product, ...faqSchema(faq)]}
+>
+  <section class="page-hero center">
+    <div class="container">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li>Pricing</li></ol>
+      <h1>Simple pricing. <span class="grad-text">Start free.</span></h1>
+      <p class="lede">Every feature free for {TRIAL_DAYS} days, no card needed. Then keep {FREE_HABITS} habits free forever, or go Pro for everything.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:12px">
+    <div class="container">
+      <div class="pp-plans pp-4">
+        <article class="card pp-plan reveal">
+          <h2>Free</h2>
+          <p class="price"><b>₹0</b><span>forever</span></p>
+          <p class="note">After the {TRIAL_DAYS}-day trial</p>
+          <ul>{FREE_FEATURES.map((f) => <li><Icon name="Check" size={17} stroke={2.6} />{f}</li>)}</ul>
+          <a class="btn btn-light" href={playLink('pricing-free')} rel="noopener" data-download="pricing-free"><PlayIcon size={20} /> Download free</a>
+          <p class="fine">No account, no ads</p>
+        </article>
+        {PLANS.map((p) => (
+          <article class={`card pp-plan reveal${p.badge ? ' best' : ''}`}>
+            {p.badge && <span class="badge">Best value · {p.badge}</span>}
+            <h2>{p.name}</h2>
+            <p class="price"><b>{p.price}</b><span>{p.period}</span></p>
+            <p class="note">{p.note}</p>
+            <ul>
+              <li><Icon name="Sparkles" size={17} stroke={2.6} /><strong>Everything in Free, plus:</strong></li>
+              {PRO_FEATURES.map((f) => <li><Icon name="Check" size={17} stroke={2.6} />{f}</li>)}
+              {p.id === 'lifetime' && <li><Icon name="Check" size={17} stroke={2.6} />100 AI coach replies a month</li>}
+            </ul>
+            <a class={`btn ${p.badge ? 'btn-light' : 'btn-dark'}`} href={playLink(`pricing-${p.id}`)} rel="noopener" data-download={`pricing-${p.id}`}><PlayIcon size={20} /> Start {TRIAL_DAYS}-day free trial</a>
+            <p class="fine">{p.id === 'lifetime' ? 'One payment via Google Play' : 'Cancel anytime in Google Play'}</p>
+          </article>
+        ))}
+      </div>
+      <p class="muted-note" style="text-align:center;margin-top:22px">Prices in INR, including taxes where Google Play requires. Google Play shows your local price before you pay.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="refer-card reveal">
+        <span class="ico"><Icon name="Gift" size={26} /></span>
+        <div>
+          <h2>Invite 5 friends. Get 3 months of Pro free.</h2>
+          <p>14 days of Pro for every friend who uses the app on 3 days, plus a 20-day bonus at your 5th. Your friends get a 14-day trial instead of 7.</p>
+        </div>
+        <a class="btn btn-dark" href="/invite-friends">How it works <Icon name="ArrowRight" size={18} /></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="section-head reveal">
+        <h2>Free vs Pro, side by side</h2>
+        <p>Both include the {TRIAL_DAYS}-day trial of everything.</p>
+      </div>
+      <div class="table-wrap reveal">
+        <table class="compare">
+          <thead><tr><th>Feature</th><th class="c">Free</th><th class="c hi">Pro</th></tr></thead>
+          <tbody>
+            {rows.map(([name, free, pro, href]) => (
+              <tr>
+                <td>{href ? <a href={href}>{name}</a> : name}</td>
+                {[free, pro].map((v, i) => (
+                  <td class={`c${i === 1 ? ' hi' : ''}`}>
+                    {v === true ? <span class="yes"><Icon name="Check" size={18} stroke={2.8} /></span> : v === false ? <span class="no" aria-label="Not included"><Icon name="Minus" size={18} /></span> : v}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted-note" style="margin-top:12px">* Lifetime includes 100 coach replies a month; the free trial includes 10 a day.</p>
+    </div>
+  </section>
+
+  <FaqList items={faq} title="Pricing questions" />
+  <CtaBand from="pricing-band" title="Try every Pro feature free for 7 days." />
+</Base>

@@ -1,0 +1,17 @@
+---
+import PlayIcon from './PlayIcon.astro';
+import { playLink } from '../config/site';
+
+interface Props {
+  /** Where on the site the button sits; tagged on the Play link. */
+  from: string;
+  label?: string;
+  light?: boolean;
+  class?: string;
+}
+const { from, label = 'Google Play', light = false, class: cls = '' } = Astro.props;
+---
+<a class={`btn btn-play ${light ? 'btn-light' : 'btn-dark'} ${cls}`} href={playLink(from)} rel="noopener" data-download={from}>
+  <PlayIcon />
+  <span><small>Get it on</small>{label}</span>
+</a>

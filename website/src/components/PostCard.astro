@@ -1,0 +1,22 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { fmtDate, readingMinutes } from '../lib/schema';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  featured?: boolean;
+  heading?: 'h2' | 'h3';
+}
+const { post, featured = false, heading = 'h3' } = Astro.props;
+const d = post.data;
+const H = heading;
+---
+<a class={`card post-card reveal${featured ? ' featured' : ''}`} href={`/blog/${post.id}`}>
+  <div class={`thumb tint-${d.tint}`}><img src={`/img/ill/${d.art}.webp`} alt="" width="300" height="300" loading="lazy" decoding="async" /></div>
+  <div class="body">
+    <p class="post-meta"><span>{d.category}</span><span>{readingMinutes(post.body ?? '')} min read</span></p>
+    <H>{d.title}</H>
+    <p>{d.description}</p>
+    <p class="post-meta"><time datetime={d.date.toISOString()}>{fmtDate(d.date)}</time></p>
+  </div>
+</a>

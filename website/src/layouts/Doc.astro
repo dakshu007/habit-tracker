@@ -1,0 +1,27 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  heading: string;
+  description: string;
+  updated?: string;
+  path: string;
+  noindex?: boolean;
+}
+const { title, heading, description, updated, path, noindex = false } = Astro.props;
+---
+<Base title={title} description={description} crumbs={noindex ? [] : [{ name: heading, path }]} noindex={noindex}>
+  <section class="page-hero">
+    <div class="container" style="max-width:820px">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li>{heading}</li></ol>
+      <h1>{heading}</h1>
+      {updated && <p class="muted-note">Last updated {updated}</p>}
+    </div>
+  </section>
+  <section class="section" style="padding-top:0">
+    <div class="container" style="max-width:820px">
+      <article class="card prose doc-card"><slot /></article>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,63 @@
+---
+import { SITE, playLink } from '../config/site';
+
+const groups = [
+  {
+    title: 'Product',
+    links: [
+      { href: '/features', label: 'All features' },
+      { href: '/ai-coach', label: 'AI Coach' },
+      { href: '/invite-friends', label: 'Invite friends' },
+      { href: '/pricing', label: 'Pricing' },
+      { href: playLink('footer'), label: 'Download on Google Play', external: true },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { href: '/blog', label: 'Blog' },
+      { href: '/alternatives', label: 'Compare apps' },
+      { href: '/#faq', label: 'FAQ' },
+      { href: '/support', label: 'Support' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { href: '/privacy', label: 'Privacy policy' },
+      { href: '/terms', label: 'Terms of use' },
+      { href: `mailto:${SITE.email}`, label: SITE.email },
+    ],
+  },
+];
+const year = new Date().getFullYear();
+---
+<footer class="footer" data-astro-cid-jo6i4kqk="">
+  <div class="container inner" data-astro-cid-jo6i4kqk="">
+    <div class="brand" data-astro-cid-jo6i4kqk="">
+      <img src="/img/icon.webp" alt="" width="40" height="40" loading="lazy" decoding="async" />
+      <div data-astro-cid-jo6i4kqk="">
+        <p class="name" data-astro-cid-jo6i4kqk="">Habit Tracker</p>
+        <p class="tag" data-astro-cid-jo6i4kqk="">Beautiful habits for Android, by Mykavo.</p>
+      </div>
+    </div>
+    <div class="foot-cols">
+      {groups.map((g) => (
+        <nav aria-label={g.title}>
+          <p class="foot-title">{g.title}</p>
+          <ul data-astro-cid-jo6i4kqk="">
+            {g.links.map((l) => (
+              <li data-astro-cid-jo6i4kqk="">
+                <a href={l.href} rel={l.external ? 'noopener' : undefined} data-astro-cid-jo6i4kqk="">{l.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))}
+    </div>
+  </div>
+  <div class="container legal" data-astro-cid-jo6i4kqk="">
+    <p data-astro-cid-jo6i4kqk="">© {year} Mykavo. All rights reserved.</p>
+    <p data-astro-cid-jo6i4kqk="">Google Play and the Google Play logo are trademarks of Google LLC.</p>
+  </div>
+</footer>

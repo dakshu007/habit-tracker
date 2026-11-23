@@ -1,0 +1,25 @@
+---
+interface Props {
+  items: { q: string; a: string }[];
+  group?: string;
+  title?: string;
+}
+const { items, group = 'faq', title = 'Frequently asked questions' } = Astro.props;
+---
+{items.length > 0 && (
+  <section class="section" aria-labelledby={`${group}-title`}>
+    <div class="container">
+      <div class="section-head reveal">
+        <h2 id={`${group}-title`}>{title}</h2>
+      </div>
+      <div class="faq-list">
+        {items.map((f) => (
+          <details data-group={group} class="reveal">
+            <summary>{f.q}</summary>
+            <div><p>{f.a}</p></div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+)}

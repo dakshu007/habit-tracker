@@ -6,3 +6,7 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# After each production deploy, submit every sitemap URL to IndexNow.
+[[plugins]]
+  package = "./plugins/indexnow"

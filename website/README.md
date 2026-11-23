@@ -23,3 +23,5 @@ npm run build    # writes dist/
 ## Deploy
 Recommended: in Netlify, link the project to this GitHub repo with **base directory `website`** (build settings come from `netlify.toml`), so every push deploys.
 Manual: `npm run build && npx netlify deploy --prod --dir=dist --site=habbittrackz`.
+
+After a deploy, tell Bing/Yandex/ChatGPT search about every page: `node scripts/indexnow.mjs` (the key file is `public/<key>.txt`; Google reads `/sitemap.xml` from Search Console instead).

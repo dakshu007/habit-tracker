@@ -325,3 +325,4 @@
 .wv-row { display: flex; gap: 12px; }
 .wv-row img { width: calc(50% - 6px); }
 @media (width <= 520px) { .widget-visual > img { width: 42%; } .widget-visual > div { width: 54%; } }
+.float-cta-text small, .float-cta-text b { white-space: nowrap; }
